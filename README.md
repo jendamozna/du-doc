@@ -105,6 +105,12 @@ Poznámky k rozsahu (scope):
 - Host / registrovaný člen / člen DU je **stav jedné osoby**, nikoli samostatná entita:
   - `host → registrovaný člen` (migrace provedená hlavním vedoucím)
   - `registrovaný člen → člen DU` (po zaplacení příspěvku do listopadu; platí leden–prosinec)
+  - `člen DU → registrovaný člen` (automatický přechod koncem roku, pokud nebyl zaplacen příspěvek na další rok — členství DU vyprší 31. 12.)
+  - `* → neaktivní` (osoba opustila oddíl nebo dlouhodobě bez aktivity; záznam zůstává kvůli historii, ale nezapočítává se do počtu členů a nedostává automatické výzvy)
+  - `neaktivní → registrovaný člen / host` (reaktivace, pokud se osoba vrátí)
+  - `* → archivovaný` (GDPR: po uplynutí retenční doby se osobní a citlivá data anonymizují; zachovají se jen agregované/nepřímo identifikující údaje nutné pro reporting)
+- Stavy `neaktivní` a `archivovaný` jsou kolmé na členský stav výše — určují, zda je záznam živý, uspaný, nebo anonymizovaný.
+- **Retence a GDPR:** citlivá data (zdravotní apod.) se mažou dříve než základní evidence; konkrétní lhůty retence jsou ke stanovení (TODO), výmaz/anonymizaci provádí primární oddíl, příp. ORG-A.
 - Role **rodič** (a např. dobrovolník) je kolmá na tento stav — osoba může být současně rodič i host/člen
 
 ### Hosté (= nečleni, veřejnost)
