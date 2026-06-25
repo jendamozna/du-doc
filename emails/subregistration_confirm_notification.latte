@@ -1,0 +1,24 @@
+{layout 'layout.latte'}
+
+{block content}
+    <p>Dobrý den,<br />
+    k vaší přihlášce na akci <strong>{$event['name']}</strong> byla přidána další přihláška.</p>
+
+    <h3>Přihlášení účastníci</h3>
+    <table>
+        <tr>
+            <th>Jméno</th>
+            <th>Příjmení</th>
+        </tr>
+        {foreach $users as $user}
+        <tr>
+            <td>{$user['firstname']}</td>
+            <td>{$user['surname']}</td>
+        </tr>
+        {/foreach}
+    </table>
+
+
+    <p class="details">Pro správu přihlášky použijte odkaz z předchozího e-mailu.</p>
+
+{/block}

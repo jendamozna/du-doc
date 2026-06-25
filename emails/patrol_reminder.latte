@@ -1,0 +1,23 @@
+{layout 'layout.latte'}
+
+{block content}
+    <p>Dobrý den,</p>
+
+    <p>dovolujeme si Vás upozornit, že následující závodníci z Vaší přihlášky na akci
+    <strong>{$event['name']}</strong> dosud nejsou zařazeni do žádné hlídky:</p>
+
+    <ul>
+    {foreach $unassignedUsers as $user}
+        <li><strong>{$user['firstname']} {$user['surname']}</strong></li>
+    {/foreach}
+    </ul>
+
+    <p>Akce začíná <strong>{$event['start_at']|date:'j. n. Y'}</strong>.
+    Prosíme, přiřaďte závodníky do hlídek co nejdříve.</p>
+
+    <p style="text-align: center;">
+        <a href="{$manageUrl}" class="button">Spravovat přihlášku</a>
+    </p>
+
+    <p>Pokud jste již závodníky do hlídek přiřadili, tuto zprávu ignorujte.</p>
+{/block}

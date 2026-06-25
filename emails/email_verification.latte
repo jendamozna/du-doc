@@ -1,0 +1,19 @@
+{layout 'layout.latte'}
+
+{block content}
+    <p>Dobrý den,<br />
+    děkujeme za Vaši přihlášku na akci <strong>{$event['name']}</strong>.</p>
+
+    <p>Pro dokončení registrace je nutné potvrdit Váš e-mail kliknutím na tlačítko níže:</p>
+
+    <p style="text-align: center;">
+        <a href="{$confirmUrl}" class="button">Potvrdit e-mail</a>
+    </p>
+
+    <p><small>Nebo zkopírujte tento odkaz: {$confirmUrl}</small></p>
+
+    <p>
+        <strong>Upozornění:</strong>
+        Bez potvrzení e-mailu nebude přihláška zpracována.
+    </p>
+{/block}
