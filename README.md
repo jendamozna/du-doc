@@ -92,14 +92,30 @@ Poznámky k rozsahu (scope):
 - Každá osoba je v databázi samostatnou entitou
 - Každá osoba může být přihlášená na akce více oddílů
 
+#### Osoba vs. uživatelský účet
+
+- Oddělujeme dvě entity:
+  - **Osoba** = datový subjekt / účastník; může existovat bez přihlášení (host, nezletilé dítě spravované rodičem)
+  - **Účet (uživatel)** = přihlašovací identita (heslo / OAuth), navázaná právě na jednu osobu
+- Jedna osoba má nejvýše jeden účet; jeden účet může mít více propojených OAuth identit (Google, Facebook)
+- Host nemá účet — má pouze identifikátor (token), kterým si může účet založit; po založení se účet propojí s existující osobou (nevznikne duplicita)
+
+#### Stav osoby (lifecycle)
+
+- Host / registrovaný člen / člen DU je **stav jedné osoby**, nikoli samostatná entita:
+  - `host → registrovaný člen` (migrace provedená hlavním vedoucím)
+  - `registrovaný člen → člen DU` (po zaplacení příspěvku do listopadu; platí leden–prosinec)
+- Role **rodič** (a např. dobrovolník) je kolmá na tento stav — osoba může být současně rodič i host/člen
+
 ### Hosté (= nečleni, veřejnost)
 
-- Hosta lze změnit na normálního člena
+- oddíl eviduje hosty (min jméno příjmení nebo přezdívka) pro docházku, tábory a jiné akce
 - Při registraci na akci je hostům vygenerován identifikátor, díky kterému je možné si založit účet
 
 ### Registrovaní členové
 
 - Každý člen má svůj primární oddíl
+- Hlavní vedoucí může zmigrovat data hosta do Registrovaného člena
 - U každého je evidována historie, kde byl veden (změny, registrace, pod jakým oddílem)
 - Členům lze poslat výzvu k aktualizaci údajů
 
@@ -226,6 +242,7 @@ Poznámky k rozsahu (scope):
 ### Ukládání tokenů
 
 Tokeny jsou uloženy v databázi šifrovaně, klíč je uložen na serveru v neveřejné části.
+https://github.com/defuse/php-encryption
 
 ### Pravidla přihlášení přes OAuth (bezpečné párování)
 
