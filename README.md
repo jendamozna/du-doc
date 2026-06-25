@@ -114,14 +114,15 @@ Poznámky k rozsahu (scope):
 
 ### Registrovaní členové
 
-- Hlavní vedoucí může zmigrovat data hosta do Registrovaného člena
+- Hlavní vedoucí může zmigrovat data Hosta do Registrovaného člena
+- Registrovaný člen má povinné datum narození
 - U každého je evidována historie - změny, registrace, pod jakým oddílem
-- Členům lze poslat výzvu k aktualizaci údajů
 
 ## Deduplikace osob, merge
 
 - Na úrovni organizace systém zobrazí možné kandidáty (jméno, příjmení, datum narození). Systém nabídne "Reportovací sloučení" osob pro účely unikátních počtů, záznamy zůstanou oddělené. Pro účely reportů se neřeší hosty.
-- Osobě s účtem se zobrazí možný kandidát na propojení (z jiného oddílu/organizace). Účet zadá žádost o sloučení. Schválí ji vedoucí daného klubu (zobrazí se mu pro porovnání náhled dat osoby), případně uživatel účet kandidáta pokud existuje. Záznamy obou osob se spojí do jedné osoby, účet se naváže na sjednocenou osobu; pokud obě osoby mají účet, pak druhý účet se zruší (uživatel vybere). Konflikt základních polí se řeší volbou A/B při schválení, citlivá data zůstávají per oddíl, jeho OAuth identity se přenesou pod ponechaný účet.
+- Osobě s účtem se zobrazí možný kandidát na propojení (z jiného oddílu/organizace). Účet zadá Žádost o sloučení. Systém rozešle emailem žádost - iniciátorovi, hlavní vedoucí druhého klubu a případně i účtu kandidáta na propojení. Po odsouhlasení všemi stranami (vedoucímu se zobrazí pro porovnání náhled obou osob) může uživatel pokračovat se spojením: Záznamy obou osob se spojí do jedné osoby, konflikt základních polí se řeší volbou A/B, účet se naváže na sjednocenou osobu, pokud obě osoby mají účet, pak druhý účet se zruší (uživatel vybere), citlivá data zůstávají per oddíl, OAuth identity se přenesou pod ponechaný účet.
+- Podobně se zpracuje duplicitní dítě, které se zobrazí rodiči s tím, že další strana je rodič dítěte kandidáta a výsledek nespojí účty rodičů do jednoho, jen osobu dítěte. Pokud dítě nemá navázaného rodiče, schválí merge vedoucí oddílu, kde je dítě evidováno.
 - Systém loguje, kdo kdy které osoby spojil, je možné zrušit merge pro nápravu chybného spojení.
 
 ### Člen DU
@@ -152,11 +153,12 @@ Poznámky k rozsahu (scope):
 - Typy oddílů: IČO ústředí, Pobočný spolek (vlastní IČO), kolektivní člen (bez DU v názvu, vlastní IČO)
 - Registrace - Je možné vytvořit formulář (na úrovni oddílu) určený k registraci s možností zvolit políčka k vyplnění o členovi (lze vybírat z chytré tabulky)
 - Vedoucí může definovat družiny a do nich přiřadit členy
-- admin a hlavní vedoucí oddílu můžou do systému zadat bankovní účty
+- Admin a Hlavní vedoucí oddílu můžou do systému zadat bankovní účty
+- Rádci nevidí citlivá data oddílových dětí, nejsou plnoletí
 
 ### Družina
 
-- Má své vedoucí, rádce a členy
+- Má své Vedoucí, Rádce a členy
 
 ### Dobrovolníci
 
@@ -215,15 +217,15 @@ Poznámky k rozsahu (scope):
 
 - Organizace nabízí některé akce, které si může vedoucí započítat do svého vzdělání, pokud je absolvuje
 - Organizace udržuje tabulku se seznamem kurzů - vlastní nebo jiné s seznamem platnosti
-- Hlavní vedoucí, Vedoucí a rádci můžou sobě přiřadit kurzy z nabídky
+- Hlavní vedoucí, Vedoucí a Rádci můžou sobě přiřadit kurzy z nabídky
 - Systém automaticky přiřadí kurz organizace všem účastníkům po jeho absolvování
-- Vedoucí a rádci mají možnost vložit do systému svoje certifikáty, potvrzení od doktora a jiné kurzy
+- Vedoucí a Rádci mají možnost vložit do systému svoje certifikáty, potvrzení od doktora a jiné kurzy
 - Organizace vidí, jaké kurzy absolvovali jednotliví vedoucí v oddílech
 
 ### Pomocná evidence
 
 - Vedoucí může pro svůj oddíl definovat nové sloupce (do tabulky hostů/členů)
-- Sloupcům lze nastavit, zda je vlastník účtu může vidět nebo upravovat
+- Sloupcům lze nastavit, zda je vlastník účtu (nebo Rádce) může vidět nebo upravovat
 - Hodnoty z pomocné evidenci nejsou přístupné z úrovně organizace
 
 ---
