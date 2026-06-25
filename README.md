@@ -1,22 +1,10 @@
-# Registrační systém oddílů DU — specifikace pro AI agenta
+# Registrační systém oddílů DU — specifikace
 
 ## Přehled projektu
 
 Systém registrací na akce pro oddíly DU. Struktura: Organizace → oddíly. Organizace sdružuje oddíly, spravuje členskou databázi a může pořádat vlastní akce. Každý oddíl spravuje vlastní akce, registrace a účastníky. Člen je nezávislá entita — může patřit do více oddílů v rámci organizace současně.
 
 **Rozsah:** Veřejný registrační portál, oddílová správa akcí, organizační správa, self-management pro registrované.
-
----
-
-## Technologický stack
-
-| Vrstva   | Technologie                               |
-| -------- | ----------------------------------------- |
-| Backend  | Nette, PHP 8.2+                           |
-| Databáze | Nette Database (Explorer), MySQL          |
-| Frontend | Vite, React 18+, TypeScript, Tailwind CSS |
-| API      | REST, JSON, autentizace přes session      |
-| Stav     | React Query pro stav serveru              |
 
 ---
 
@@ -69,22 +57,22 @@ Zkratky rolí: **ORG-A** = admin (organizace), **ORG-Ú** = účetní (organizac
 
 | Zdroj / akce                             | ORG-A | ORG-Ú | HVO | VO  | VD  | RÁD | KOO | ROD |
 | ---------------------------------------- | ----- | ----- | --- | --- | --- | --- | --- | --- |
-| Oddíly (CRUD)                            | C     | R     | R¹  | —   | —   | —   | —   | —    |
-| Uživatelé a role oddílu                  | C     | —     | C¹  | —   | —   | —   | —   | —    |
-| Členové oddílu (evidence)                | W²    | R²    | C¹  | W¹  | R³  | R³  | —   | W¹⁰  |
-| Citlivá data (zdravotní ap.)             | —⁴    | —⁴    | R⁵  | R⁵  | R⁴  | R⁴  | —⁴  | W¹⁰  |
-| Přesun člena mezi oddíly                 | C     | —     | W⁶  | —   | —   | —   | —   | —    |
-| Družiny                                  | R     | —     | C¹  | C¹  | W⁷  | R⁷  | —   | —    |
-| Vlastní certifikáty / potvrzení          | R     | —     | W⁸  | W⁸  | W⁸  | W⁸  | —   | —    |
-| Akce (vytvoření/konfigurace)             | C     | R     | C¹  | W¹  | —   | —   | —   | —    |
-| Registrace / přihlášky na akci           | W     | R     | W¹  | W¹  | —   | —   | W⁹  | W¹⁰  |
-| Bankovní účty + tokeny                   | C     | R     | C¹  | —   | —   | —   | —   | —    |
-| Platby (potvrzení, párování, výzvy)      | W     | W     | W¹  | R¹  | —   | —   | R⁹  | R¹⁰  |
-| Chytré sloupce (definice + viditelnost)  | R     | —     | C¹  | R¹  | R¹  | R¹  | —   | —    |
-| Komunikační e-mail / token oddílu        | C     | —     | C¹  | —   | —   | —   | —   | —    |
-| Reporting (období, docházka, statistiky) | C     | R     | R¹  | R¹  | R⁷  | R⁷  | R⁹  | —    |
-| Dobrovolníci + docházka hodin            | R     | —     | W¹  | W¹  | W⁷  | R⁷  | —   | —    |
-| Hosté (evidence, povýšení na člena)      | W     | R     | W¹  | W¹  | —   | —   | W⁹  | —    |
+| Oddíly (CRUD)                            | C     | R     | R¹  | —   | —   | —   | —   | —   |
+| Uživatelé a role oddílu                  | C     | —     | C¹  | —   | —   | —   | —   | —   |
+| Členové oddílu (evidence)                | W²    | R²    | C¹  | W¹  | R³  | R³  | —   | W¹⁰ |
+| Citlivá data (zdravotní ap.)             | —⁴    | —⁴    | R⁵  | R⁵  | R⁴  | R⁴  | —⁴  | W¹⁰ |
+| Přesun člena mezi oddíly                 | C     | —     | W⁶  | —   | —   | —   | —   | —   |
+| Družiny                                  | R     | —     | C¹  | C¹  | W⁷  | R⁷  | —   | —   |
+| Vlastní certifikáty / potvrzení          | R     | —     | W⁸  | W⁸  | W⁸  | W⁸  | —   | —   |
+| Akce (vytvoření/konfigurace)             | C     | R     | C¹  | W¹  | —   | —   | —   | —   |
+| Registrace / přihlášky na akci           | W     | R     | W¹  | W¹  | —   | —   | W⁹  | W¹⁰ |
+| Bankovní účty + tokeny                   | C     | R     | C¹  | —   | —   | —   | —   | —   |
+| Platby (potvrzení, párování, výzvy)      | W     | W     | W¹  | R¹  | —   | —   | R⁹  | R¹⁰ |
+| Chytré sloupce (definice + viditelnost)  | R     | —     | C¹  | R¹  | R¹  | R¹  | —   | —   |
+| Komunikační e-mail / token oddílu        | C     | —     | C¹  | —   | —   | —   | —   | —   |
+| Reporting (období, docházka, statistiky) | C     | R     | R¹  | R¹  | R⁷  | R⁷  | R⁹  | —   |
+| Dobrovolníci + docházka hodin            | R     | —     | W¹  | W¹  | W⁷  | R⁷  | —   | —   |
+| Hosté (evidence, povýšení na člena)      | W     | R     | W¹  | W¹  | —   | —   | W⁹  | —   |
 
 Poznámky k rozsahu (scope):
 
@@ -218,6 +206,18 @@ Poznámky k rozsahu (scope):
 - Hodnoty v pomocné evidenci nejsou přístupné z úrovně organizace
 - Sloupečky v chytré tabulce lze definovat per oddíl vedoucími
 - Do tabulky hostu/členů lze přidávat sloupce a nastavit jim zda je uživatel může vidět nebo upravovat
+
+---
+
+## Technologický stack
+
+| Vrstva   | Technologie                               |
+| -------- | ----------------------------------------- |
+| Backend  | Nette, PHP 8.2+                           |
+| Databáze | Nette Database (Explorer), MySQL          |
+| Frontend | Vite, React 18+, TypeScript, Tailwind CSS |
+| API      | REST, JSON, autentizace přes session      |
+| Stav     | React Query pro stav serveru              |
 
 ---
 
