@@ -132,14 +132,17 @@ Poznámky k rozsahu (scope):
 
 ### Rodič (zákonný zástupce)
 
-- Rodič je osoba, která má vazbu na alespoň jedno dítě
+- Rodič je osoba, která má vazbu na alespoň jedno dítě (typicky nezletilé)
 - Rodič může zastupovat jedno nebo více nezletilých dětí (vazba rodič ↔ dítě, typu 1:N)
 - Jedno dítě může být svázáno s více rodiči (oba zákonní zástupci) — vazba je M:N
 - Rodič může své zastupované děti přihlašovat na akce a spravovat jejich přihlášky (registrace, storno, platby za dítě)
 - Rodič se sám může akcí účastnit jako účastník (vystupuje pak zároveň jako účastník i jako zástupce dětí)
-- Rodič vidí a edituje pouze údaje a přihlášky vlastních dětí; rozsah viditelnosti citlivých dat dítěte se řídí pravidly oddílu, ve kterém je dítě evidováno (GDPR)
-- Vazbu rodič ↔ dítě vzniká registraci dítěte rodičem
-- Po dosažení zletilosti dítěte přechází správa údajů a přihlášek na samotného (nyní již plnoletého) člena; zastoupení rodičem se ukončí (resp. zůstane jen se souhlasem člena)
+- Rodič vidí a edituje pouze údaje a přihlášky vlastních dětí
+- Vazba rodič ↔ dítě vzniká registraci dítěte rodičem
+- Po dosažení zletilosti se zastoupení rodičem přepne do režimu jen pro čtení. Výjimkou je doplnění kontaktního e-mailu dítěte, pokud chybí — slouží k doručení výzvy k převzetí účtu. Zletilý člen může přístup rodiče kdykoli zcela zrušit.
+- Vazbu může zrušit sám rodič (vystoupení), případně vedoucí oddílu na žádost; zrušení se loguje. Zůstane-li nezletilé dítě bez navázaného rodiče, jeho údaje a přihlášky spravuje vedoucí oddílu, dokud se nepřipojí nový zákonný zástupce.
+- Oba rodiče mají plná práva, platí poslední zápis.
+- Druhého zákonného zástupce přidává stávající rodič nebo hlavní vedoucí pozvánkou (e-mailem). Vazba vznikne přijetím pozvánky druhým rodičem. Nemá-li dítě žádného navázaného rodiče, schvaluje připojení vedoucí oddílu, kde je dítě evidováno.
 
 ### Organizace
 
