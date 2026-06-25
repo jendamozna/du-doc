@@ -13,7 +13,7 @@ Systém registrací na akce pro oddíly DU. Struktura: Organizace → oddíly. O
 ```
 ┌─────────────────────────────────────────────────┐
 │                   Organizace                    │
-│  (oddíly, členové DU, vedoucí, přesuny,         │
+│  (oddíly, členové DU, vedoucí,                  │
 │  akce, platby, reporting)                       │
 └──────────────────────┬──────────────────────────┘
                        │
@@ -57,22 +57,21 @@ Zkratky rolí: **ORG-A** = Admin (organizace), **ORG-Ú** = Účetní (organizac
 
 | Zdroj / akce                             | ORG-A | ORG-Ú | HVO | VO  | VD  | RÁD | KOO | ROD |
 | ---------------------------------------- | ----- | ----- | --- | --- | --- | --- | --- | --- |
-| Oddíly (CRUD)                            | C     | R     | R¹  | —   | —   | —   | —   | —   |
-| Uživatelé a role oddílu                  | C     | —     | C¹  | —   | —   | —   | —   | —   |
-| Členové oddílu (evidence)                | W²    | R²    | C¹  | W¹  | R³  | R³  | —   | W¹⁰ |
-| Citlivá data (zdravotní ap.)             | —⁴    | —⁴    | R⁵  | R⁵  | R⁴  | R⁴  | —⁴  | W¹⁰ |
-| Přesun člena mezi oddíly                 | C     | —     | W⁶  | —   | —   | —   | —   | —   |
-| Družiny                                  | R     | —     | C¹  | C¹  | W⁷  | R⁷  | —   | —   |
-| Vlastní certifikáty / potvrzení          | R     | —     | W⁸  | W⁸  | W⁸  | W⁸  | —   | —   |
-| Akce (vytvoření/konfigurace)             | C     | R     | C¹  | W¹  | —   | —   | —   | —   |
-| Registrace / přihlášky na akci           | W     | R     | W¹  | W¹  | —   | —   | W⁹  | W¹⁰ |
-| Bankovní účty + tokeny                   | C     | R     | C¹  | —   | —   | —   | —   | —   |
-| Platby (potvrzení, párování, výzvy)      | W     | W     | W¹  | R¹  | —   | —   | R⁹  | R¹⁰ |
-| Chytré sloupce (definice + viditelnost)  | R     | —     | C¹  | R¹  | R¹  | R¹  | —   | —   |
-| Komunikační e-mail / token oddílu        | C     | —     | C¹  | —   | —   | —   | —   | —   |
-| Reporting (období, docházka, statistiky) | C     | R     | R¹  | R¹  | R⁷  | R⁷  | R⁹  | —   |
-| Dobrovolníci + docházka hodin            | R     | —     | W¹  | W¹  | W⁷  | R⁷  | —   | —   |
-| Hosté (evidence, povýšení na člena)      | W     | R     | W¹  | W¹  | —   | —   | W⁹  | —   |
+| Oddíly (CRUD)                            | C     | R     | R1  | —   | —   | —   | —   | —   |
+| Uživatelé a role oddílu                  | C     | —     | C1  | —   | —   | —   | —   | —   |
+| Členové oddílu (evidence)                | W2    | R2    | C1  | W1  | W1  | R3  | —   | W9  |
+| Citlivá data (zdravotní ap.)             | —4    | —4    | R5  | R5  | R4  | R4  | —4  | W9  |
+| Družiny                                  | R     | —     | C1  | C1  | W6  | R6  | —   | —   |
+| Vlastní certifikáty / potvrzení          | R     | —     | W7  | W7  | W7  | W7  | —   | —   |
+| Akce (vytvoření/konfigurace)             | C     | R     | C1  | W1  | —   | —   | —   | —   |
+| Registrace / přihlášky na akci           | W     | R     | W1  | W1  | —   | —   | W8  | W9  |
+| Bankovní účty + tokeny                   | C     | R     | C1  | —   | —   | —   | —   | —   |
+| Platby (potvrzení, párování, výzvy)      | W     | W     | W1  | R1  | —   | —   | R8  | R9  |
+| Chytré sloupce (definice + viditelnost)  | R     | —     | C1  | R1  | R1  | R1  | —   | —   |
+| Komunikační e-mail / token oddílu        | C     | —     | C1  | —   | —   | —   | —   | —   |
+| Reporting (období, docházka, statistiky) | C     | R     | R1  | R1  | R6  | R6  | R8  | —   |
+| Dobrovolníci + docházka hodin            | R     | —     | W1  | W1  | W6  | R6  | —   | —   |
+| Hosté (evidence, povýšení na člena)      | W     | R     | W1  | W1  | —   | —   | W8  | —   |
 
 Poznámky k rozsahu (scope):
 
@@ -81,11 +80,10 @@ Poznámky k rozsahu (scope):
 3. VD/RÁD vidí členy jen ve své družině.
 4. Citlivá data jsou vedená **odděleně pro každý oddíl** (každý oddíl si drží vlastní záznam, např. zdravotní kartu) — nevidí je organizace ani jiný oddíl (zdravotní omezení, léky, alergie, církev).
 5. Vidí je jen vedoucí oddílu, ve kterém jsou data pořízena; je-li člen ve více oddílech, každý oddíl vidí pouze svoji verzi citlivých dat.
-6. HVO může člena přesunout ze svého oddílu; cílový oddíl přesun potvrdí (jinak provádí jen ORG-A). — k rozhodnutí.
-7. Jen vlastní družina (VD spravuje, RÁD čte).
-8. Každý vedoucí/rádce edituje jen své vlastní certifikáty a potvrzení.
-9. Jen přidělená akce (přes assignment); bez přístupu ke konfiguraci akce (ceny/storno) a k jiným akcím.
-10. Rodič jen u vlastních zastupovaných dětí (a sebe jako účastníka). Je editorem jejich základních i citlivých dat (zdravotní apod.) a jejich přihlášek; u plateb vidí stav a dostanává výzvy, nepáruje je. Bez přístupu k oddílovým zdrojům a k cizím osobám.
+6. Jen vlastní družina (VD spravuje, RÁD čte).
+7. Každý vedoucí/rádce edituje jen své vlastní certifikáty a potvrzení.
+8. Jen přidělená akce (přes assignment); bez přístupu ke konfiguraci akce (ceny/storno) a k jiným akcím.
+9. Rodič jen u vlastních zastupovaných dětí (a sebe jako účastníka). Je editorem jejich základních i citlivých dat (zdravotní apod.) a jejich přihlášek; u plateb vidí stav a dostanává výzvy, nepáruje je. Bez přístupu k oddílovým zdrojům a k cizím osobám.
 
 #### Osoba vs. uživatelský účet
 
@@ -105,8 +103,14 @@ Poznámky k rozsahu (scope):
   - `neaktivní → registrovaný člen / host` (reaktivace, pokud se osoba vrátí)
   - `* → archivovaný` (GDPR: po uplynutí retenční doby se osobní a citlivá data anonymizují; zachovají se jen agregované/nepřímo identifikující údaje nutné pro reporting)
 - Stavy `neaktivní` a `archivovaný` jsou kolmé na členský stav výše — určují, zda je záznam živý, uspaný, nebo anonymizovaný.
-- **Retence a GDPR:** citlivá data (zdravotní apod.) se mažou dříve než základní evidence; konkrétní lhůty retence jsou ke stanovení (TODO). Citlivá data jsou izolovaná per oddíl, každý oddíl proto maže/anonymizuje jen svoji verzi; ORG-A může spustit výmaz napříč všemi oddíly.
 - Role **rodič** (a např. dobrovolník) je kolmá na tento stav — osoba může být současně rodič i host/člen
+
+### Retence a GDPR
+
+- citlivá data (zdravotní apod.) se mažou dříve než základní evidence
+- konkrétní lhůty retence jsou TODO
+- Citlivá data jsou izolovaná per oddíl, každý oddíl proto maže/anonymizuje jen svoji verzi
+- ORG-A může spustit výmaz napříč všemi oddíly.
 
 ### Hosté (= nečleni, veřejnost)
 
@@ -170,15 +174,15 @@ Poznámky k rozsahu (scope):
 ### Přihlašování na oddílové/celoČR akce
 
 - Hlavní vedoucí i Admin můžou vytvářet Přihlášky na akce
-- Každá akce je svazána s maximálně jedním účtem
-- systém posílá výzvu k zaplacení (QR kód + platební údaje)
-- systém připomíná nezaplacené platby
+- Každá akce může být svazána s maximálně jedním bankovním účtem
+- Systém posílá výzvu k zaplacení (QR kód + platební údaje)
+- Systém připomíná nezaplacené platby
 - Akce může být veřejná nebo neveřejná (dostupná přes odkaz)
 - Při registraci na akci je hostům vygenerován identifikátor, díky kterému je možné si založit účet
 
 ### Generování reportu na konci období (roku)
 
-- seznam akcí/výprav, docházka členů/nečlenů/vedoucích/rádců
+- Seznam akcí/výprav, docházka členů/nečlenů/vedoucích/rádců
 - Unikátni počet dětí v rámci všech akcí (počítá se jednou, ikdyž bylo na více akcích)
 - Trendy - TODO
 
@@ -190,14 +194,14 @@ Poznámky k rozsahu (scope):
 
 ### Platební modul
 
-- ke každému bankovnímu účtu je možné doplnit API token
-- systém automaticky páruje bankovní transakce s přihláškami podle SS=akce a VS=přihláška
-- systém automaticky posílá potvrzení o platbě
+- Ke každému bankovnímu účtu je možné doplnit API token
+- Systém automaticky páruje bankovní transakce s přihláškami podle SS=akce a VS=přihláška
+- Systém automaticky posílá potvrzení o platbě
 
 ### Přihlašování do systému
 
 - Administrátoři vytvářejí účty hlavním vedoucím, hlavní vedoucí vytvářejí účty vedoucím a rádcům
-- Každý uživatel si může v systému změnit heslo ()
+- Každý uživatel si může v systému změnit heslo
 - Každý si může vytvořit účet v systému a v něm editovat svojí identitu, kterou může použít při dalších registracích na akce
 - Neregistrovaným uživatelům je umožněno přes token spravovat jejich registrace (storno, měnit nebo přidávat další účastníky)
 - Pro přihlášení do aplikace půjde použít účet Google nebo Facebook (OAuth)
@@ -206,8 +210,17 @@ Poznámky k rozsahu (scope):
 ### Konfigurace akce
 
 - Vedoucí/administrátoři můžou vytvářet akce
-- název, SS, max kapacita, počet náhradníků, ceny pro členy DU i ostatní, začátek akce, začátek a konec přihlašování, termíny pro storno podmínky
-- pokud akce vyžaduje dobrovolníky, lze zadat cenu, začátek a konec přihlašování, system nabídne samostatnou registraci pro dobrovolníky
+- Název, SS, max kapacita, počet náhradníků, ceny pro členy DU i ostatní, začátek akce, začátek a konec přihlašování, termíny pro storno podmínky
+- Pokud akce vyžaduje dobrovolníky, lze zadat cenu, začátek a konec přihlašování, systém nabídne samostatnou stránku pro přihlášení dobrovolníků
+- Náhradníci - Po uvolnění místa je informován vedoucí, který vybere z náhradníku dalšího, náhradník dostane časově omezenou nabídku, po vypršení propadá a vedoucí znovu vybírá.
+
+## Ceny a storna na akcích
+
+- Systém umožňuje definovat více cen platných v různých termínech pro různé typy členství - DU, bez DU
+- Systém umožňuje definovat ceny pro děti vedoucích
+- Systém umožňuje sponzorské ceny - několik variant
+- Systém umožnuje definovat storno poplatky procentuálně v různých termínech
+- Vratky schvaluje a odesílá Účetní nebo HVO ručně po skončení akce
 
 ### Typy akcí
 
