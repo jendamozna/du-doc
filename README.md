@@ -264,3 +264,5 @@ https://github.com/defuse/php-encryption
    založení odmítni a vyžádej standardní registraci.
 5. **Odpojení:** Uživatel může OAuth identitu odpojit; nesmí ale zůstat bez
    možnosti přihlášení (musí mít heslo nebo alespoň jednu identitu).
+
+---
