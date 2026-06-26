@@ -12,20 +12,34 @@ Systém registrací na akce pro oddíly DU. Struktura: Organizace → oddíly. O
 
 ```mermaid
 flowchart TD
-    ORG["Organizace<br/>Admin (ORG-A): správa oddílů, přiřazování HVO<br/>Deduplikace osob · reporty ústředí nad všemi oddíly<br/>Vzdělávání: katalog kurzů + evidence absolvování"]
+    ORG["<b>Organizace</b><br/>Administrátor (ADM): správa oddílů, přiřazování HVO<br/>Deduplikace osob · reporty ústředí nad všemi oddíly<br/>Vzdělávání: katalog kurzů + evidence absolvování"]
 
-    USTREDI["Ústředí (speciální oddíl)<br/>celostátní akce · dobrovolníci<br/>BEZ registrovaných členů"]
-    ODDILY["Běžné oddíly (A, B, C …)<br/>akce · platby · bankovní účty · chytré sloupce<br/>členové · hosté · družiny · dobrovolníci<br/>role: HVO, VO, VD, RÁD, ÚČE, ROD"]
+    USTREDI["<b>Ústředí</b> (speciální oddíl)<br/>celostátní akce · vedoucí · dobrovolníci<br/>mimo regiony"]
+    REGION["<b>Regiony</b> (definuje ADM)<br/>seskupují běžné oddíly<br/>mění se v čase: vznik · přesun · sloučení · rozdělení"]
+    ODDILY["<b>Běžné oddíly</b> (A, B, C …)<br/>členové · akce · platby · bankovní účty · chytré sloupce<br/>hosté · družiny · dobrovolníci<br/>role: HVO, VO, VD, RÁD, ÚČE, ROD"]
 
-    PORTAL["Veřejný registrační portál<br/>(procházet akce, registrovat se)"]
+    PORTAL["<b>Veřejný registrační portál</b><br/>(procházet akce, registrovat se)"]
 
-    OSOBA["Osoba (nezávislá entita)<br/>evidována ve více oddílech<br/>stav: host / registrovaný člen / člen DU<br/>role (kolmé): rodič, dobrovolník<br/>účet volitelný — 1 osoba ⇢ max 1 účet, více OAuth identit"]
+    OSOBA["<b>Osoba</b> (nezávislá entita)<br/>evidována ve více oddílech<br/>stav: host / registrovaný člen / člen DU<br/>účet volitelný — 1 osoba ⇢ max 1 účet, více OAuth identit"]
 
     ORG --> USTREDI
-    ORG --> ODDILY
+    ORG --> REGION
+    REGION --> ODDILY
     USTREDI --> PORTAL
     ODDILY --> PORTAL
     PORTAL -. "registrace / přihlášení" .-> OSOBA
+
+    classDef org fill:#1e3a8a,stroke:#1e293b,stroke-width:2px,color:#ffffff;
+    classDef region fill:#7c3aed,stroke:#5b21b6,stroke-width:1.5px,color:#ffffff;
+    classDef oddil fill:#2563eb,stroke:#1e3a8a,stroke-width:1.5px,color:#ffffff;
+    classDef portal fill:#059669,stroke:#065f46,stroke-width:1.5px,color:#ffffff;
+    classDef osoba fill:#f1f5f9,stroke:#475569,stroke-width:1.5px,color:#0f172a;
+
+    class ORG org;
+    class REGION region;
+    class USTREDI,ODDILY oddil;
+    class PORTAL portal;
+    class OSOBA osoba;
 ```
 
 ---
@@ -35,7 +49,7 @@ flowchart TD
 ### Role
 
 - Uživatel může být ve více rolích, např. Administrátor a zároveň jeden z vedoucích oddílu nebo dobrovolník a rodič
-- Role Hlavní vedoucí oddílu (HVO), Rádce (RÁD), Vedoucí oddílu (VO), Vedoucí družiny (VD), Administrátor (ORG-A), Účetní (ÚČE), Rodič (ROD)
+- Role Hlavní vedoucí oddílu (HVO), Rádce (RÁD), Vedoucí oddílu (VO), Vedoucí družiny (VD), Administrátor (ADM), Účetní (ÚČE), Rodič (ROD)
 - VO/VD nemají pevná globální práva, oprávnění se přidělují u akce / v rámci družiny.
 
 #### Účetní
@@ -92,7 +106,6 @@ flowchart TD
   - `neaktivní → registrovaný člen / host` (reaktivace, pokud se osoba vrátí)
   - `* → archivovaný` (GDPR: po uplynutí retenční doby se osobní a citlivá data anonymizují; zachovají se jen agregované/nepřímo identifikující údaje nutné pro reporting)
 - Stavy `neaktivní` a `archivovaný` jsou kolmé na členský stav výše — určují, zda je záznam živý, uspaný, nebo anonymizovaný.
-- Role **rodič** (a např. dobrovolník) je kolmá na tento stav — osoba může být současně rodič i host/člen
 - U každého je evidována historie - změny, registrace, pod jakým oddílem
 
 ### Retence a GDPR
@@ -100,7 +113,7 @@ flowchart TD
 - citlivá data (zdravotní apod.) se mažou dříve než základní evidence
 - konkrétní lhůty retence jsou TODO
 - Citlivá data jsou izolovaná per oddíl, každý oddíl proto maže/anonymizuje jen svoji verzi
-- ORG-A může spustit výmaz napříč všemi oddíly.
+- Administrátor může spustit výmaz napříč všemi oddíly.
 
 ### Deduplikace osob, merge
 
@@ -114,6 +127,19 @@ flowchart TD
 - Osoba se může stát členem DU od ledna následujícího roku po zaplacení příspěvku do listopadu
 - Členství DU trvá: leden–prosinec (kalendářní rok)
 
+### Region
+
+- Region je vrstva mezi organizací a běžnými oddíly: `Organizace → Region → Oddíl`. Ústředí (celostátní) do regionů nepatří.
+- Regiony definuje a spravuje ADM a přiřazuje do nich běžné oddíly. Oddíl je v daném okamžiku nejvýše v jednom regionu (nově vzniklý oddíl může být dočasně bez regionu).
+- **Příslušnost oddílu k regionu je verzovaná** (platnost od/do) — díky tomu lze určit, do jakého regionu oddíl patřil k libovolnému datu.
+- Regiony se v čase mění:
+  - **Vznik** – ADM založí nový region.
+  - **Přesun oddílu** – uzavře se stávající příslušnost a založí nová do jiného regionu (bez přepisování historie).
+  - **Sloučení (A + B → C)** – zdrojové regiony se označí jako _sloučené_ s odkazem na nástupnický region; všem oddílům z A i B se uzavře příslušnost a otevře nová na C.
+  - **Rozdělení** – opačná operace ke sloučení.
+- Regiony se **nemažou**, jen označí stavem _sloučený / zrušený_ — kvůli zachování historie.
+- **Reporty (snapshot):** region oddílu/akce se zaznamenává jako **snapshot na akci v okamžiku jejího vzniku** (`region_id` se uloží k akci). Pozdější přesun oddílu nebo sloučení regionu **nemění už existující reporty**; nové akce počítají podle aktuálního zařazení. _Modul reporty ústředí_ tím získá dimenzi „region".
+
 ### Oddíl
 
 - Typy oddílů: IČO ústředí, Pobočný spolek (vlastní IČO), kolektivní člen (bez DU v názvu, vlastní IČO)
@@ -123,12 +149,6 @@ flowchart TD
 #### Družina
 
 - Má své Vedoucí, Rádce a členy
-
-### Pomocná evidence
-
-- Vedoucí může pro svůj oddíl nebo družinu definovat nové sloupce (do tabulky hostů/členů)
-- Sloupcům lze nastavit viditelnost - zda je vlastník účtu může vidět nebo upravovat
-- Sloupcům lze nastavit oprávnění - zda Rádci můžou vidět nebo upravovat
 
 ### Přihlašování do systému
 
@@ -169,19 +189,9 @@ flowchart TD
 
 - Neregistrovaným uživatelům je umožněno přes token spravovat jejich přihlášky (storno, měnit nebo přidávat další účastníky)
 - Systém posílá posílá potvrzení přihlášky s výzvou k zaplacení (QR kód + platební údaje), hostům je navíc vygenerován identifikátor, díky kterému je možné si založit účet
-- Systém připomíná nezaplacené platby
-
-### Platební modul - párování plateb
-
-- Aktivuje se doplněním tokenu k bankovnímu účtu
-- Systém automaticky páruje bankovní transakce s přihláškami podle SS=akce a VS=přihláška
-- Systém automaticky posílá poděkování za přijatou platbu
-
-### Potvrzení o platbě
-
-- Vyžaduje aktivní Platební modul
-- Účetní do systému zadá systému šablonu s razítkem/podpisem
-- Systém automaticky připraví potvrzení o platbě ke stažení
+- Systém připomíná nezaplacené platby - četnost lze upravit v Nastavení oddílu
+- Systém kategorizuje přihlášky: Učastník, Dobrovolník, Náhradník
+- Stavy přihlášky: Paid, New, Canceled, PartialPaid, Overpayment, PendingPayment, Expired
 
 ### Docházka
 
@@ -195,13 +205,36 @@ flowchart TD
 - Seznam akcí/výprav, docházka členů/nečlenů/vedoucích/rádců/dobrovolníků
 - Trendy - TODO
 
-### Modul Reporty ústředí
+### Volitelné moduly
+
+- Povoluje Hlavní vedoucí pro svůj oddíl v Nastavení oddílu
+
+#### Pomocná evidence
+
+- Vedoucí může pro svůj oddíl nebo družinu definovat nové sloupce (do tabulky hostů/členů)
+- Sloupcům lze nastavit viditelnost - zda je vlastník účtu může vidět nebo upravovat
+- Sloupcům lze nastavit oprávnění - zda Rádci můžou vidět nebo upravovat
+
+#### Modul párování plateb
+
+- Aktivuje se doplněním tokenu k bankovnímu účtu
+- Systém automaticky páruje bankovní transakce s přihláškami podle SS=akce a VS=přihláška
+- Systém automaticky posílá poděkování za přijatou platbu
+
+#### Modul Potvrzení o platbě
+
+- Vyžaduje aktivní Platební modul
+- Účetní do systému zadá systému šablonu s razítkem/podpisem
+- Systém automaticky připraví potvrzení o platbě ke stažení
+
+#### Modul reporty ústředí
 
 - Počítá unikátni počet dětí v rámci všech akcí všech oddílů (počítá se jednou, ikdyž bylo na více akcích)
+- Lze filtrovat a agregovat podle **regionu** (region akce = snapshot uložený při vzniku akce)
 - Zobrazí možné kandidáty (jméno, příjmení, datum narození). Systém nabídne "Reportovací sloučení" osob pro účely unikátních počtů, záznamy zůstanou oddělené
 - nepočítá hosty ostatních oddílů
 
-### Vzdělávání
+#### Modul vzdělávání
 
 - Administrátor definuje jaké kurzy ústředí lze použít pro vzdělání vedoucích - eviduje se i doba platnosti
 - Hlavní vedoucí, Vedoucí a Rádci můžou sobě přiřadit kurzy z nabídky
