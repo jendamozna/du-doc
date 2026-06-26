@@ -14,16 +14,16 @@ Systém registrací na akce pro oddíly DU. Strukturu tvoří ústředí, region
 flowchart TD
     subgraph USTREDI["Ústředí (ADM)"]
         direction TB
-        MODULY["<b>Moduly ústředí</b><br/>správa oddílů · přiřazování HVO<br/>definice a správa regionů (vznik · přesun · sloučení · rozdělení)<br/>deduplikace osob · reporty ústředí · vzdělávání"]
-        USTODD["<b>Speciální oddíl ústředí</b><br/>celostátní akce · vedoucí · dobrovolníci · mimo regiony"]
+        MODULY["<b>Moduly ústředí</b><br/>správa oddílů · přiřazování HVO<br/>definice a správa regionů<br/>deduplikace osob · reporty ústředí · vzdělávání"]
+        USTODD["<b>Speciální oddíl ústředí</b><br/>celostátní akce · vedoucí · dobrovolníci"]
     end
 
     subgraph REGIONY["Regiony — verzované seskupení běžných oddílů"]
-        ODDILY["<b>Běžné oddíly</b> (A, B, C …)<br/>členové · hosté · družiny · dobrovolníci<br/>akce · platby · bankovní účty · chytré sloupce<br/>role: HVO, VO, VD, RÁD, ÚČE, ROD"]
+        ODDILY["<b>Běžné oddíly</b><br/>členové · hosté · družiny · dobrovolníci<br/>akce · platby · bankovní účty · chytré sloupce<br/>role: HVO, VO, VD, RÁD, ÚČE, ROD"]
     end
 
     PORTAL["<b>Veřejný registrační portál</b><br/>(procházet akce, registrovat se)"]
-    OSOBA["<b>Osoba</b> (nezávislá entita)<br/>evidována ve více oddílech<br/>stav: host / registrovaný člen / člen DU<br/>účet volitelný — 1 osoba ⇢ max 1 účet, více OAuth identit"]
+    OSOBA["<b>Osoba</b> (nezávislá entita)<br/>evidována ve více oddílech<br />1 osoba ⇢ max 1 účet"]
 
     MODULY --> REGIONY
     USTODD --> PORTAL
