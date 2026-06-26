@@ -10,33 +10,22 @@ Systém registrací na akce pro oddíly DU. Struktura: Organizace → oddíly. O
 
 ## Přehled architektury
 
-```
-┌─────────────────────────────────────────────────┐
-│                   Organizace                    │
-│  (oddíly, členové DU, vedoucí,                  │
-│  akce, platby, reporting)                       │
-└──────────────────────┬──────────────────────────┘
-                       │
-       ┌───────────────┼────────────────┐
-       │               │                │
-  ┌────▼─────────┐ ┌───▼─────────┐ ┌────▼───┐
-  │oddíl A       │ │oddíl B      │ │oddíl C │
-  │akce, platby, │ │...          │ │...     │
-  │chytré sloupce│ │             │ │        │
-  |členové, hosté│ │             │ │        │
-  └───┬──────────┘ └───┬─────────┘ └────┬───┘
-      │                │                │
-  ┌───▼────────────────▼────────────────▼───┐
-  │       Veřejný registrační portál        │
-  │  (procházet akce, registrovat se)       │
-  └─────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    ORG["Organizace<br/>Admin (ORG-A): správa oddílů, přiřazování HVO<br/>Deduplikace osob · reporty ústředí nad všemi oddíly<br/>Vzdělávání: katalog kurzů + evidence absolvování"]
 
-┌────────────────────────────────────────────┐
-│          Osoba (nezávislá entita)          │
-│  - Může být evidován ve více oddílech      │
-│  - Může být člen, host, rodič, dobrovolník │
-└────────────────────────────────────────────┘
+    USTREDI["Ústředí (speciální oddíl)<br/>celostátní akce · dobrovolníci<br/>BEZ registrovaných členů"]
+    ODDILY["Běžné oddíly (A, B, C …)<br/>akce · platby · bankovní účty · chytré sloupce<br/>členové · hosté · družiny · dobrovolníci<br/>role: HVO, VO, VD, RÁD, ÚČE, ROD"]
 
+    PORTAL["Veřejný registrační portál<br/>(procházet akce, registrovat se)"]
+
+    OSOBA["Osoba (nezávislá entita)<br/>evidována ve více oddílech<br/>stav: host / registrovaný člen / člen DU<br/>role (kolmé): rodič, dobrovolník<br/>účet volitelný — 1 osoba ⇢ max 1 účet, více OAuth identit"]
+
+    ORG --> USTREDI
+    ORG --> ODDILY
+    USTREDI --> PORTAL
+    ODDILY --> PORTAL
+    PORTAL -. "registrace / přihlášení" .-> OSOBA
 ```
 
 ---
@@ -45,94 +34,28 @@ Systém registrací na akce pro oddíly DU. Struktura: Organizace → oddíly. O
 
 ### Role
 
-- Uživatel může být ve více rolích, např. admin a zároveň jeden z vedoucích oddílu nebo dobrovolník a rodič
-- Role Hlavní vedoucí oddílu, Rádce, Vedoucí oddílu, Vedoucí družiny, Admin (organizace) / Účetní (organizace), Koordinátor (konkrétní akce v organizaci nebo oddíle)
-- Role Rodič (zákonný zástupce) — zastupuje jedno či více nezletilých dětí; přihlašuje je na akce a sám se může akcí účastnit, dítě může mít více rodinných zástupců
+- Uživatel může být ve více rolích, např. Administrátor a zároveň jeden z vedoucích oddílu nebo dobrovolník a rodič
+- Role Hlavní vedoucí oddílu (HVO), Rádce (RÁD), Vedoucí oddílu (VO), Vedoucí družiny (VD), Administrátor (ORG-A), Účetní (ÚČE), Rodič (ROD)
 
-### Matice oprávnění
+#### Účetní
 
-Legenda: **C** = plná správa (CRUD + konfigurace), **W** = správa záznamů (bez konfigurace), **R** = jen čtení, **—** = žádný přístup. Rozsah upřesňují poznámky pod tabulkou.
+- Role, která má přístup jen k přihláškám (úpravy), akcím/cenám/stornům/bankovním účtům (čtení) a k párování/potvrzování plateb a výzvám.
 
-Zkratky rolí: **ORG-A** = Admin (organizace), **ORG-Ú** = Účetní (organizace), **HVO** = Hlavní vedoucí oddílu, **VO** = Vedoucí oddílu, **VD** = Vedoucí družiny, **RÁD** = Rádce, **KOO** = Koordinátor, **ROD** = Rodič.
+#### Administrátor
 
-| Zdroj / akce                             | ORG-A | ORG-Ú | HVO | VO  | VD  | RÁD | KOO | ROD |
-| ---------------------------------------- | ----- | ----- | --- | --- | --- | --- | --- | --- |
-| Oddíly (CRUD)                            | C     | R     | R1  | —   | —   | —   | —   | —   |
-| Uživatelé a role oddílu                  | C     | —     | C1  | —   | —   | —   | —   | —   |
-| Členové oddílu (evidence)                | W2    | R2    | C1  | W1  | W1  | R3  | —   | W9  |
-| Citlivá data (zdravotní ap.)             | —4    | —4    | R5  | R5  | R4  | R4  | —4  | W9  |
-| Družiny                                  | R     | —     | C1  | C1  | W6  | R6  | —   | —   |
-| Vlastní certifikáty / potvrzení          | R     | —     | W7  | W7  | W7  | W7  | —   | —   |
-| Akce (vytvoření/konfigurace)             | C     | R     | C1  | W1  | —   | —   | —   | —   |
-| Registrace / přihlášky na akci           | W     | R     | W1  | W1  | —   | —   | W8  | W9  |
-| Bankovní účty + tokeny                   | C     | R     | C1  | —   | —   | —   | —   | —   |
-| Platby (potvrzení, párování, výzvy)      | W     | W     | W1  | R1  | —   | —   | R8  | R9  |
-| Chytré sloupce (definice + viditelnost)  | R     | —     | C1  | R1  | R1  | R1  | —   | —   |
-| Komunikační e-mail / token oddílu        | C     | —     | C1  | —   | —   | —   | —   | —   |
-| Reporting (období, docházka, statistiky) | C     | R     | R1  | R1  | R6  | R6  | R8  | —   |
-| Dobrovolníci + docházka hodin            | R     | —     | W1  | W1  | W6  | R6  | —   | —   |
-| Hosté (evidence, povýšení na člena)      | W     | R     | W1  | W1  | —   | —   | W8  | —   |
+- Spravuje oddíly a přiřazuje jim jejich Hlavní vedoucí
 
-Poznámky k rozsahu (scope):
+#### Hlavní vedoucí oddílu
 
-1. Jen vlastní oddíl — HVO/VO, sloupce, akce a platby působí pouze v rámci svého oddílu.
-2. ORG-A/ORG-Ú napříč organizací, ale bez citlivých dat (viz pozn. 4).
-3. VD/RÁD vidí členy jen ve své družině.
-4. Citlivá data jsou vedená **odděleně pro každý oddíl** (každý oddíl si drží vlastní záznam, např. zdravotní kartu) — nevidí je organizace ani jiný oddíl (zdravotní omezení, léky, alergie, církev).
-5. Vidí je jen vedoucí oddílu, ve kterém jsou data pořízena; je-li člen ve více oddílech, každý oddíl vidí pouze svoji verzi citlivých dat.
-6. Jen vlastní družina (VD spravuje, RÁD čte).
-7. Každý vedoucí/rádce edituje jen své vlastní certifikáty a potvrzení.
-8. Jen přidělená akce (přes assignment); bez přístupu ke konfiguraci akce (ceny/storno) a k jiným akcím.
-9. Rodič jen u vlastních zastupovaných dětí (a sebe jako účastníka). Je editorem jejich základních i citlivých dat (zdravotní apod.) a jejich přihlášek; u plateb vidí stav a dostanává výzvy, nepáruje je. Bez přístupu k oddílovým zdrojům a k cizím osobám.
+- Spravuje bankovní účty
+- Spravuje uživatele: účetní a vedoucí - system vygeneruje pozvánku emailem
+- můžou do systému nahrát pověření od staršovstva
+- může definovat družiny a do nich přiřadit členy
+- eviduje hosty (min jméno příjmení nebo přezdívka)
 
-#### Osoba vs. uživatelský účet
+### Rádce
 
-- Oddělujeme dvě entity:
-  - **Osoba** = datový subjekt / účastník; může existovat bez přihlášení (host, nezletilé dítě spravované rodičem)
-  - **Účet (uživatel)** = přihlašovací identita (heslo / OAuth), navázaná právě na jednu osobu
-- Jedna osoba má nejvýše jeden účet; jeden účet může mít více propojených OAuth identit (Google, Facebook)
-- Host nemá účet — má pouze identifikátor (token), kterým si může účet založit; po založení se účet propojí s existující osobou (nevznikne duplicita)
-
-#### Stav osoby (lifecycle)
-
-- Host / registrovaný člen / člen DU je **stav jedné osoby**, nikoli samostatná entita:
-  - `host → registrovaný člen` (migrace provedená hlavním vedoucím)
-  - `registrovaný člen → člen DU` (po zaplacení příspěvku do listopadu; platí leden–prosinec)
-  - `člen DU → registrovaný člen` (automatický přechod koncem roku, pokud nebyl zaplacen příspěvek na další rok — členství DU vyprší 31. 12.)
-  - `* → neaktivní` (osoba opustila oddíl nebo dlouhodobě bez aktivity; záznam zůstává kvůli historii, ale nezapočítává se do počtu členů a nedostává automatické výzvy)
-  - `neaktivní → registrovaný člen / host` (reaktivace, pokud se osoba vrátí)
-  - `* → archivovaný` (GDPR: po uplynutí retenční doby se osobní a citlivá data anonymizují; zachovají se jen agregované/nepřímo identifikující údaje nutné pro reporting)
-- Stavy `neaktivní` a `archivovaný` jsou kolmé na členský stav výše — určují, zda je záznam živý, uspaný, nebo anonymizovaný.
-- Role **rodič** (a např. dobrovolník) je kolmá na tento stav — osoba může být současně rodič i host/člen
-
-### Retence a GDPR
-
-- citlivá data (zdravotní apod.) se mažou dříve než základní evidence
-- konkrétní lhůty retence jsou TODO
-- Citlivá data jsou izolovaná per oddíl, každý oddíl proto maže/anonymizuje jen svoji verzi
-- ORG-A může spustit výmaz napříč všemi oddíly.
-
-### Hosté (= nečleni, veřejnost)
-
-- Oddíl/organizace eviduje hosty (min jméno příjmení nebo přezdívka)
-
-### Registrovaní členové
-
-- Hlavní vedoucí může zmigrovat data Hosta do Registrovaného člena
-- Registrovaný člen má povinné datum narození
-- U každého je evidována historie - změny, registrace, pod jakým oddílem
-
-## Deduplikace osob, merge
-
-- Na úrovni organizace systém zobrazí možné kandidáty (jméno, příjmení, datum narození). Systém nabídne "Reportovací sloučení" osob pro účely unikátních počtů, záznamy zůstanou oddělené. Pro účely reportů se neřeší hosty.
-- Osobě s účtem se zobrazí možný kandidát na propojení (z jiného oddílu/organizace). Účet zadá Žádost o sloučení. Systém rozešle emailem žádost - iniciátorovi, hlavní vedoucí druhého klubu a případně i účtu kandidáta na propojení. Po odsouhlasení všemi stranami (vedoucímu se zobrazí pro porovnání náhled obou osob) může uživatel pokračovat se spojením: Záznamy obou osob se spojí do jedné osoby, konflikt základních polí se řeší volbou A/B, účet se naváže na sjednocenou osobu, pokud obě osoby mají účet, pak druhý účet se zruší (uživatel vybere), citlivá data zůstávají per oddíl, OAuth identity se přenesou pod ponechaný účet.
-- Podobně se zpracuje duplicitní dítě, které se zobrazí rodiči s tím, že další strana je rodič dítěte kandidáta a výsledek nespojí účty rodičů do jednoho, jen osobu dítěte. Pokud dítě nemá navázaného rodiče, schválí merge vedoucí oddílu, kde je dítě evidováno.
-- Systém loguje, kdo kdy které osoby spojil, je možné zrušit merge pro nápravu chybného spojení.
-
-### Člen DU
-
-- Člen se může stát členem DU od ledna následujícího roku po zaplacení příspěvku do listopadu
-- Členství DU trvá: leden–prosinec (kalendářní rok)
+- Rádci nevidí citlivá data oddílových dětí, nejsou plnoletí
 
 ### Rodič (zákonný zástupce)
 
@@ -148,20 +71,51 @@ Poznámky k rozsahu (scope):
 - Oba rodiče mají plná práva, platí poslední zápis.
 - Druhého zákonného zástupce přidává stávající rodič nebo hlavní vedoucí pozvánkou (e-mailem). Vazba vznikne přijetím pozvánky druhým rodičem. Nemá-li dítě žádného navázaného rodiče, schvaluje připojení vedoucí oddílu, kde je dítě evidováno.
 
-### Organizace
+### Osoba vs. uživatelský účet
 
-- Administrátor spravuje oddíly a přiřazuje jim jejich Hlavní vedoucí
-- Vidí seznam členů všech oddílů (kromě jejich citlivých dat a hostů)
-- Hosté se nepočítají do počtu členů oddílu
+- Oddělujeme dvě entity:
+  - **Osoba** = datový subjekt / účastník; může existovat bez přihlášení (host, nezletilé dítě spravované rodičem)
+  - **Účet (uživatel)** = přihlašovací identita (heslo / OAuth), navázaná právě na jednu osobu
+- Jedna osoba má nejvýše jeden účet; jeden účet může mít více propojených OAuth identit (Google, Facebook)
+- Host nemá účet — má pouze identifikátor (token), kterým si může účet založit; po založení se účet propojí s existující osobou (nevznikne duplicita)
+
+#### Stav osoby (lifecycle)
+
+- Host / registrovaný člen / člen DU je **stav jedné osoby**, nikoli samostatná entita:
+  - `host → registrovaný člen` (migrace provedená hlavním vedoucím - Registrovaný člen má povinné datum narození)
+  - `registrovaný člen → člen DU` (po zaplacení příspěvku do listopadu; platí leden–prosinec)
+  - `člen DU → registrovaný člen` (automatický přechod koncem roku, pokud nebyl zaplacen příspěvek na další rok — členství DU vyprší 31. 12.)
+  - `* → neaktivní` (osoba opustila oddíl nebo dlouhodobě bez aktivity; záznam zůstává kvůli historii, ale nezapočítává se do počtu členů a nedostává automatické výzvy)
+  - `neaktivní → registrovaný člen / host` (reaktivace, pokud se osoba vrátí)
+  - `* → archivovaný` (GDPR: po uplynutí retenční doby se osobní a citlivá data anonymizují; zachovají se jen agregované/nepřímo identifikující údaje nutné pro reporting)
+- Stavy `neaktivní` a `archivovaný` jsou kolmé na členský stav výše — určují, zda je záznam živý, uspaný, nebo anonymizovaný.
+- Role **rodič** (a např. dobrovolník) je kolmá na tento stav — osoba může být současně rodič i host/člen
+- U každého je evidována historie - změny, registrace, pod jakým oddílem
+
+### Retence a GDPR
+
+- citlivá data (zdravotní apod.) se mažou dříve než základní evidence
+- konkrétní lhůty retence jsou TODO
+- Citlivá data jsou izolovaná per oddíl, každý oddíl proto maže/anonymizuje jen svoji verzi
+- ORG-A může spustit výmaz napříč všemi oddíly.
+
+### Deduplikace osob, merge
+
+- Osobě s účtem se zobrazí možný kandidát na propojení (z jiného oddílu/organizace). Účet zadá Žádost o sloučení. Systém rozešle emailem žádost - iniciátorovi, hlavní vedoucí druhého klubu a případně i účtu kandidáta na propojení. Po odsouhlasení všemi stranami (vedoucímu se zobrazí pro porovnání náhled obou osob) může uživatel pokračovat se spojením: Záznamy obou osob se spojí do jedné osoby, konflikt základních polí se řeší volbou A/B, účet se naváže na sjednocenou osobu, pokud obě osoby mají účet, pak druhý účet se zruší (uživatel vybere), citlivá data zůstávají per oddíl, OAuth identity se přenesou pod ponechaný účet.
+- Podobně se zpracuje duplicitní dítě, které se zobrazí rodiči s tím, že další strana je rodič dítěte kandidáta a výsledek nespojí účty rodičů do jednoho, jen osobu dítěte. Pokud dítě nemá navázaného rodiče, schválí merge vedoucí oddílu, kde je dítě evidováno.
+- Systém loguje, kdo kdy které osoby spojil, je možné zrušit merge pro nápravu chybného spojení.
+
+### Člen DU
+
+- Je vlastnost osoby
+- Osoba se může stát členem DU od ledna následujícího roku po zaplacení příspěvku do listopadu
+- Členství DU trvá: leden–prosinec (kalendářní rok)
 
 ### Oddíl
 
-- Hlavní vedoucí můžou do systému nahrát pověření od staršovstva
 - Typy oddílů: IČO ústředí, Pobočný spolek (vlastní IČO), kolektivní člen (bez DU v názvu, vlastní IČO)
+- Ústředí je **speciální typ oddílu** určený pro celostátní akce. **Nemá registrované členy**.
 - Registrace - Je možné vytvořit formulář (na úrovni oddílu) určený k registraci s možností zvolit políčka k vyplnění o členovi (lze vybírat z chytré tabulky)
-- Vedoucí může definovat družiny a do nich přiřadit členy
-- Admin a Hlavní vedoucí oddílu můžou do systému zadat bankovní účty
-- Rádci nevidí citlivá data oddílových dětí, nejsou plnoletí
 
 ### Družina
 
@@ -171,20 +125,17 @@ Poznámky k rozsahu (scope):
 
 - Typy: krátkodobí a dlouhodobí
 
-### Přihlašování na oddílové/celoČR akce
-
-- Hlavní vedoucí i Admin můžou vytvářet Přihlášky na akce
-- Každá akce může být svazána s maximálně jedním bankovním účtem
-- Systém posílá výzvu k zaplacení (QR kód + platební údaje)
-- Systém připomíná nezaplacené platby
-- Akce může být veřejná nebo neveřejná (dostupná přes odkaz)
-- Při registraci na akci je hostům vygenerován identifikátor, díky kterému je možné si založit účet
-
-### Generování reportu na konci období (roku)
+### Reporty
 
 - Seznam akcí/výprav, docházka členů/nečlenů/vedoucích/rádců
-- Unikátni počet dětí v rámci všech akcí (počítá se jednou, ikdyž bylo na více akcích)
 - Trendy - TODO
+
+### Reporty ústředí
+
+- Jen pro Administrátora, počítá nad všemi oddíly
+- Zobrazí možné kandidáty (jméno, příjmení, datum narození). Systém nabídne "Reportovací sloučení" osob pro účely unikátních počtů, záznamy zůstanou oddělené.
+- Reporty ústředí nepočítá hosty ostatních oddílů.
+- Unikátni počet dětí v rámci všech akcí (počítá se jednou, ikdyž bylo na více akcích)
 
 ### Docházka
 
@@ -209,10 +160,19 @@ Poznámky k rozsahu (scope):
 
 ### Konfigurace akce
 
-- Vedoucí/administrátoři můžou vytvářet akce
+- Hlavní vedoucí vytváří akce
+- Hlavní vedoucí přiřazuje k akcím Vedoucí - získají přístup k přihláškám, nastaví jim uroveň oprávnění, zda můžou editovat akci, přihlášky, ceny, atd.
+- Každá akce může být svazána s maximálně jedním bankovním účtem
 - Název, SS, max kapacita, počet náhradníků, ceny pro členy DU i ostatní, začátek akce, začátek a konec přihlašování, termíny pro storno podmínky
 - Pokud akce vyžaduje dobrovolníky, lze zadat cenu, začátek a konec přihlašování, systém nabídne samostatnou stránku pro přihlášení dobrovolníků
 - Náhradníci - Po uvolnění místa je informován vedoucí, který vybere z náhradníku dalšího, náhradník dostane časově omezenou nabídku, po vypršení propadá a vedoucí znovu vybírá.
+- Akce může být veřejná nebo neveřejná (dostupná přes odkaz)
+
+### Přihlašování na akce
+
+- Při registraci na akci je hostům vygenerován identifikátor, díky kterému je možné si založit účet
+- Systém posílá výzvu k zaplacení (QR kód + platební údaje)
+- Systém připomíná nezaplacené platby
 
 ## Ceny a storna na akcích
 
@@ -231,18 +191,17 @@ Poznámky k rozsahu (scope):
 
 ### Vzdělávání
 
-- Organizace nabízí některé akce, které si může vedoucí započítat do svého vzdělání, pokud je absolvuje
-- Organizace udržuje tabulku se seznamem kurzů - vlastní nebo jiné s seznamem platnosti
+- Administrátor definuje jaké kurzy ústředí lze použít pro vzdělání vedoucích - eviduje se i doba platnosti
 - Hlavní vedoucí, Vedoucí a Rádci můžou sobě přiřadit kurzy z nabídky
-- Systém automaticky přiřadí kurz organizace všem účastníkům po jeho absolvování
-- Vedoucí a Rádci mají možnost vložit do systému svoje certifikáty, potvrzení od doktora a jiné kurzy
-- Organizace vidí, jaké kurzy absolvovali jednotliví vedoucí v oddílech
+- Systém automaticky přiřadí kurz ústředí všem účastníkům po jeho absolvování
+- Všichni Vedoucí a Rádci mají možnost vložit do systému svoje certifikáty, potvrzení od doktora a jiné absolvované kurzy
+- Modul vzdělání zobrazuje Administrátorovi, jaké kurzy absolvovali jednotliví vedoucí v oddílech
 
 ### Pomocná evidence
 
 - Vedoucí může pro svůj oddíl definovat nové sloupce (do tabulky hostů/členů)
-- Sloupcům lze nastavit, zda je vlastník účtu (nebo Rádce) může vidět nebo upravovat
-- Hodnoty z pomocné evidenci nejsou přístupné z úrovně organizace
+- Sloupcům lze nastavit viditelnost - zda je vlastník účtu může vidět nebo upravovat
+- Sloupcům lze nastavit oprávnění - zda Rádce můžou vidět nebo upravovat
 
 ---
 
