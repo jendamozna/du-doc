@@ -36,6 +36,7 @@ flowchart TD
 
 - Uživatel může být ve více rolích, např. Administrátor a zároveň jeden z vedoucích oddílu nebo dobrovolník a rodič
 - Role Hlavní vedoucí oddílu (HVO), Rádce (RÁD), Vedoucí oddílu (VO), Vedoucí družiny (VD), Administrátor (ORG-A), Účetní (ÚČE), Rodič (ROD)
+- VO/VD nemají pevná globální práva, oprávnění se přidělují u akce / v rámci družiny.
 
 #### Účetní
 
@@ -44,20 +45,22 @@ flowchart TD
 #### Administrátor
 
 - Spravuje oddíly a přiřazuje jim jejich Hlavní vedoucí
+- Vytváří účty hlavním vedoucím - system vygeneruje pozvánku emailem
 
 #### Hlavní vedoucí oddílu
 
 - Spravuje bankovní účty
-- Spravuje uživatele: účetní a vedoucí - system vygeneruje pozvánku emailem
-- můžou do systému nahrát pověření od staršovstva
-- může definovat družiny a do nich přiřadit členy
-- eviduje hosty (min jméno příjmení nebo přezdívka)
+- Vytváří účty účetním, vedoucím, rádcům - system vygeneruje pozvánku emailem
+- Můžou do systému nahrát pověření od staršovstva
+- Může definovat družiny, jejich vedoucí a členy
+- Eviduje registrované členy
+- Eviduje hosty (min jméno příjmení nebo přezdívka)
 
-### Rádce
+#### Rádce
 
-- Rádci nevidí citlivá data oddílových dětí, nejsou plnoletí
+- Rádci nevidí citlivá data dětí, nejsou plnoletí
 
-### Rodič (zákonný zástupce)
+#### Rodič (zákonný zástupce)
 
 - Rodič je osoba, která má vazbu na alespoň jedno dítě (typicky nezletilé)
 - Rodič může zastupovat jedno nebo více nezletilých dětí (vazba rodič ↔ dítě, typu 1:N)
@@ -67,23 +70,23 @@ flowchart TD
 - Rodič vidí a edituje pouze údaje a přihlášky vlastních dětí
 - Vazba rodič ↔ dítě vzniká registraci dítěte rodičem
 - Po dosažení zletilosti se zastoupení rodičem přepne do režimu jen pro čtení. Výjimkou je doplnění kontaktního e-mailu dítěte, pokud chybí — slouží k doručení výzvy k převzetí účtu. Zletilý člen může přístup rodiče kdykoli zcela zrušit.
-- Vazbu může zrušit sám rodič (vystoupení), případně vedoucí oddílu na žádost; zrušení se loguje. Zůstane-li nezletilé dítě bez navázaného rodiče, jeho údaje a přihlášky spravuje vedoucí oddílu, dokud se nepřipojí nový zákonný zástupce.
+- Vazbu může zrušit sám rodič (vystoupení), případně HVO na žádost; zrušení se loguje. Zůstane-li nezletilé dítě bez navázaného rodiče, jeho údaje a přihlášky spravuje HVO, dokud se nepřipojí nový zákonný zástupce.
 - Oba rodiče mají plná práva, platí poslední zápis.
-- Druhého zákonného zástupce přidává stávající rodič nebo hlavní vedoucí pozvánkou (e-mailem). Vazba vznikne přijetím pozvánky druhým rodičem. Nemá-li dítě žádného navázaného rodiče, schvaluje připojení vedoucí oddílu, kde je dítě evidováno.
+- Druhého zákonného zástupce přidává stávající rodič nebo HVO pozvánkou (e-mailem). Vazba vznikne přijetím pozvánky druhým rodičem. Nemá-li dítě žádného navázaného rodiče, schvaluje připojení HVO, kde je dítě evidováno.
 
 ### Osoba vs. uživatelský účet
 
 - Oddělujeme dvě entity:
   - **Osoba** = datový subjekt / účastník; může existovat bez přihlášení (host, nezletilé dítě spravované rodičem)
   - **Účet (uživatel)** = přihlašovací identita (heslo / OAuth), navázaná právě na jednu osobu
-- Jedna osoba má nejvýše jeden účet; jeden účet může mít více propojených OAuth identit (Google, Facebook)
+- Jedna osoba má nejvýše jeden účet
 - Host nemá účet — má pouze identifikátor (token), kterým si může účet založit; po založení se účet propojí s existující osobou (nevznikne duplicita)
 
 #### Stav osoby (lifecycle)
 
 - Host / registrovaný člen / člen DU je **stav jedné osoby**, nikoli samostatná entita:
-  - `host → registrovaný člen` (migrace provedená hlavním vedoucím - Registrovaný člen má povinné datum narození)
-  - `registrovaný člen → člen DU` (po zaplacení příspěvku do listopadu; platí leden–prosinec)
+  - `host → registrovaný člen` (migrace provedená HVO - Registrovaný člen má povinné datum narození)
+  - `registrovaný člen → člen DU`
   - `člen DU → registrovaný člen` (automatický přechod koncem roku, pokud nebyl zaplacen příspěvek na další rok — členství DU vyprší 31. 12.)
   - `* → neaktivní` (osoba opustila oddíl nebo dlouhodobě bez aktivity; záznam zůstává kvůli historii, ale nezapočítává se do počtu členů a nedostává automatické výzvy)
   - `neaktivní → registrovaný člen / host` (reaktivace, pokud se osoba vrátí)
@@ -101,8 +104,8 @@ flowchart TD
 
 ### Deduplikace osob, merge
 
-- Osobě s účtem se zobrazí možný kandidát na propojení (z jiného oddílu/organizace). Účet zadá Žádost o sloučení. Systém rozešle emailem žádost - iniciátorovi, hlavní vedoucí druhého klubu a případně i účtu kandidáta na propojení. Po odsouhlasení všemi stranami (vedoucímu se zobrazí pro porovnání náhled obou osob) může uživatel pokračovat se spojením: Záznamy obou osob se spojí do jedné osoby, konflikt základních polí se řeší volbou A/B, účet se naváže na sjednocenou osobu, pokud obě osoby mají účet, pak druhý účet se zruší (uživatel vybere), citlivá data zůstávají per oddíl, OAuth identity se přenesou pod ponechaný účet.
-- Podobně se zpracuje duplicitní dítě, které se zobrazí rodiči s tím, že další strana je rodič dítěte kandidáta a výsledek nespojí účty rodičů do jednoho, jen osobu dítěte. Pokud dítě nemá navázaného rodiče, schválí merge vedoucí oddílu, kde je dítě evidováno.
+- Osobě s účtem se zobrazí možný kandidát na propojení (z jiného oddílu/organizace). Účet zadá Žádost o sloučení. Systém rozešle emailem žádost - iniciátorovi, HVO druhého oddílu a případně i účtu kandidáta na propojení. Po odsouhlasení všemi stranami (HVO se zobrazí pro porovnání náhled obou osob) může uživatel pokračovat se spojením: Záznamy obou osob se spojí do jedné osoby, konflikt základních polí se řeší volbou A/B, účet se naváže na sjednocenou osobu, pokud obě osoby mají účet, pak druhý účet se zruší (uživatel vybere), citlivá data zůstávají per oddíl, OAuth identity se přenesou pod ponechaný účet.
+- Podobně se zpracuje duplicitní dítě, které se zobrazí rodiči s tím, že další strana je rodič dítěte kandidáta a výsledek nespojí účty rodičů do jednoho, jen osobu dítěte. Nemá-li dítě žádného navázaného rodiče, schvaluje připojení HVO, kde je dítě evidováno.
 - Systém loguje, kdo kdy které osoby spojil, je možné zrušit merge pro nápravu chybného spojení.
 
 ### Člen DU
@@ -121,27 +124,24 @@ flowchart TD
 
 - Má své Vedoucí, Rádce a členy
 
-### Dobrovolníci
-
-- Typy: krátkodobí a dlouhodobí
-
-### Reporty
-
-- Seznam akcí/výprav, docházka členů/nečlenů/vedoucích/rádců
-- Trendy - TODO
-
-### Reporty ústředí
-
-- Jen pro Administrátora, počítá nad všemi oddíly
-- Zobrazí možné kandidáty (jméno, příjmení, datum narození). Systém nabídne "Reportovací sloučení" osob pro účely unikátních počtů, záznamy zůstanou oddělené.
-- Reporty ústředí nepočítá hosty ostatních oddílů.
-- Unikátni počet dětí v rámci všech akcí (počítá se jednou, ikdyž bylo na více akcích)
-
 ### Docházka
 
 - Vedoucí můžou vytvářet události - např. páteční kluby
 - Vedoucí můžou vybirat účastníky ze seznamu osob z oddílu
 - Při evidenci dobrovolníku je možné zadat počet hodin
+- Dobrovolníci krátkodobí (pod 50hod.), dlouhodobí (nad 50hod.)
+
+### Reporty
+
+- Seznam akcí/výprav, docházka členů/nečlenů/vedoucích/rádců/dobrovolníků
+- Trendy - TODO
+
+### Reporty ústředí
+
+- Jen pro Administrátora, počítá nad všemi oddíly
+- Zobrazí možné kandidáty (jméno, příjmení, datum narození). Systém nabídne "Reportovací sloučení" osob pro účely unikátních počtů, záznamy zůstanou oddělené
+- Reporty ústředí nepočítá hosty ostatních oddílů
+- Unikátni počet dětí v rámci všech akcí (počítá se jednou, ikdyž bylo na více akcích)
 
 ### Platební modul
 
@@ -151,12 +151,10 @@ flowchart TD
 
 ### Přihlašování do systému
 
-- Administrátoři vytvářejí účty hlavním vedoucím, hlavní vedoucí vytvářejí účty vedoucím a rádcům
 - Každý uživatel si může v systému změnit heslo
 - Každý si může vytvořit účet v systému a v něm editovat svojí identitu, kterou může použít při dalších registracích na akce
-- Neregistrovaným uživatelům je umožněno přes token spravovat jejich registrace (storno, měnit nebo přidávat další účastníky)
 - Pro přihlášení do aplikace půjde použít účet Google nebo Facebook (OAuth)
-- Jeden uživatel může mít více propojených identit (Google i Facebook).
+- jeden účet může mít více propojených OAuth identit (Google, Facebook)
 
 ### Konfigurace akce
 
@@ -165,16 +163,10 @@ flowchart TD
 - Každá akce může být svazána s maximálně jedním bankovním účtem
 - Název, SS, max kapacita, počet náhradníků, ceny pro členy DU i ostatní, začátek akce, začátek a konec přihlašování, termíny pro storno podmínky
 - Pokud akce vyžaduje dobrovolníky, lze zadat cenu, začátek a konec přihlašování, systém nabídne samostatnou stránku pro přihlášení dobrovolníků
-- Náhradníci - Po uvolnění místa je informován vedoucí, který vybere z náhradníku dalšího, náhradník dostane časově omezenou nabídku, po vypršení propadá a vedoucí znovu vybírá.
+- Náhradníci - po uvolnění místa jsou informováni vedoucí akce, po výběru náhradníka, náhradník dostane časově omezenou nabídku, po vypršení propadá a vedoucí znovu vybírá.
 - Akce může být veřejná nebo neveřejná (dostupná přes odkaz)
 
-### Přihlašování na akce
-
-- Při registraci na akci je hostům vygenerován identifikátor, díky kterému je možné si založit účet
-- Systém posílá výzvu k zaplacení (QR kód + platební údaje)
-- Systém připomíná nezaplacené platby
-
-## Ceny a storna na akcích
+#### Ceny a storna na akcích
 
 - Systém umožňuje definovat více cen platných v různých termínech pro různé typy členství - DU, bez DU
 - Systém umožňuje definovat ceny pro děti vedoucích
@@ -182,12 +174,18 @@ flowchart TD
 - Systém umožnuje definovat storno poplatky procentuálně v různých termínech
 - Vratky schvaluje a odesílá Účetní nebo HVO ručně po skončení akce
 
-### Typy akcí
+#### Typy akcí
 
 - Vzdělávací - vyžaduje tituly, adresu trvalého bydliště
 - S doporučením mentora, vedoucího - system osloví zadané vedoucí/mentory o doplnění očekávání, potvrzení
 - Jednoosobové - obecná přihláška
 - Klubové - lze přihlásit více účastníků včetně jejich zákonných zástupců
+
+### Přihlašování na akce
+
+- Neregistrovaným uživatelům je umožněno přes token spravovat jejich přihlášky (storno, měnit nebo přidávat další účastníky)
+- Systém posílá posílá potvrzení přihlášky s výzvou k zaplacení (QR kód + platební údaje), hostům je navíc vygenerován identifikátor, díky kterému je možné si založit účet
+- Systém připomíná nezaplacené platby
 
 ### Vzdělávání
 
@@ -199,9 +197,9 @@ flowchart TD
 
 ### Pomocná evidence
 
-- Vedoucí může pro svůj oddíl definovat nové sloupce (do tabulky hostů/členů)
+- Vedoucí může pro svůj oddíl nebo družinu definovat nové sloupce (do tabulky hostů/členů)
 - Sloupcům lze nastavit viditelnost - zda je vlastník účtu může vidět nebo upravovat
-- Sloupcům lze nastavit oprávnění - zda Rádce můžou vidět nebo upravovat
+- Sloupcům lze nastavit oprávnění - zda Rádci můžou vidět nebo upravovat
 
 ---
 
