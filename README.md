@@ -2,9 +2,9 @@
 
 ## Přehled projektu
 
-Systém registrací na akce pro oddíly DU. Struktura: Organizace → oddíly. Organizace sdružuje oddíly, spravuje členskou databázi a může pořádat vlastní akce. Každý oddíl spravuje vlastní akce, registrace a účastníky. Člen je nezávislá entita — může patřit do více oddílů v rámci organizace současně.
+Systém registrací na akce pro oddíly DU. Strukturu tvoří ústředí, regiony a oddíly. Ústředí zastřešuje všechny oddíly, vede společnou členskou databázi a pořádá celostátní akce; jeho centrální agendu (správa oddílů, regiony, deduplikace, reporty, vzdělávání) zajišťují moduly ústředí. Každý oddíl spravuje vlastní akce, registrace a účastníky. Člen je nezávislá entita — může patřit do více oddílů současně.
 
-**Rozsah:** Veřejný registrační portál, oddílová správa akcí, organizační správa, self-management pro registrované.
+**Rozsah:** Veřejný registrační portál, oddílová správa akcí, správa ústředí, self-management pro registrované.
 
 ---
 
@@ -12,34 +12,36 @@ Systém registrací na akce pro oddíly DU. Struktura: Organizace → oddíly. O
 
 ```mermaid
 flowchart TD
-    ORG["<b>Organizace</b><br/>Administrátor (ADM): správa oddílů, přiřazování HVO<br/>Deduplikace osob · reporty ústředí nad všemi oddíly<br/>Vzdělávání: katalog kurzů + evidence absolvování"]
+    subgraph USTREDI["Ústředí (ADM)"]
+        direction TB
+        MODULY["<b>Moduly ústředí</b><br/>správa oddílů · přiřazování HVO<br/>definice a správa regionů (vznik · přesun · sloučení · rozdělení)<br/>deduplikace osob · reporty ústředí · vzdělávání"]
+        USTODD["<b>Speciální oddíl ústředí</b><br/>celostátní akce · vedoucí · dobrovolníci · mimo regiony"]
+    end
 
-    USTREDI["<b>Ústředí</b> (speciální oddíl)<br/>celostátní akce · vedoucí · dobrovolníci<br/>mimo regiony"]
-    REGION["<b>Regiony</b> (definuje ADM)<br/>seskupují běžné oddíly<br/>mění se v čase: vznik · přesun · sloučení · rozdělení"]
-    ODDILY["<b>Běžné oddíly</b> (A, B, C …)<br/>členové · akce · platby · bankovní účty · chytré sloupce<br/>hosté · družiny · dobrovolníci<br/>role: HVO, VO, VD, RÁD, ÚČE, ROD"]
+    subgraph REGIONY["Regiony — verzované seskupení běžných oddílů"]
+        ODDILY["<b>Běžné oddíly</b> (A, B, C …)<br/>členové · hosté · družiny · dobrovolníci<br/>akce · platby · bankovní účty · chytré sloupce<br/>role: HVO, VO, VD, RÁD, ÚČE, ROD"]
+    end
 
     PORTAL["<b>Veřejný registrační portál</b><br/>(procházet akce, registrovat se)"]
-
     OSOBA["<b>Osoba</b> (nezávislá entita)<br/>evidována ve více oddílech<br/>stav: host / registrovaný člen / člen DU<br/>účet volitelný — 1 osoba ⇢ max 1 účet, více OAuth identit"]
 
-    ORG --> USTREDI
-    ORG --> REGION
-    REGION --> ODDILY
-    USTREDI --> PORTAL
+    MODULY --> REGIONY
+    USTODD --> PORTAL
     ODDILY --> PORTAL
     PORTAL -. "registrace / přihlášení" .-> OSOBA
 
-    classDef org fill:#1e3a8a,stroke:#1e293b,stroke-width:2px,color:#ffffff;
-    classDef region fill:#7c3aed,stroke:#5b21b6,stroke-width:1.5px,color:#ffffff;
+    classDef modul fill:#1e3a8a,stroke:#1e293b,stroke-width:2px,color:#ffffff;
     classDef oddil fill:#2563eb,stroke:#1e3a8a,stroke-width:1.5px,color:#ffffff;
     classDef portal fill:#059669,stroke:#065f46,stroke-width:1.5px,color:#ffffff;
     classDef osoba fill:#f1f5f9,stroke:#475569,stroke-width:1.5px,color:#0f172a;
 
-    class ORG org;
-    class REGION region;
-    class USTREDI,ODDILY oddil;
+    class MODULY,USTODD modul;
+    class ODDILY oddil;
     class PORTAL portal;
     class OSOBA osoba;
+
+    style USTREDI fill:#eef2ff,stroke:#1e3a8a,stroke-width:1px;
+    style REGIONY fill:#f5f3ff,stroke:#7c3aed,stroke-width:1px;
 ```
 
 ---
@@ -117,7 +119,7 @@ flowchart TD
 
 ### Deduplikace osob, merge
 
-- Osobě s účtem se zobrazí možný kandidát na propojení (z jiného oddílu/organizace). Účet zadá Žádost o sloučení. Systém rozešle emailem žádost - iniciátorovi, HVO druhého oddílu a případně i účtu kandidáta na propojení. Po odsouhlasení všemi stranami (HVO se zobrazí pro porovnání náhled obou osob) může uživatel pokračovat se spojením: Záznamy obou osob se spojí do jedné osoby, konflikt základních polí se řeší volbou A/B, účet se naváže na sjednocenou osobu, pokud obě osoby mají účet, pak druhý účet se zruší (uživatel vybere), citlivá data zůstávají per oddíl, OAuth identity se přenesou pod ponechaný účet.
+- Osobě s účtem se zobrazí možný kandidát na propojení (z jiného oddílu). Účet zadá Žádost o sloučení. Systém rozešle emailem žádost - iniciátorovi, HVO druhého oddílu a případně i účtu kandidáta na propojení. Po odsouhlasení všemi stranami (HVO se zobrazí pro porovnání náhled obou osob) může uživatel pokračovat se spojením: Záznamy obou osob se spojí do jedné osoby, konflikt základních polí se řeší volbou A/B, účet se naváže na sjednocenou osobu, pokud obě osoby mají účet, pak druhý účet se zruší (uživatel vybere), citlivá data zůstávají per oddíl, OAuth identity se přenesou pod ponechaný účet.
 - Podobně se zpracuje duplicitní dítě, které se zobrazí rodiči s tím, že další strana je rodič dítěte kandidáta a výsledek nespojí účty rodičů do jednoho, jen osobu dítěte. Nemá-li dítě žádného navázaného rodiče, schvaluje připojení HVO, kde je dítě evidováno.
 - Systém loguje, kdo kdy které osoby spojil, je možné zrušit merge pro nápravu chybného spojení.
 
@@ -129,7 +131,7 @@ flowchart TD
 
 ### Region
 
-- Region je vrstva mezi organizací a běžnými oddíly: `Organizace → Region → Oddíl`. Ústředí (celostátní) do regionů nepatří.
+- Region je vrstva mezi ústředím a běžnými oddíly: `Ústředí → Region → Oddíl`. Ústředí (celostátní) do regionů nepatří.
 - Regiony definuje a spravuje ADM a přiřazuje do nich běžné oddíly. Oddíl je v daném okamžiku nejvýše v jednom regionu (nově vzniklý oddíl může být dočasně bez regionu).
 - **Příslušnost oddílu k regionu je verzovaná** (platnost od/do) — díky tomu lze určit, do jakého regionu oddíl patřil k libovolnému datu.
 - Regiony se v čase mění:
@@ -250,8 +252,6 @@ flowchart TD
 
 ```mermaid
 erDiagram
-    ORGANIZACE ||--o{ ODDIL : sdruzuje
-    ORGANIZACE ||--o{ REGION : definuje
     REGION ||--o{ ODDIL_REGION : zahrnuje
     ODDIL ||--o{ ODDIL_REGION : "prislusnost (verzovana)"
     ODDIL ||--o{ AKCE : porada
@@ -293,13 +293,8 @@ erDiagram
     CHYTRY_SLOUPEC ||--o{ CHYTRY_SLOUPEC_HODNOTA : ma
     KURZ ||--o{ OSOBA_KURZ : "v nabidce"
 
-    ORGANIZACE {
-        int id PK
-        string nazev
-    }
     REGION {
         int id PK
-        int organizace_id FK
         string nazev
         string stav "aktivni / slouceny / zruseny"
         date platnost_od
@@ -308,7 +303,6 @@ erDiagram
     }
     ODDIL {
         int id PK
-        int organizace_id FK
         string nazev
         string typ "ico_ustredi / pobocny_spolek / kolektivni"
         string ico
