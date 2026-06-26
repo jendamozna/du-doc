@@ -244,6 +244,252 @@ flowchart TD
 
 ---
 
+## Datový model (ER diagram)
+
+> Návrh schématu odvozený ze specifikace. Spojovací (M:N) a historizační tabulky jsou uvedeny zvlášť. `*_enc` = šifrovaný sloupec, `platnost_od/do` = časová verzování.
+
+```mermaid
+erDiagram
+    ORGANIZACE ||--o{ ODDIL : sdruzuje
+    ORGANIZACE ||--o{ REGION : definuje
+    REGION ||--o{ ODDIL_REGION : zahrnuje
+    ODDIL ||--o{ ODDIL_REGION : "prislusnost (verzovana)"
+    ODDIL ||--o{ AKCE : porada
+    ODDIL ||--o{ BANKOVNI_UCET : ma
+    ODDIL ||--o{ DRUZINA : ma
+    ODDIL ||--o{ OSOBA_ODDIL : eviduje
+    ODDIL ||--o{ UZIVATEL_ROLE : "v ramci"
+    ODDIL ||--o{ DOCHAZKA_UDALOST : ma
+    ODDIL ||--o{ CHYTRY_SLOUPEC : definuje
+
+    OSOBA ||--o| UCET : ma
+    OSOBA ||--o{ OSOBA_ODDIL : evidovana
+    OSOBA ||--o{ RODIC_DITE : "jako rodic"
+    OSOBA ||--o{ RODIC_DITE : "jako dite"
+    OSOBA ||--o{ DRUZINA_CLEN : je
+    OSOBA ||--o{ PRIHLASKA : podava
+    OSOBA ||--o{ CLENSTVI_DU : ma
+    OSOBA ||--o{ DOCHAZKA_ZAZNAM : "ucastni se"
+    OSOBA ||--o{ CHYTRY_SLOUPEC_HODNOTA : ma
+    OSOBA ||--o{ OSOBA_KURZ : absolvuje
+
+    UCET ||--o{ OAUTH_IDENTITY : ma
+    UCET ||--o{ UZIVATEL_ROLE : ma
+
+    DRUZINA ||--o{ DRUZINA_CLEN : obsahuje
+
+    AKCE ||--o{ AKCE_CENA : ma
+    AKCE ||--o{ STORNO_PRAVIDLO : ma
+    AKCE ||--o{ PRIHLASKA : obsahuje
+    AKCE }o--o| BANKOVNI_UCET : svazana
+    AKCE }o--o| REGION : "snapshot regionu"
+
+    PRIHLASKA ||--o{ PLATBA : ma
+    BANKOVNI_UCET ||--o{ BANKOVNI_TRANSAKCE : eviduje
+    BANKOVNI_TRANSAKCE |o--o| PLATBA : paruje
+    CLENSTVI_DU |o--o| PLATBA : doklad
+
+    DOCHAZKA_UDALOST ||--o{ DOCHAZKA_ZAZNAM : obsahuje
+    CHYTRY_SLOUPEC ||--o{ CHYTRY_SLOUPEC_HODNOTA : ma
+    KURZ ||--o{ OSOBA_KURZ : "v nabidce"
+
+    ORGANIZACE {
+        int id PK
+        string nazev
+    }
+    REGION {
+        int id PK
+        int organizace_id FK
+        string nazev
+        string stav "aktivni / slouceny / zruseny"
+        date platnost_od
+        date platnost_do "NULL = aktivni"
+        int slouceno_do_region_id FK "nastupnicky region"
+    }
+    ODDIL {
+        int id PK
+        int organizace_id FK
+        string nazev
+        string typ "ico_ustredi / pobocny_spolek / kolektivni"
+        string ico
+        bool je_ustredi
+    }
+    ODDIL_REGION {
+        int id PK
+        int oddil_id FK
+        int region_id FK
+        date platnost_od
+        date platnost_do "NULL = aktualni"
+    }
+    OSOBA {
+        int id PK
+        string jmeno
+        string prijmeni
+        string prezdivka
+        date datum_narozeni "povinne u registrovaneho clena"
+        string email
+    }
+    OSOBA_ODDIL {
+        int id PK
+        int osoba_id FK
+        int oddil_id FK
+        string stav "host / registrovany_clen / clen_du"
+        string zaznamovy_stav "aktivni / neaktivni / archivovany"
+        datetime platnost_od
+        datetime platnost_do
+    }
+    UCET {
+        int id PK
+        int osoba_id FK "1:1"
+        string email
+        string heslo_hash
+    }
+    OAUTH_IDENTITY {
+        int id PK
+        int ucet_id FK
+        string provider "google / facebook"
+        string provider_user_id
+        bool email_verified
+    }
+    UZIVATEL_ROLE {
+        int id PK
+        int ucet_id FK
+        int oddil_id FK "scope role"
+        string role "HVO / VO / VD / RAD / ADM / UCE / ROD"
+    }
+    RODIC_DITE {
+        int id PK
+        int rodic_osoba_id FK
+        int dite_osoba_id FK
+        string stav "aktivni / zruseno / readonly_po_zletilosti"
+        datetime platnost_od
+        datetime platnost_do
+    }
+    DRUZINA {
+        int id PK
+        int oddil_id FK
+        string nazev
+    }
+    DRUZINA_CLEN {
+        int id PK
+        int druzina_id FK
+        int osoba_id FK
+        string role "vedouci / radce / clen"
+    }
+    AKCE {
+        int id PK
+        int oddil_id FK
+        int bankovni_ucet_id FK
+        int region_id_snapshot FK "region pri vzniku akce"
+        string nazev
+        string ss "specificky symbol"
+        string typ "klub / jednorazova / vikendovka / vzdelavaci / ..."
+        int kapacita
+        int pocet_nahradniku
+        bool verejna
+        datetime zacatek
+        datetime prihlaseni_od
+        datetime prihlaseni_do
+    }
+    AKCE_CENA {
+        int id PK
+        int akce_id FK
+        string typ_clenstvi "DU / bez_DU / vedouci / dite_vedouciho / sponzorska"
+        decimal castka
+        date platnost_od
+        date platnost_do
+    }
+    STORNO_PRAVIDLO {
+        int id PK
+        int akce_id FK
+        decimal procento
+        date platne_do
+    }
+    PRIHLASKA {
+        int id PK
+        int akce_id FK
+        int osoba_id FK
+        int cena_id FK
+        string vs "variabilni symbol"
+        string stav "nova / potvrzena / zaplacena / stornovana"
+        bool je_nahradnik
+        string token "sprava bez uctu"
+    }
+    PLATBA {
+        int id PK
+        int prihlaska_id FK
+        decimal castka
+        date datum
+        bool sparovano
+    }
+    BANKOVNI_UCET {
+        int id PK
+        int oddil_id FK
+        string nazev
+        string cislo_uctu
+        string api_token_enc
+        string smtp_token_enc
+    }
+    BANKOVNI_TRANSAKCE {
+        int id PK
+        int bankovni_ucet_id FK
+        int platba_id FK "po sparovani"
+        string ss
+        string vs
+        decimal castka
+        date datum
+    }
+    CLENSTVI_DU {
+        int id PK
+        int osoba_id FK
+        int rok
+        int platba_id FK
+        bool zaplaceno
+    }
+    DOCHAZKA_UDALOST {
+        int id PK
+        int oddil_id FK
+        string nazev
+        date datum
+    }
+    DOCHAZKA_ZAZNAM {
+        int id PK
+        int udalost_id FK
+        int osoba_id FK
+        bool pritomen
+        decimal hodiny_dobrovolnik
+    }
+    CHYTRY_SLOUPEC {
+        int id PK
+        int oddil_id FK
+        int druzina_id FK "volitelne"
+        string nazev
+        string viditelnost "vlastnik vidi / upravuje"
+        string opravneni "radce vidi / upravuje"
+    }
+    CHYTRY_SLOUPEC_HODNOTA {
+        int id PK
+        int sloupec_id FK
+        int osoba_id FK
+        string hodnota
+    }
+    KURZ {
+        int id PK
+        string nazev
+        int platnost_mesicu
+    }
+    OSOBA_KURZ {
+        int id PK
+        int osoba_id FK
+        int kurz_id FK
+        date datum_absolvovani
+        date platnost_do
+        string certifikat_soubor
+    }
+```
+
+---
+
 ## Technologický stack
 
 | Vrstva   | Technologie                               |
