@@ -120,34 +120,15 @@ flowchart TD
 - Ústředí je **speciální typ oddílu** určený pro celostátní akce. **Nemá registrované členy**.
 - Registrace - Je možné vytvořit formulář (na úrovni oddílu) určený k registraci s možností zvolit políčka k vyplnění o členovi (lze vybírat z chytré tabulky)
 
-### Družina
+#### Družina
 
 - Má své Vedoucí, Rádce a členy
 
-### Docházka
+### Pomocná evidence
 
-- Vedoucí můžou vytvářet události - např. páteční kluby
-- Vedoucí můžou vybirat účastníky ze seznamu osob z oddílu
-- Při evidenci dobrovolníku je možné zadat počet hodin
-- Dobrovolníci krátkodobí (pod 50hod.), dlouhodobí (nad 50hod.)
-
-### Reporty
-
-- Seznam akcí/výprav, docházka členů/nečlenů/vedoucích/rádců/dobrovolníků
-- Trendy - TODO
-
-### Reporty ústředí
-
-- Jen pro Administrátora, počítá nad všemi oddíly
-- Zobrazí možné kandidáty (jméno, příjmení, datum narození). Systém nabídne "Reportovací sloučení" osob pro účely unikátních počtů, záznamy zůstanou oddělené
-- Reporty ústředí nepočítá hosty ostatních oddílů
-- Unikátni počet dětí v rámci všech akcí (počítá se jednou, ikdyž bylo na více akcích)
-
-### Platební modul
-
-- Ke každému bankovnímu účtu je možné doplnit API token
-- Systém automaticky páruje bankovní transakce s přihláškami podle SS=akce a VS=přihláška
-- Systém automaticky posílá potvrzení o platbě
+- Vedoucí může pro svůj oddíl nebo družinu definovat nové sloupce (do tabulky hostů/členů)
+- Sloupcům lze nastavit viditelnost - zda je vlastník účtu může vidět nebo upravovat
+- Sloupcům lze nastavit oprávnění - zda Rádci můžou vidět nebo upravovat
 
 ### Přihlašování do systému
 
@@ -169,23 +150,56 @@ flowchart TD
 #### Ceny a storna na akcích
 
 - Systém umožňuje definovat více cen platných v různých termínech pro různé typy členství - DU, bez DU
-- Systém umožňuje definovat ceny pro děti vedoucích
+- Systém umožňuje definovat ceny pro oddílové vedoucí i děti oddílových vedoucích
 - Systém umožňuje sponzorské ceny - několik variant
 - Systém umožnuje definovat storno poplatky procentuálně v různých termínech
 - Vratky schvaluje a odesílá Účetní nebo HVO ručně po skončení akce
 
 #### Typy akcí
 
+- Pravidelné kluby
+- Jednorázové akce
+- Víkendovky
 - Vzdělávací - vyžaduje tituly, adresu trvalého bydliště
 - S doporučením mentora, vedoucího - system osloví zadané vedoucí/mentory o doplnění očekávání, potvrzení
 - Jednoosobové - obecná přihláška
-- Klubové - lze přihlásit více účastníků včetně jejich zákonných zástupců
+- Klubové - lze přihlašovat více účastníků včetně jejich zákonných zástupců najednou
 
-### Přihlašování na akce
+#### Přihlašování na akce
 
 - Neregistrovaným uživatelům je umožněno přes token spravovat jejich přihlášky (storno, měnit nebo přidávat další účastníky)
 - Systém posílá posílá potvrzení přihlášky s výzvou k zaplacení (QR kód + platební údaje), hostům je navíc vygenerován identifikátor, díky kterému je možné si založit účet
 - Systém připomíná nezaplacené platby
+
+### Platební modul - párování plateb
+
+- Aktivuje se doplněním tokenu k bankovnímu účtu
+- Systém automaticky páruje bankovní transakce s přihláškami podle SS=akce a VS=přihláška
+- Systém automaticky posílá poděkování za přijatou platbu
+
+### Potvrzení o platbě
+
+- Vyžaduje aktivní Platební modul
+- Účetní do systému zadá systému šablonu s razítkem/podpisem
+- Systém automaticky připraví potvrzení o platbě ke stažení
+
+### Docházka
+
+- Vedoucí můžou vytvářet události - např. páteční kluby
+- Vedoucí můžou vybirat účastníky ze seznamu osob z oddílu
+- Při evidenci dobrovolníku je možné zadat počet hodin
+- Dobrovolníci krátkodobí (pod 50hod.), dlouhodobí (nad 50hod.)
+
+#### Reporty
+
+- Seznam akcí/výprav, docházka členů/nečlenů/vedoucích/rádců/dobrovolníků
+- Trendy - TODO
+
+### Modul Reporty ústředí
+
+- Počítá unikátni počet dětí v rámci všech akcí všech oddílů (počítá se jednou, ikdyž bylo na více akcích)
+- Zobrazí možné kandidáty (jméno, příjmení, datum narození). Systém nabídne "Reportovací sloučení" osob pro účely unikátních počtů, záznamy zůstanou oddělené
+- nepočítá hosty ostatních oddílů
 
 ### Vzdělávání
 
@@ -194,12 +208,6 @@ flowchart TD
 - Systém automaticky přiřadí kurz ústředí všem účastníkům po jeho absolvování
 - Všichni Vedoucí a Rádci mají možnost vložit do systému svoje certifikáty, potvrzení od doktora a jiné absolvované kurzy
 - Modul vzdělání zobrazuje Administrátorovi, jaké kurzy absolvovali jednotliví vedoucí v oddílech
-
-### Pomocná evidence
-
-- Vedoucí může pro svůj oddíl nebo družinu definovat nové sloupce (do tabulky hostů/členů)
-- Sloupcům lze nastavit viditelnost - zda je vlastník účtu může vidět nebo upravovat
-- Sloupcům lze nastavit oprávnění - zda Rádci můžou vidět nebo upravovat
 
 ---
 
