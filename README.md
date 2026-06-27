@@ -69,7 +69,7 @@ flowchart TD
 - Vytváří účty účetním, vedoucím, rádcům - system vygeneruje pozvánku emailem
 - Může do systému nahrát pověření od staršovstva
 - Může definovat družiny, jejich vedoucí a členy
-- Eviduje registrované členy
+- Eviduje registrované členy (jméno, příjmení, pohlaví, datum narození)
 - Eviduje hosty (min. jméno, příjmení nebo přezdívka)
 
 #### Rádce
@@ -237,8 +237,11 @@ flowchart TD
 #### Modul párování plateb
 
 - Aktivuje se doplněním tokenu k bankovnímu účtu
-- Systém automaticky páruje bankovní transakce s přihláškami podle SS=akce a VS=přihláška
-- Systém automaticky posílá poděkování za přijatou platbu
+- Párování je M:N — jedna bankovní transakce může pokrýt více přihlášek (např. rodič platí za více dětí jednou platbou) a jedna přihláška může být uhrazena více platbami (postupné / částečné platby)
+- Systém automaticky navrhuje párování podle SS=akce a VS=přihláška; když částka neodpovídá jediné přihlášce, umožní ruční rozdělení (alokaci) částky mezi více přihlášek
+- Každá alokace eviduje napárovanou částku (`PAYMENT_ALLOCATION`); stav přihlášky (PartialPaid / Paid / Overpayment) se počítá ze součtu alokací vůči ceně
+- Nealokovaný zůstatek transakce zůstává k ručnímu dořešení; přeplatky lze evidovat a vracet
+- Systém automaticky posílá poděkování po plném uhrazení přihlášky
 
 #### Modul Potvrzení o platbě
 
@@ -301,10 +304,10 @@ erDiagram
     EVENT }o--o| BANK_ACCOUNT : "linked to"
     EVENT }o--o| REGION : "region snapshot"
 
-    REGISTRATION ||--o{ PAYMENT : has
+    REGISTRATION ||--o{ PAYMENT_ALLOCATION : "paid by"
     BANK_ACCOUNT ||--o{ BANK_TRANSACTION : records
-    BANK_TRANSACTION |o--o| PAYMENT : matches
-    DU_MEMBERSHIP |o--o| PAYMENT : receipt
+    BANK_TRANSACTION ||--o{ PAYMENT_ALLOCATION : "split into"
+    BANK_TRANSACTION |o--o{ DU_MEMBERSHIP : "membership receipt"
 
     ATTENDANCE_EVENT ||--o{ ATTENDANCE_RECORD : contains
     CUSTOM_FIELD ||--o{ CUSTOM_FIELD_VALUE : has
@@ -339,6 +342,8 @@ erDiagram
         string type "hq_ico / branch / collective"
         string ico
         bool is_hq
+        string smtp_email "Google email pro odchozi komunikaci (volitelne)"
+        string smtp_app_password_enc "Heslo aplikaci (Google)"
     }
     UNIT_REGION {
         int id PK
@@ -352,6 +357,7 @@ erDiagram
         string first_name
         string last_name
         string nickname
+        string gender "male / female / other"
         date birth_date "required for registered member"
         string email
     }
@@ -445,25 +451,25 @@ erDiagram
         bool is_substitute
         string token "management without account"
     }
-    PAYMENT {
+    PAYMENT_ALLOCATION {
         int id PK
+        int bank_transaction_id FK
         int registration_id FK
-        decimal amount
-        date date
-        bool matched
+        decimal amount "alokovana cast platby"
+        string matched_by "auto / manual"
+        datetime matched_at
     }
     BANK_ACCOUNT {
         int id PK
         int unit_id FK
         string name
-        string account_number
+        string account_number "cislo uctu"
+        string bank_code "kod banky"
         string api_token_enc
-        string smtp_token_enc
     }
     BANK_TRANSACTION {
         int id PK
         int bank_account_id FK
-        int payment_id FK "after matching"
         string ss
         string vs
         decimal amount
@@ -473,7 +479,7 @@ erDiagram
         int id PK
         int person_id FK
         int year
-        int payment_id FK
+        int bank_transaction_id FK "uhrada prispevku"
         bool paid
     }
     ATTENDANCE_EVENT {
@@ -612,12 +618,13 @@ erDiagram
 ## Implementační detaily
 
 Identifikátory v kódu a databázi (názvy tabulek, sloupců i proměnných) jsou v angličtině; česky zůstává jen uživatelské rozhraní a dokumentace.
+Bankovním účtem se rozumí dvojice číslo účtu a kód banky.
 
 ### Komunikační modul
 
-- systém ve výchozím stavu komunikuje emailem přes ověřený SMTP účet dorostove unie
-- každý oddíl může volitelně definovat svůj email pro odchozí komunikaci nastavením SMTP tokenu
-- šablony jsou ve složce emails/
+- Systém ve výchozím stavu komunikuje emailem přes ověřený SMTP účet definovaný v ENV
+- Každý oddíl může volitelně definovat svůj Google email pro odchozí komunikaci nastavením Hesla aplikací, ukládá se na úrovni oddílu
+- Šablony jsou uložené ve složce emails/
 
 ### Ukládání tokenů
 
