@@ -265,328 +265,333 @@ flowchart TD
 
 ## Datový model (ER diagram)
 
-> Návrh schématu odvozený ze specifikace. Spojovací (M:N) a historizační tabulky jsou uvedeny zvlášť. `*_enc` = šifrovaný sloupec, `platnost_od/do` = časová verzování.
+> Návrh schématu odvozený ze specifikace. Spojovací (M:N) a historizační tabulky jsou uvedeny zvlášť.
 
 ```mermaid
 erDiagram
-    REGION ||--o{ ODDIL_REGION : zahrnuje
-    ODDIL ||--o{ ODDIL_REGION : "prislusnost (verzovana)"
-    ODDIL ||--o{ AKCE : porada
-    ODDIL ||--o{ BANKOVNI_UCET : ma
-    ODDIL ||--o{ DRUZINA : ma
-    ODDIL ||--o{ OSOBA_ODDIL : eviduje
-    ODDIL ||--o{ UZIVATEL_ROLE : "v ramci"
-    ODDIL ||--o{ DOCHAZKA_UDALOST : ma
-    ODDIL ||--o{ CHYTRY_SLOUPEC : definuje
+    REGION ||--o{ UNIT_REGION : includes
+    UNIT ||--o{ UNIT_REGION : "membership (versioned)"
+    UNIT ||--o{ EVENT : organizes
+    UNIT ||--o{ BANK_ACCOUNT : has
+    UNIT ||--o{ PATROL : has
+    UNIT ||--o{ PERSON_UNIT : tracks
+    UNIT ||--o{ USER_ROLE : "scoped to"
+    UNIT ||--o{ ATTENDANCE_EVENT : has
+    UNIT ||--o{ CUSTOM_FIELD : defines
 
-    OSOBA ||--o| UCET : ma
-    OSOBA ||--o{ OSOBA_ODDIL : evidovana
-    OSOBA ||--o{ RODIC_DITE : "jako rodic"
-    OSOBA ||--o{ RODIC_DITE : "jako dite"
-    OSOBA ||--o{ DRUZINA_CLEN : je
-    OSOBA ||--o{ PRIHLASKA : podava
-    OSOBA ||--o{ CLENSTVI_DU : ma
-    OSOBA ||--o{ DOCHAZKA_ZAZNAM : "ucastni se"
-    OSOBA ||--o{ CHYTRY_SLOUPEC_HODNOTA : ma
-    OSOBA ||--o{ OSOBA_KURZ : absolvuje
+    PERSON ||--o| ACCOUNT : has
+    PERSON ||--o{ PERSON_UNIT : "tracked in"
+    PERSON ||--o{ PARENT_CHILD : "as parent"
+    PERSON ||--o{ PARENT_CHILD : "as child"
+    PERSON ||--o{ PATROL_MEMBER : is
+    PERSON ||--o{ REGISTRATION : submits
+    PERSON ||--o{ DU_MEMBERSHIP : has
+    PERSON ||--o{ ATTENDANCE_RECORD : attends
+    PERSON ||--o{ CUSTOM_FIELD_VALUE : has
+    PERSON ||--o{ PERSON_COURSE : completes
 
-    UCET ||--o{ OAUTH_IDENTITY : ma
-    UCET ||--o{ UZIVATEL_ROLE : ma
+    ACCOUNT ||--o{ OAUTH_IDENTITY : has
+    ACCOUNT ||--o{ USER_ROLE : has
 
-    DRUZINA ||--o{ DRUZINA_CLEN : obsahuje
+    PATROL ||--o{ PATROL_MEMBER : contains
 
-    AKCE ||--o{ AKCE_CENA : ma
-    AKCE ||--o{ STORNO_PRAVIDLO : ma
-    AKCE ||--o{ PRIHLASKA : obsahuje
-    AKCE }o--o| BANKOVNI_UCET : svazana
-    AKCE }o--o| REGION : "snapshot regionu"
+    EVENT ||--o{ EVENT_PRICE : has
+    EVENT ||--o{ CANCELLATION_RULE : has
+    EVENT ||--o{ REGISTRATION : contains
+    EVENT }o--o| BANK_ACCOUNT : "linked to"
+    EVENT }o--o| REGION : "region snapshot"
 
-    PRIHLASKA ||--o{ PLATBA : ma
-    BANKOVNI_UCET ||--o{ BANKOVNI_TRANSAKCE : eviduje
-    BANKOVNI_TRANSAKCE |o--o| PLATBA : paruje
-    CLENSTVI_DU |o--o| PLATBA : doklad
+    REGISTRATION ||--o{ PAYMENT : has
+    BANK_ACCOUNT ||--o{ BANK_TRANSACTION : records
+    BANK_TRANSACTION |o--o| PAYMENT : matches
+    DU_MEMBERSHIP |o--o| PAYMENT : receipt
 
-    DOCHAZKA_UDALOST ||--o{ DOCHAZKA_ZAZNAM : obsahuje
-    CHYTRY_SLOUPEC ||--o{ CHYTRY_SLOUPEC_HODNOTA : ma
-    KURZ ||--o{ OSOBA_KURZ : "v nabidce"
+    ATTENDANCE_EVENT ||--o{ ATTENDANCE_RECORD : contains
+    CUSTOM_FIELD ||--o{ CUSTOM_FIELD_VALUE : has
+    COURSE ||--o{ PERSON_COURSE : "offered as"
 
-    OSOBA ||--o{ SOUHLAS : udeluje
-    OSOBA ||--o{ AUDIT_LOG : dotcena
-    OSOBA ||--o{ DOPORUCENI : "jako mentor"
-    OSOBA ||--o{ REPORT_SLOUCENI : "kandidat A"
-    OSOBA ||--o{ REPORT_SLOUCENI : "kandidat B"
-    UCET ||--o{ AUDIT_LOG : provedl
-    PRIHLASKA ||--o{ NABIDKA_NAHRADNIKA : nabizi
-    PRIHLASKA ||--o{ DOPORUCENI : vyzaduje
-    ODDIL ||--o{ REGISTRACNI_FORMULAR : ma
-    ODDIL ||--o| ODDIL_NASTAVENI : ma
-    ODDIL ||--o{ POVERENI : ma
-    REGISTRACNI_FORMULAR ||--o{ FORMULAR_POLE : obsahuje
-    CHYTRY_SLOUPEC ||--o{ FORMULAR_POLE : "zdroj pole"
+    PERSON ||--o{ CONSENT : grants
+    PERSON ||--o{ AUDIT_LOG : "subject of"
+    PERSON ||--o{ RECOMMENDATION : "as mentor"
+    PERSON ||--o{ REPORT_MERGE : "candidate A"
+    PERSON ||--o{ REPORT_MERGE : "candidate B"
+    ACCOUNT ||--o{ AUDIT_LOG : "performed by"
+    REGISTRATION ||--o{ SUBSTITUTE_OFFER : offers
+    REGISTRATION ||--o{ RECOMMENDATION : requires
+    UNIT ||--o{ REGISTRATION_FORM : has
+    UNIT ||--o{ UNIT_MODULE : enables
+    UNIT ||--o{ UNIT_SETTING : has
+    UNIT ||--o{ MANDATE : has
+    REGISTRATION_FORM ||--o{ FORM_FIELD : contains
+    CUSTOM_FIELD ||--o{ FORM_FIELD : "field source"
 
     REGION {
         int id PK
-        string nazev
-        string stav "aktivni / slouceny / zruseny"
-        date platnost_od
-        date platnost_do "NULL = aktivni"
-        int slouceno_do_region_id FK "nastupnicky region"
+        string name
+        string state "active / merged / cancelled"
+        date valid_from
+        date valid_to "NULL = active"
+        int merged_into_region_id FK "successor region"
     }
-    ODDIL {
+    UNIT {
         int id PK
-        string nazev
-        string typ "ico_ustredi / pobocny_spolek / kolektivni"
+        string name
+        string type "hq_ico / branch / collective"
         string ico
-        bool je_ustredi
+        bool is_hq
     }
-    ODDIL_REGION {
+    UNIT_REGION {
         int id PK
-        int oddil_id FK
+        int unit_id FK
         int region_id FK
-        date platnost_od
-        date platnost_do "NULL = aktualni"
+        date valid_from
+        date valid_to "NULL = current"
     }
-    OSOBA {
+    PERSON {
         int id PK
-        string jmeno
-        string prijmeni
-        string prezdivka
-        date datum_narozeni "povinne u registrovaneho clena"
+        string first_name
+        string last_name
+        string nickname
+        date birth_date "required for registered member"
         string email
     }
-    OSOBA_ODDIL {
+    PERSON_UNIT {
         int id PK
-        int osoba_id FK
-        int oddil_id FK
-        string stav "host / registrovany_clen / clen_du"
-        string zaznamovy_stav "aktivni / neaktivni / archivovany"
-        datetime platnost_od
-        datetime platnost_do
+        int person_id FK
+        int unit_id FK
+        string membership_state "guest / registered_member / du_member"
+        string record_state "active / inactive / archived"
+        datetime valid_from
+        datetime valid_to
     }
-    UCET {
+    ACCOUNT {
         int id PK
-        int osoba_id FK "1:1"
+        int person_id FK "1:1"
         string email
-        string heslo_hash
+        string password_hash
     }
     OAUTH_IDENTITY {
         int id PK
-        int ucet_id FK
+        int account_id FK
         string provider "google / facebook"
         string provider_user_id
         bool email_verified
     }
-    UZIVATEL_ROLE {
+    USER_ROLE {
         int id PK
-        int ucet_id FK
-        int oddil_id FK "scope role"
+        int account_id FK
+        int unit_id FK "role scope"
         string role "HVO / VO / VD / RAD / ADM / UCE / ROD"
     }
-    RODIC_DITE {
+    PARENT_CHILD {
         int id PK
-        int rodic_osoba_id FK
-        int dite_osoba_id FK
-        string stav "aktivni / zruseno / readonly_po_zletilosti"
-        datetime platnost_od
-        datetime platnost_do
+        int parent_person_id FK
+        int child_person_id FK
+        string state "active / cancelled / readonly_after_adulthood"
+        datetime valid_from
+        datetime valid_to
     }
-    DRUZINA {
+    PATROL {
         int id PK
-        int oddil_id FK
-        string nazev
+        int unit_id FK
+        string name
     }
-    DRUZINA_CLEN {
+    PATROL_MEMBER {
         int id PK
-        int druzina_id FK
-        int osoba_id FK
-        string role "vedouci / radce / clen"
+        int patrol_id FK
+        int person_id FK
+        string role "leader / advisor / member"
     }
-    AKCE {
+    EVENT {
         int id PK
-        int oddil_id FK
-        int bankovni_ucet_id FK
-        int region_id_snapshot FK "region pri vzniku akce"
-        string nazev
-        string ss "specificky symbol"
-        string typ "klub / jednorazova / vikendovka / vzdelavaci / ..."
-        int kapacita
-        int pocet_nahradniku
-        bool verejna
-        datetime zacatek
-        datetime prihlaseni_od
-        datetime prihlaseni_do
-        bool dobrovolnici_povoleno
-        datetime dobrovolnici_prihlaseni_od
-        datetime dobrovolnici_prihlaseni_do
+        int unit_id FK
+        int bank_account_id FK
+        int region_id_snapshot FK "region at event creation"
+        string name
+        string ss "specific symbol"
+        string type "club / one_off / weekend / training / ..."
+        int capacity
+        int substitute_count
+        bool public
+        datetime starts_at
+        datetime registration_from
+        datetime registration_to
+        bool volunteers_enabled
+        datetime volunteer_registration_from
+        datetime volunteer_registration_to
     }
-    AKCE_CENA {
+    EVENT_PRICE {
         int id PK
-        int akce_id FK
-        string typ_clenstvi "DU / bez_DU / dobrovolnik / vedouci / dite_vedouciho / sponzorska"
-        decimal castka
-        date platnost_od
-        date platnost_do
+        int event_id FK
+        string membership_type "DU / non_DU / volunteer / leader / leader_child / sponsor"
+        decimal amount
+        date valid_from
+        date valid_to
     }
-    STORNO_PRAVIDLO {
+    CANCELLATION_RULE {
         int id PK
-        int akce_id FK
-        decimal procento
-        date platne_do
+        int event_id FK
+        decimal percent
+        date valid_until
     }
-    PRIHLASKA {
+    REGISTRATION {
         int id PK
-        int akce_id FK
-        int osoba_id FK
-        int cena_id FK
-        string vs "variabilni symbol"
-        string kategorie "ucastnik / dobrovolnik / nahradnik"
-        string stav "New / PendingPayment / PartialPaid / Paid / Overpayment / Canceled / Expired"
-        bool je_nahradnik
-        string token "sprava bez uctu"
+        int event_id FK
+        int person_id FK
+        int price_id FK
+        string vs "variable symbol"
+        string category "participant / volunteer / substitute"
+        string state "New / PendingPayment / PartialPaid / Paid / Overpayment / Canceled / Expired"
+        bool is_substitute
+        string token "management without account"
     }
-    PLATBA {
+    PAYMENT {
         int id PK
-        int prihlaska_id FK
-        decimal castka
-        date datum
-        bool sparovano
+        int registration_id FK
+        decimal amount
+        date date
+        bool matched
     }
-    BANKOVNI_UCET {
+    BANK_ACCOUNT {
         int id PK
-        int oddil_id FK
-        string nazev
-        string cislo_uctu
+        int unit_id FK
+        string name
+        string account_number
         string api_token_enc
         string smtp_token_enc
     }
-    BANKOVNI_TRANSAKCE {
+    BANK_TRANSACTION {
         int id PK
-        int bankovni_ucet_id FK
-        int platba_id FK "po sparovani"
+        int bank_account_id FK
+        int payment_id FK "after matching"
         string ss
         string vs
-        decimal castka
-        date datum
+        decimal amount
+        date date
     }
-    CLENSTVI_DU {
+    DU_MEMBERSHIP {
         int id PK
-        int osoba_id FK
-        int rok
-        int platba_id FK
-        bool zaplaceno
+        int person_id FK
+        int year
+        int payment_id FK
+        bool paid
     }
-    DOCHAZKA_UDALOST {
+    ATTENDANCE_EVENT {
         int id PK
-        int oddil_id FK
-        string nazev
-        date datum
+        int unit_id FK
+        string name
+        date date
     }
-    DOCHAZKA_ZAZNAM {
+    ATTENDANCE_RECORD {
         int id PK
-        int udalost_id FK
-        int osoba_id FK
-        bool pritomen
-        decimal hodiny_dobrovolnik
+        int attendance_event_id FK
+        int person_id FK
+        bool present
+        decimal volunteer_hours
     }
-    CHYTRY_SLOUPEC {
+    CUSTOM_FIELD {
         int id PK
-        int oddil_id FK
-        int druzina_id FK "volitelne"
-        string nazev
-        string viditelnost "vlastnik vidi / upravuje"
-        string opravneni "radce vidi / upravuje"
+        int unit_id FK
+        int patrol_id FK "optional"
+        string name
+        string visibility "owner sees / edits"
+        string permission "advisor sees / edits"
     }
-    CHYTRY_SLOUPEC_HODNOTA {
+    CUSTOM_FIELD_VALUE {
         int id PK
-        int sloupec_id FK
-        int osoba_id FK
-        string hodnota
+        int field_id FK
+        int person_id FK
+        string value
     }
-    KURZ {
+    COURSE {
         int id PK
-        string nazev
-        int platnost_mesicu
+        string name
+        int validity_months
     }
-    OSOBA_KURZ {
+    PERSON_COURSE {
         int id PK
-        int osoba_id FK
-        int kurz_id FK
-        date datum_absolvovani
-        date platnost_do
-        string certifikat_soubor
+        int person_id FK
+        int course_id FK
+        date completed_on
+        date valid_to
+        string certificate_file
     }
-    SOUHLAS {
+    CONSENT {
         int id PK
-        int osoba_id FK
-        string typ "zpracovani / foto / zdravotni / ..."
-        string ucel
-        datetime udeleno_at
-        datetime odvolano_at "NULL = platny"
-        date retence_do
+        int person_id FK
+        string type "processing / photo / health / ..."
+        string purpose
+        datetime granted_at
+        datetime revoked_at "NULL = valid"
+        date retention_until
     }
-    NABIDKA_NAHRADNIKA {
+    SUBSTITUTE_OFFER {
         int id PK
-        int prihlaska_id FK
+        int registration_id FK
         string token
-        datetime nabidnuto_at
-        datetime platnost_do
-        string stav "nabidnuto / prijato / propadlo"
+        datetime offered_at
+        datetime expires_at
+        string state "offered / accepted / expired"
     }
-    DOPORUCENI {
+    RECOMMENDATION {
         int id PK
-        int prihlaska_id FK
-        int mentor_osoba_id FK "NULL = jen email"
+        int registration_id FK
+        int mentor_person_id FK "NULL = email only"
         string mentor_email
-        string typ "mentor / vedouci"
-        string ocekavani
-        string stav "vyzadano / potvrzeno / zamitnuto"
-        datetime potvrzeno_at
+        string type "mentor / leader"
+        string expectation
+        string state "requested / confirmed / rejected"
+        datetime confirmed_at
     }
-    REGISTRACNI_FORMULAR {
+    REGISTRATION_FORM {
         int id PK
-        int oddil_id FK
-        string nazev
-        bool aktivni
+        int unit_id FK
+        string name
+        bool active
     }
-    FORMULAR_POLE {
+    FORM_FIELD {
         int id PK
-        int formular_id FK
-        int chytry_sloupec_id FK "volitelne (zdroj pole)"
-        string nazev
-        bool povinne
+        int form_id FK
+        int custom_field_id FK "optional (field source)"
+        string name
+        bool required
     }
-    POVERENI {
+    MANDATE {
         int id PK
-        int oddil_id FK
-        string soubor
-        date platnost_od
-        date platnost_do
+        int unit_id FK
+        string file
+        date valid_from
+        date valid_to
     }
-    ODDIL_NASTAVENI {
+    UNIT_MODULE {
         int id PK
-        int oddil_id FK
-        bool modul_parovani
-        bool modul_potvrzeni
-        bool modul_vzdelavani
-        bool modul_pomocna_evidence
-        bool modul_reporty
-        int pripominky_cetnost_dni
+        int unit_id FK
+        string code "payment_matching / payment_confirmation / training / custom_fields / reports"
+        bool active
+        json config "module-specific settings"
+        datetime activated_at
+    }
+    UNIT_SETTING {
+        int id PK
+        int unit_id FK
+        string key "e.g. reminder_frequency_days"
+        string value
     }
     AUDIT_LOG {
         int id PK
-        int ucet_id FK "kdo (NULL = system)"
-        int osoba_id FK "dotcena osoba"
-        string typ "merge / unmerge / bezpecnost / zmena"
-        string entita
-        string popis
-        datetime vytvoreno_at
+        int account_id FK "who (NULL = system)"
+        int person_id FK "affected person"
+        string type "merge / unmerge / security / change"
+        string entity
+        string description
+        datetime created_at
     }
-    REPORT_SLOUCENI {
+    REPORT_MERGE {
         int id PK
-        int osoba_a_id FK
-        int osoba_b_id FK
-        string duvod "reportovaci slouceni (zaznamy oddelene)"
-        datetime vytvoreno_at
+        int person_a_id FK
+        int person_b_id FK
+        string reason "reporting merge (records stay separate)"
+        datetime created_at
     }
 ```
 
@@ -606,6 +611,8 @@ erDiagram
 
 ## Implementační detaily
 
+Identifikátory v kódu a databázi (názvy tabulek, sloupců i proměnných) jsou v angličtině; česky zůstává jen uživatelské rozhraní a dokumentace.
+
 ### Komunikační modul
 
 - systém ve výchozím stavu komunikuje emailem přes ověřený SMTP účet dorostove unie
@@ -616,6 +623,16 @@ erDiagram
 
 Tokeny jsou uloženy v databázi šifrovaně, klíč je uložen na serveru v neveřejné části.
 https://github.com/defuse/php-encryption
+
+### Konfigurace volitelných modulů
+
+- Aktivace modulu **není sloupec** v tabulce oddílu — každý zapnutý modul je samostatný
+  řádek v `UNIT_MODULE` (`unit_id`, `code`, `active`, `config`, `activated_at`).
+- Přidání nového modulu tak nevyžaduje migraci schématu (žádné nové sloupce), jen nový `code`.
+- Specifická nastavení modulu se ukládají do `config` (JSON) — např. četnost připomínek
+  u modulu párování plateb, šablona potvrzení apod.
+- Obecná (nemodulová) nastavení oddílu jsou v `UNIT_SETTING` jako dvojice `key`/`value`.
+- HVO zapíná/vypíná moduly v Nastavení oddílu; vypnutí jen přepne `active`, historii zachová.
 
 ### Pravidla přihlášení přes OAuth (bezpečné párování)
 
