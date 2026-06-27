@@ -181,7 +181,7 @@ flowchart TD
 - Název, SS, max kapacita, počet náhradníků, ceny pro členy DU i ostatní, začátek akce, začátek a konec přihlašování, termíny pro storno podmínky
 - Pokud akce vyžaduje dobrovolníky, lze zadat cenu, začátek a konec přihlašování, systém nabídne samostatnou stránku pro přihlášení dobrovolníků
 - Náhradníci - po uvolnění místa jsou informováni vedoucí akce, po výběru náhradníka, náhradník dostane časově omezenou nabídku, po vypršení propadá a vedoucí znovu vybírá.
-- Akce může být veřejná nebo neveřejná (dostupná přes odkaz)
+- Akce může být veřejná, vnitřní nebo neveřejná. Každá akce má neveřejnou adresu (sdílecí odkaz), kterou lze sdílet a přihlašovat se přes ni, aniž by se akce publikovala ve veřejném výpisu. Veřejná akce se navíc zobrazuje ve veřejném výpisu portálu, interní akce je viditelná pouze po prihlášeným osobám, kteří jsou členy klubu.
 
 #### Ceny a storna na akcích
 
@@ -419,6 +419,7 @@ erDiagram
         int capacity
         int substitute_count
         bool public
+        string share_slug "neverejny sdileci odkaz (bez publikace)"
         datetime starts_at
         datetime registration_from
         datetime registration_to
@@ -618,7 +619,7 @@ erDiagram
 ## Implementační detaily
 
 Identifikátory v kódu a databázi (názvy tabulek, sloupců i proměnných) jsou v angličtině; česky zůstává jen uživatelské rozhraní a dokumentace.
-Bankovním účtem se rozumí dvojice číslo účtu a kód banky.
+Bankovním účtem se rozumí dvojice číslo účtu a kód banky. Synchronizace bankovních transakcí eviduje částku, ss, vs, název odesílatele, zprávu, účet odesílatele, kod banky odesílatele a typ transakce.
 
 ### Komunikační modul
 
