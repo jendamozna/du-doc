@@ -65,12 +65,12 @@ flowchart TD
 
 #### Hlavní vedoucí oddílu
 
-- Spravuje bankovní účty
+- Nastavuje bankovní účty
 - Vytváří účty účetním, vedoucím, rádcům - system vygeneruje pozvánku emailem
-- Můžou do systému nahrát pověření od staršovstva
+- Může do systému nahrát pověření od staršovstva
 - Může definovat družiny, jejich vedoucí a členy
 - Eviduje registrované členy
-- Eviduje hosty (min jméno příjmení nebo přezdívka)
+- Eviduje hosty (min. jméno, příjmení nebo přezdívka)
 
 #### Rádce
 
@@ -79,11 +79,10 @@ flowchart TD
 #### Rodič (zákonný zástupce)
 
 - Rodič je osoba, která má vazbu na alespoň jedno dítě (typicky nezletilé)
-- Rodič může zastupovat jedno nebo více nezletilých dětí (vazba rodič ↔ dítě, typu 1:N)
-- Jedno dítě může být svázáno s více rodiči (oba zákonní zástupci) — vazba je M:N
-- Rodič může své zastupované děti přihlašovat na akce a spravovat jejich přihlášky (registrace, storno, platby za dítě)
-- Rodič se sám může akcí účastnit jako účastník (vystupuje pak zároveň jako účastník i jako zástupce dětí)
-- Rodič vidí a edituje pouze údaje a přihlášky vlastních dětí
+- Rodič může zastupovat jedno nebo více nezletilých dětí
+- Jedno dítě může být svázáno s více rodiči (oba zákonní zástupci)
+- Rodič může své zastupované děti přihlašovat na akce a spravovat jejich přihlášky (registrace, storno, platby za dítě) a údaje v systému
+- Rodič se sám může akcí účastnit jako účastník
 - Vazba rodič ↔ dítě vzniká registraci dítěte rodičem
 - Po dosažení zletilosti se zastoupení rodičem přepne do režimu jen pro čtení. Výjimkou je doplnění kontaktního e-mailu dítěte, pokud chybí — slouží k doručení výzvy k převzetí účtu. Zletilý člen může přístup rodiče kdykoli zcela zrušit.
 - Vazbu může zrušit sám rodič (vystoupení), případně HVO na žádost; zrušení se loguje. Zůstane-li nezletilé dítě bez navázaného rodiče, jeho údaje a přihlášky spravuje HVO, dokud se nepřipojí nový zákonný zástupce.
@@ -118,7 +117,7 @@ flowchart TD
 - Administrátor může spustit výmaz napříč všemi oddíly.
 
 ### Deduplikace osob, merge
-
+- system oveřuje správnost českých jmen podle seznamu (spravovaného administrátorem), nabízí možnost přidáni vyjímky HVO v rámci oddílu.
 - Osobě s účtem se zobrazí možný kandidát na propojení (z jiného oddílu). Účet zadá Žádost o sloučení. Systém rozešle emailem žádost - iniciátorovi, HVO druhého oddílu a případně i účtu kandidáta na propojení. Po odsouhlasení všemi stranami (HVO se zobrazí pro porovnání náhled obou osob) může uživatel pokračovat se spojením: Záznamy obou osob se spojí do jedné osoby, konflikt základních polí se řeší volbou A/B, účet se naváže na sjednocenou osobu, pokud obě osoby mají účet, pak druhý účet se zruší (uživatel vybere), citlivá data zůstávají per oddíl, OAuth identity se přenesou pod ponechaný účet.
 - Podobně se zpracuje duplicitní dítě, které se zobrazí rodiči s tím, že další strana je rodič dítěte kandidáta a výsledek nespojí účty rodičů do jednoho, jen osobu dítěte. Nemá-li dítě žádného navázaného rodiče, schvaluje připojení HVO, kde je dítě evidováno.
 - Systém loguje, kdo kdy které osoby spojil, je možné zrušit merge pro nápravu chybného spojení.
@@ -132,7 +131,7 @@ flowchart TD
 ### Region
 
 - Region je vrstva mezi ústředím a běžnými oddíly: `Ústředí → Region → Oddíl`. Ústředí (celostátní) do regionů nepatří.
-- Regiony definuje a spravuje ADM a přiřazuje do nich běžné oddíly. Oddíl je v daném okamžiku nejvýše v jednom regionu (nově vzniklý oddíl může být dočasně bez regionu).
+- Regiony definuje a spravuje ADM a přiřazuje do nich běžné oddíly. Oddíl je v daném okamžiku nejvýše v jednom regionu.
 - **Příslušnost oddílu k regionu je verzovaná** (platnost od/do) — díky tomu lze určit, do jakého regionu oddíl patřil k libovolnému datu.
 - Regiony se v čase mění:
   - **Vznik** – ADM založí nový region.
