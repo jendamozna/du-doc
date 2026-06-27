@@ -81,8 +81,7 @@ flowchart TD
 - Rodič je osoba, která má vazbu na alespoň jedno dítě (typicky nezletilé)
 - Rodič může zastupovat jedno nebo více nezletilých dětí
 - Jedno dítě může být svázáno s více rodiči (oba zákonní zástupci)
-- Rodič může své zastupované děti přihlašovat na akce a spravovat jejich přihlášky (registrace, storno, platby za dítě) a údaje v systému
-- Rodič se sám může akcí účastnit jako účastník
+- Rodič může své zastupované děti přihlašovat na akce a spravovat jejich přihlášky (registrace, storno, platby za dítě) a údaje v systému (adresy, pojišťovny, ...)
 - Vazba rodič ↔ dítě vzniká registraci dítěte rodičem
 - Po dosažení zletilosti se zastoupení rodičem přepne do režimu jen pro čtení. Výjimkou je doplnění kontaktního e-mailu dítěte, pokud chybí — slouží k doručení výzvy k převzetí účtu. Zletilý člen může přístup rodiče kdykoli zcela zrušit.
 - Vazbu může zrušit sám rodič (vystoupení), případně HVO na žádost; zrušení se loguje. Zůstane-li nezletilé dítě bez navázaného rodiče, jeho údaje a přihlášky spravuje HVO, dokud se nepřipojí nový zákonný zástupce.
@@ -95,7 +94,6 @@ flowchart TD
   - **Osoba** = datový subjekt / účastník; může existovat bez přihlášení (host, nezletilé dítě spravované rodičem)
   - **Účet (uživatel)** = přihlašovací identita (heslo / OAuth), navázaná právě na jednu osobu
 - Jedna osoba má nejvýše jeden účet
-- Host nemá účet — má pouze identifikátor (token), kterým si může účet založit; po založení se účet propojí s existující osobou (nevznikne duplicita)
 
 #### Stav osoby (lifecycle)
 
@@ -111,12 +109,29 @@ flowchart TD
 
 ### Retence a GDPR
 
-- citlivá data (zdravotní apod.) se mažou dříve než základní evidence
-- konkrétní lhůty retence jsou TODO
 - Citlivá data jsou izolovaná per oddíl, každý oddíl proto maže/anonymizuje jen svoji verzi
 - Administrátor může spustit výmaz napříč všemi oddíly.
 
+> Lhůty jsou orientační a je nutné je potvrdit s DPO/právníkem (odvíjejí se od dotačních pravidel a interních směrnic).
+
+| Kategorie dat                                               | Lhůta                                                         | Důvod / právní základ                                   |
+| ----------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------- |
+| Citlivá data (zdravotní, alergie, léky, stravovací omezení) | smazat do 30 dnů po skončení akce                             | nutná jen pro průběh akce; minimalizace                 |
+| Údaje hosta / jednorázového účastníka (nečlen)              | 12 měsíců od poslední aktivity, pak anonymizace               | žádný trvající vztah                                    |
+| Členská evidence (registrovaný člen, člen DU)               | po dobu členství + 10 let                                     | doložitelnost pro dotace/kontroly (MŠMT obvykle 10 let) |
+| Docházka, dobrovolnické hodiny                              | 10 let                                                        | výkaznictví k dotacím                                   |
+| Účetní doklady (platby, párování, vratky)                   | 5 let (běžné), 10 let u dokladů s DPH                         | zákon o účetnictví / zákon o DPH                        |
+| Souhlasy se zpracováním (GDPR)                              | po dobu zpracování + 4 roky po odvolání                       | doložení souhlasu, promlčecí doba                       |
+| Úrazy / pojistné události nezletilých                       | do zletilosti dítěte + 4 roky                                 | promlčecí lhůty nároků nezletilých                      |
+| Auditní logy (merge, bezpečnostní, změny)                   | 3 roky                                                        | bezpečnost, řešení sporů o spojení osob                 |
+| Přihlašovací účet (neaktivní)                               | smazat/anonymizovat po 24 měsících nečinnosti (po upozornění) | minimalizace                                            |
+
+- **Anonymizace, ne mazání** u záznamů potřebných pro agregovaný reporting (návaznost na stav `archivovaný`) — zachovají se jen nepřímo identifikující údaje (rok narození, oddíl, region-snapshot).
+- **Nejdelší lhůta vyhrává:** je-li osoba zároveň člen i účastník akce s platbou, řídí se výmaz nejdelší relevantní lhůtou pro daný typ dat (citlivá data se ale mažou samostatně dřív).
+- **Automatické joby:** systém periodicky označuje záznamy po expiraci a spouští anonymizaci; citlivá data mají vlastní (kratší) job.
+
 ### Deduplikace osob, merge
+
 - system oveřuje správnost českých jmen podle seznamu (spravovaného administrátorem), nabízí možnost přidáni vyjímky HVO v rámci oddílu.
 - Osobě s účtem se zobrazí možný kandidát na propojení (z jiného oddílu). Účet zadá Žádost o sloučení. Systém rozešle emailem žádost - iniciátorovi, HVO druhého oddílu a případně i účtu kandidáta na propojení. Po odsouhlasení všemi stranami (HVO se zobrazí pro porovnání náhled obou osob) může uživatel pokračovat se spojením: Záznamy obou osob se spojí do jedné osoby, konflikt základních polí se řeší volbou A/B, účet se naváže na sjednocenou osobu, pokud obě osoby mají účet, pak druhý účet se zruší (uživatel vybere), citlivá data zůstávají per oddíl, OAuth identity se přenesou pod ponechaný účet.
 - Podobně se zpracuje duplicitní dítě, které se zobrazí rodiči s tím, že další strana je rodič dítěte kandidáta a výsledek nespojí účty rodičů do jednoho, jen osobu dítěte. Nemá-li dítě žádného navázaného rodiče, schvaluje připojení HVO, kde je dítě evidováno.
@@ -170,9 +185,7 @@ flowchart TD
 
 #### Ceny a storna na akcích
 
-- Systém umožňuje definovat více cen platných v různých termínech pro různé typy členství - DU, bez DU
-- Systém umožňuje definovat ceny pro oddílové vedoucí i děti oddílových vedoucích
-- Systém umožňuje sponzorské ceny - několik variant
+- Systém umožňuje definovat více cen platných v různých termínech pro různé typy účastníků - DU, bez DU, dobrovolníky, oddílové vedoucí i děti oddílových vedoucích a sponzorské ceny
 - Systém umožnuje definovat storno poplatky procentuálně v různých termínech
 - Vratky schvaluje a odesílá Účetní nebo HVO ručně po skončení akce
 
@@ -188,23 +201,28 @@ flowchart TD
 
 #### Přihlašování na akce
 
-- Neregistrovaným uživatelům je umožněno přes token spravovat jejich přihlášky (storno, měnit nebo přidávat další účastníky)
-- Systém posílá posílá potvrzení přihlášky s výzvou k zaplacení (QR kód + platební údaje), hostům je navíc vygenerován identifikátor, díky kterému je možné si založit účet
+- Účastník, který nemá účet získa registrací identifikátor (token), kterým si může účet založit (po založení se účet propojí s existující osobou) a spravovat své přihlášky (storno, měnit nebo přidávat další účastníky)
+- Systém posílá potvrzení přihlášky s výzvou k zaplacení (QR kód + platební údaje, pokud je stanovena cena akce)
 - Systém připomíná nezaplacené platby - četnost lze upravit v Nastavení oddílu
 - Systém kategorizuje přihlášky: Učastník, Dobrovolník, Náhradník
 - Stavy přihlášky: Paid, New, Canceled, PartialPaid, Overpayment, PendingPayment, Expired
 
 ### Docházka
 
-- Vedoucí můžou vytvářet události - např. páteční kluby
-- Vedoucí můžou vybirat účastníky ze seznamu osob z oddílu
+- Vedoucí můžou vytvářet události i zpětně - např. pravidelné kluby a rovnou vybrat libovolné účastníky ze seznamu osob z oddílu
 - Při evidenci dobrovolníku je možné zadat počet hodin
-- Dobrovolníci krátkodobí (pod 50hod.), dlouhodobí (nad 50hod.)
+- Systém rozděluje Krátkodobé dobrovolníky (pod 50hod.) a dlouhodobé (nad 50hod.)
 
 #### Reporty
 
 - Seznam akcí/výprav, docházka členů/nečlenů/vedoucích/rádců/dobrovolníků
-- Trendy - TODO
+- Počty členů v čase — vývoj registrovaných členů / členů DU / hostů po měsících nebo letech (růst/úbytek oddílu).
+- Účast na akcích — kolik lidí chodí na akce v jednotlivých obdobích, naplněnost kapacit, podíl náhradníků.
+- Docházka klubů — průměrná návštěvnost pravidelných klubů v průběhu roku (sezónní výkyvy).
+- Dobrovolnické hodiny — vývoj odpracovaných hodin, poměr krátkodobých/dlouhodobých dobrovolníků.
+- Retence / odchody — kolik osob přechází do neaktivní, míra reaktivací.
+- Platby — vývoj inkasa, podíl včas/pozdě zaplacených, storna.
+- Vzdělávání — kolik vedoucích má platné kurzy v čase, blížící se expirace.
 
 ### Volitelné moduly
 
@@ -291,6 +309,20 @@ erDiagram
     DOCHAZKA_UDALOST ||--o{ DOCHAZKA_ZAZNAM : obsahuje
     CHYTRY_SLOUPEC ||--o{ CHYTRY_SLOUPEC_HODNOTA : ma
     KURZ ||--o{ OSOBA_KURZ : "v nabidce"
+
+    OSOBA ||--o{ SOUHLAS : udeluje
+    OSOBA ||--o{ AUDIT_LOG : dotcena
+    OSOBA ||--o{ DOPORUCENI : "jako mentor"
+    OSOBA ||--o{ REPORT_SLOUCENI : "kandidat A"
+    OSOBA ||--o{ REPORT_SLOUCENI : "kandidat B"
+    UCET ||--o{ AUDIT_LOG : provedl
+    PRIHLASKA ||--o{ NABIDKA_NAHRADNIKA : nabizi
+    PRIHLASKA ||--o{ DOPORUCENI : vyzaduje
+    ODDIL ||--o{ REGISTRACNI_FORMULAR : ma
+    ODDIL ||--o| ODDIL_NASTAVENI : ma
+    ODDIL ||--o{ POVERENI : ma
+    REGISTRACNI_FORMULAR ||--o{ FORMULAR_POLE : obsahuje
+    CHYTRY_SLOUPEC ||--o{ FORMULAR_POLE : "zdroj pole"
 
     REGION {
         int id PK
@@ -383,11 +415,14 @@ erDiagram
         datetime zacatek
         datetime prihlaseni_od
         datetime prihlaseni_do
+        bool dobrovolnici_povoleno
+        datetime dobrovolnici_prihlaseni_od
+        datetime dobrovolnici_prihlaseni_do
     }
     AKCE_CENA {
         int id PK
         int akce_id FK
-        string typ_clenstvi "DU / bez_DU / vedouci / dite_vedouciho / sponzorska"
+        string typ_clenstvi "DU / bez_DU / dobrovolnik / vedouci / dite_vedouciho / sponzorska"
         decimal castka
         date platnost_od
         date platnost_do
@@ -404,7 +439,8 @@ erDiagram
         int osoba_id FK
         int cena_id FK
         string vs "variabilni symbol"
-        string stav "nova / potvrzena / zaplacena / stornovana"
+        string kategorie "ucastnik / dobrovolnik / nahradnik"
+        string stav "New / PendingPayment / PartialPaid / Paid / Overpayment / Canceled / Expired"
         bool je_nahradnik
         string token "sprava bez uctu"
     }
@@ -478,6 +514,79 @@ erDiagram
         date datum_absolvovani
         date platnost_do
         string certifikat_soubor
+    }
+    SOUHLAS {
+        int id PK
+        int osoba_id FK
+        string typ "zpracovani / foto / zdravotni / ..."
+        string ucel
+        datetime udeleno_at
+        datetime odvolano_at "NULL = platny"
+        date retence_do
+    }
+    NABIDKA_NAHRADNIKA {
+        int id PK
+        int prihlaska_id FK
+        string token
+        datetime nabidnuto_at
+        datetime platnost_do
+        string stav "nabidnuto / prijato / propadlo"
+    }
+    DOPORUCENI {
+        int id PK
+        int prihlaska_id FK
+        int mentor_osoba_id FK "NULL = jen email"
+        string mentor_email
+        string typ "mentor / vedouci"
+        string ocekavani
+        string stav "vyzadano / potvrzeno / zamitnuto"
+        datetime potvrzeno_at
+    }
+    REGISTRACNI_FORMULAR {
+        int id PK
+        int oddil_id FK
+        string nazev
+        bool aktivni
+    }
+    FORMULAR_POLE {
+        int id PK
+        int formular_id FK
+        int chytry_sloupec_id FK "volitelne (zdroj pole)"
+        string nazev
+        bool povinne
+    }
+    POVERENI {
+        int id PK
+        int oddil_id FK
+        string soubor
+        date platnost_od
+        date platnost_do
+    }
+    ODDIL_NASTAVENI {
+        int id PK
+        int oddil_id FK
+        bool modul_parovani
+        bool modul_potvrzeni
+        bool modul_vzdelavani
+        bool modul_pomocna_evidence
+        bool modul_reporty
+        int pripominky_cetnost_dni
+    }
+    AUDIT_LOG {
+        int id PK
+        int ucet_id FK "kdo (NULL = system)"
+        int osoba_id FK "dotcena osoba"
+        string typ "merge / unmerge / bezpecnost / zmena"
+        string entita
+        string popis
+        datetime vytvoreno_at
+    }
+    REPORT_SLOUCENI {
+        int id PK
+        int osoba_a_id FK
+        int osoba_b_id FK
+        string duvod "reportovaci slouceni (zaznamy oddelene)"
+        datetime vytvoreno_at
     }
 ```
 
