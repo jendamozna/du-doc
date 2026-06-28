@@ -239,7 +239,7 @@ flowchart TD
 - Aktivuje se doplněním tokenu k bankovnímu účtu
 - Párování je M:N — jedna bankovní transakce může pokrýt více přihlášek (např. rodič platí za více dětí jednou platbou) a jedna přihláška může být uhrazena více platbami (postupné / částečné platby)
 - Systém automaticky navrhuje párování podle SS=akce a VS=přihláška; když částka neodpovídá jediné přihlášce, umožní ruční rozdělení (alokaci) částky mezi více přihlášek
-- Každá alokace eviduje napárovanou částku (`PAYMENT_ALLOCATION`); stav přihlášky (PartialPaid / Paid / Overpayment) se počítá ze součtu alokací vůči ceně
+- Každá alokace eviduje napárovanou částku; stav přihlášky se počítá ze součtu alokací vůči ceně
 - Nealokovaný zůstatek transakce zůstává k ručnímu dořešení; přeplatky lze evidovat a vracet
 - Systém automaticky posílá poděkování po plném uhrazení přihlášky
 
@@ -259,6 +259,7 @@ flowchart TD
 #### Modul vzdělávání
 
 - Administrátor definuje jaké kurzy ústředí lze použít pro vzdělání vedoucích - eviduje se i doba platnosti
+- Vzdělávací akce ústředí může být provázána s kurzem; po absolvování vznikne každému účastníkovi vazba s odkazem na zdrojovou akci
 - Hlavní vedoucí, Vedoucí a Rádci můžou sobě přiřadit kurzy z nabídky
 - Systém automaticky přiřadí kurz ústředí všem účastníkům po jeho absolvování
 - Všichni Vedoucí a Rádci mají možnost vložit do systému svoje certifikáty, potvrzení od doktora a jiné absolvované kurzy
@@ -312,6 +313,8 @@ erDiagram
     ATTENDANCE_EVENT ||--o{ ATTENDANCE_RECORD : contains
     CUSTOM_FIELD ||--o{ CUSTOM_FIELD_VALUE : has
     COURSE ||--o{ PERSON_COURSE : "offered as"
+    COURSE ||--o{ EVENT : "awarded by"
+    EVENT ||--o{ PERSON_COURSE : "completed at"
 
     PERSON ||--o{ CONSENT : grants
     PERSON ||--o{ AUDIT_LOG : "subject of"
@@ -416,6 +419,7 @@ erDiagram
         string name
         string ss "specific symbol"
         string type "club / one_off / weekend / training / ..."
+        int course_id FK "udeluje kurz po absolvovani (jen vzdelavaci akce)"
         int capacity
         int substitute_count
         bool public
@@ -474,6 +478,11 @@ erDiagram
         string ss
         string vs
         decimal amount
+        string sender_name "nazev odesilatele"
+        string sender_account "ucet odesilatele"
+        string sender_bank_code "kod banky odesilatele"
+        string message "zprava pro prijemce"
+        string transaction_type "typ transakce"
         date date
     }
     DU_MEMBERSHIP {
@@ -519,6 +528,7 @@ erDiagram
         int id PK
         int person_id FK
         int course_id FK
+        int source_event_id FK "z jake vzdelavaci akce (volitelne)"
         date completed_on
         date valid_to
         string certificate_file
