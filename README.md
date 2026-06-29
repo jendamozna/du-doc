@@ -164,7 +164,8 @@ flowchart TD
 
 #### Družina
 
-- Má své Vedoucí, Rádce a členy
+- Členy družiny mohou být členové, hosté, Vedoucí a Rádci z oddílu
+- Družina může mít vlastní chytré sloupce nad rámec sloupců oddílu
 
 ### Přihlašování do systému
 
@@ -191,13 +192,13 @@ flowchart TD
 
 #### Typy akcí
 
-- Pravidelné kluby
-- Jednorázové akce
-- Víkendovky
-- Vzdělávací - vyžaduje tituly, adresu trvalého bydliště
-- S doporučením mentora, vedoucího - system osloví zadané vedoucí/mentory o doplnění očekávání, potvrzení
-- Jednoosobové - obecná přihláška
-- Klubové - lze přihlašovat více účastníků včetně jejich zákonných zástupců najednou
+- Pravidelné kluby - pro účely zíápisu docházky
+- Jednorázové akce - bez potřeby registrace
+- Víkendovky/jednoosobové = Obecná přihláška
+- Kurz - vazba na nabízené kurzy ústředí
+- S certifikátem - v přihlašovacím formuláři je navíc pole pro tituly (před/za) a povinná adresu trvalého bydliště
+- S doporučením mentora, vedoucího - v přihlašovacím formuláři je pole na vyplněné kontaktů. Systém osloví zadané mentory a vedoucí o doplnění očekávání vedoucího/účastníka a potvrzení přihlášky
+- Skupinové - v přihlašovacím formuláři lze vyplnit více účastníků včetně jejich zákonných zástupců najednou
 
 #### Přihlašování na akce
 
@@ -298,6 +299,7 @@ erDiagram
     ACCOUNT ||--o{ USER_ROLE : has
 
     PATROL ||--o{ PATROL_MEMBER : contains
+    PATROL ||--o{ CUSTOM_FIELD : scopes
 
     EVENT ||--o{ EVENT_PRICE : has
     EVENT ||--o{ CANCELLATION_RULE : has
