@@ -161,6 +161,7 @@ flowchart TD
 - Typy oddílů: IČO ústředí, Pobočný spolek (vlastní IČO), kolektivní člen (bez DU v názvu, vlastní IČO)
 - Ústředí je **speciální typ oddílu** určený pro celostátní akce. **Nemá registrované členy**.
 - Registrace - Je možné vytvořit formulář (na úrovni oddílu) určený k registraci s možností zvolit políčka k vyplnění o členovi (lze vybírat z chytré tabulky)
+- Oddíl si vede vlastní seznam lokací (GPS souřadnice a volitelně adresa), které jsou viditelné jen v rámci klubu; lze je přiřadit jako sídlo oddílu i jako místo konání akce
 
 #### Družina
 
@@ -179,9 +180,12 @@ flowchart TD
 - Hlavní vedoucí vytváří akce
 - Hlavní vedoucí přiřazuje k akcím Vedoucí - získají přístup k přihláškám, nastaví jim uroveň oprávnění, zda můžou editovat akci, přihlášky, ceny, atd.
 - Každá akce může být svazána s maximálně jedním bankovním účtem
+- Každá akce může mít místo konání vybrané z lokací oddílu (GPS)
 - Název, SS, max kapacita, počet náhradníků, ceny pro členy DU i ostatní, začátek akce, začátek a konec přihlašování, termíny pro storno podmínky
 - Pokud akce vyžaduje dobrovolníky, lze zadat cenu, začátek a konec přihlašování, systém nabídne samostatnou stránku pro přihlášení dobrovolníků
 - Náhradníci - po uvolnění místa jsou informováni vedoucí akce, po výběru náhradníka, náhradník dostane časově omezenou nabídku, po vypršení propadá a vedoucí znovu vybírá.
+- Akce může mít definované sloupce s předdefinovanými hodnotami, ze kterých si účastníci při přihlášení vybírají; sloupec je buď exkluzivní (každou hodnotu může mít jen jeden účastník), nebo sdílený (stejnou hodnotu může zvolit více účastníků)
+- Sloupec může mít podmínku - vyplňují jej a hodnoty vybírají jen účastníci, kteří ji splňují (např. věk, členství DU, role); ostatním se sloupec nezobrazí
 - Akce může být veřejná, vnitřní nebo neveřejná. Každá akce má neveřejnou adresu (sdílecí odkaz), kterou lze sdílet a přihlašovat se přes ni, aniž by se akce publikovala ve veřejném výpisu. Veřejná akce se navíc zobrazuje ve veřejném výpisu portálu, interní akce je viditelná pouze po prihlášeným osobám, kteří jsou členy klubu.
 
 #### Ceny a storna na akcích
@@ -199,6 +203,8 @@ flowchart TD
 - S certifikátem - v přihlašovacím formuláři je navíc pole pro tituly (před/za) a povinná adresu trvalého bydliště
 - S doporučením mentora, vedoucího - v přihlašovacím formuláři je pole na vyplněné kontaktů. Systém osloví zadané mentory a vedoucí o doplnění očekávání vedoucího/účastníka a potvrzení přihlášky
 - Skupinové - v přihlašovacím formuláři lze vyplnit více účastníků včetně jejich zákonných zástupců najednou
+- Stezka - umožňuje po registraci z účastníků vytvořit hlídky pro účely závodu na akci - přiřadit jméno, vybrat kapitána, viz implementační detaily
+- Workshopové - eviduje workshopy (název, popis, gps, lektor, min věk, potřeby, ...), časové bloky pro jejich zařazení a přihlašování účastníků do jednotlivých běhů workshopů
 
 #### Přihlašování na akce
 
@@ -283,6 +289,9 @@ erDiagram
     UNIT ||--o{ USER_ROLE : "scoped to"
     UNIT ||--o{ ATTENDANCE_EVENT : has
     UNIT ||--o{ CUSTOM_FIELD : defines
+    UNIT ||--o{ LOCATION : defines
+    UNIT }o--o| LOCATION : "based at"
+    EVENT }o--o| LOCATION : "held at"
 
     PERSON ||--o| ACCOUNT : has
     PERSON ||--o{ PERSON_UNIT : "tracked in"
@@ -303,9 +312,23 @@ erDiagram
 
     EVENT ||--o{ EVENT_PRICE : has
     EVENT ||--o{ CANCELLATION_RULE : has
+    EVENT ||--o{ EVENT_FIELD : has
     EVENT ||--o{ REGISTRATION : contains
     EVENT }o--o| BANK_ACCOUNT : "linked to"
     EVENT }o--o| REGION : "region snapshot"
+
+    EVENT_FIELD ||--o{ EVENT_FIELD_OPTION : offers
+    EVENT_FIELD_OPTION ||--o{ REGISTRATION_FIELD_VALUE : "chosen by"
+    REGISTRATION ||--o{ REGISTRATION_FIELD_VALUE : selects
+
+    EVENT ||--o{ RACE_PATROL : "race patrols"
+    RACE_PATROL ||--o{ RACE_PATROL_MEMBER : has
+    REGISTRATION ||--o{ RACE_PATROL_MEMBER : "in patrol"
+    EVENT ||--o{ WORKSHOP : offers
+    WORKSHOP ||--o{ WORKSHOP_SLOT : "scheduled in"
+    WORKSHOP }o--o| LOCATION : "held at"
+    WORKSHOP_SLOT ||--o{ WORKSHOP_REGISTRATION : has
+    REGISTRATION ||--o{ WORKSHOP_REGISTRATION : "enrolled in"
 
     REGISTRATION ||--o{ PAYMENT_ALLOCATION : "paid by"
     BANK_ACCOUNT ||--o{ BANK_TRANSACTION : records
@@ -347,6 +370,7 @@ erDiagram
         string type "hq_ico / branch / collective"
         string ico
         bool is_hq
+        int location_id FK "GPS umisteni (volitelne)"
         string smtp_email "Google email pro odchozi komunikaci (volitelne)"
         string smtp_app_password_enc "Heslo aplikaci (Google)"
     }
@@ -418,6 +442,7 @@ erDiagram
         int unit_id FK
         int bank_account_id FK
         int region_id_snapshot FK "region at event creation"
+        int location_id FK "GPS umisteni konani (volitelne)"
         string name
         string ss "specific symbol"
         string type "club / one_off / weekend / training / ..."
@@ -446,6 +471,57 @@ erDiagram
         int event_id FK
         decimal percent
         date valid_until
+    }
+    EVENT_FIELD {
+        int id PK
+        int event_id FK
+        string name
+        string selection_mode "exclusive / shared"
+        string condition "podminka pro vyplneni (vek / DU / role; NULL = vsichni)"
+    }
+    EVENT_FIELD_OPTION {
+        int id PK
+        int event_field_id FK
+        string value "preddefinovana hodnota"
+        int capacity "limit u shared (NULL = bez limitu)"
+    }
+    REGISTRATION_FIELD_VALUE {
+        int id PK
+        int registration_id FK
+        int event_field_option_id FK
+    }
+    RACE_PATROL {
+        int id PK
+        int event_id FK
+        string name
+        int captain_registration_id FK "kapitan"
+        string category "Stezka / Pesinka / Serpa_s_detmi / Pocestni"
+    }
+    RACE_PATROL_MEMBER {
+        int id PK
+        int race_patrol_id FK
+        int registration_id FK
+    }
+    WORKSHOP {
+        int id PK
+        int event_id FK
+        int location_id FK "GPS (volitelne)"
+        string name
+        string description
+        string instructor "lektor"
+        int min_age "min vek"
+        string requirements "potreby"
+    }
+    WORKSHOP_SLOT {
+        int id PK
+        int workshop_id FK
+        string time_block "casovy blok"
+        int capacity
+    }
+    WORKSHOP_REGISTRATION {
+        int id PK
+        int workshop_slot_id FK
+        int registration_id FK
     }
     REGISTRATION {
         int id PK
@@ -525,6 +601,14 @@ erDiagram
         int id PK
         string name
         int validity_months
+    }
+    LOCATION {
+        int id PK
+        int unit_id FK "vlastnik (klub) - viditelne per klub"
+        string name
+        decimal lat "zemepisna sirka"
+        decimal lng "zemepisna delka"
+        string address "volitelne"
     }
     PERSON_COURSE {
         int id PK
@@ -632,6 +716,15 @@ erDiagram
 
 Identifikátory v kódu a databázi (názvy tabulek, sloupců i proměnných) jsou v angličtině; česky zůstává jen uživatelské rozhraní a dokumentace.
 Bankovním účtem se rozumí dvojice číslo účtu a kód banky. Synchronizace bankovních transakcí eviduje částku, ss, vs, název odesílatele, zprávu, účet odesílatele, kod banky odesílatele a typ transakce.
+
+### Stezka - validace kapacity / kategorie
+
+| Kategorie     | Počet                                | Věk                             |
+| ------------- | ------------------------------------ | ------------------------------- |
+| Stezka        | přesně 3                             | max člen ≤ 16, součet věků ≤ 42 |
+| Pesinka       | přesně 3                             | max člen ≤ 12                   |
+| Serpa_s_detmi | 1–3 děti (4–8 let) + 1 doprovod ≥ 16 | —                               |
+| Pocestni      | 2–3                                  | nejmladší ≥ 9                   |
 
 ### Komunikační modul
 
