@@ -279,6 +279,20 @@ flowchart TD
 > Návrh schématu odvozený ze specifikace. Spojovací (M:N) a historizační tabulky jsou uvedeny zvlášť.
 
 ```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "primaryColor": "#eff6ff",
+    "primaryBorderColor": "#1e3a8a",
+    "primaryTextColor": "#0f172a",
+    "secondaryColor": "#f5f3ff",
+    "secondaryBorderColor": "#7c3aed",
+    "tertiaryColor": "#ecfeff",
+    "tertiaryBorderColor": "#0f766e",
+    "lineColor": "#475569"
+  }
+}}%%
 erDiagram
     REGION ||--o{ UNIT_REGION : includes
     UNIT ||--o{ UNIT_REGION : "membership (versioned)"
@@ -295,6 +309,7 @@ erDiagram
 
     PERSON ||--o| ACCOUNT : has
     PERSON ||--o{ PERSON_UNIT : "tracked in"
+    PERSON_UNIT ||--o{ PERSON_UNIT_HISTORY : "state changes"
     PERSON ||--o{ PARENT_CHILD : "as parent"
     PERSON ||--o{ PARENT_CHILD : "as child"
     PERSON ||--o{ PATROL_MEMBER : is
@@ -331,6 +346,7 @@ erDiagram
     REGISTRATION ||--o{ WORKSHOP_REGISTRATION : "enrolled in"
 
     REGISTRATION ||--o{ PAYMENT_ALLOCATION : "paid by"
+    REGISTRATION ||--o{ REFUND : "refunded by"
     BANK_ACCOUNT ||--o{ BANK_TRANSACTION : records
     BANK_TRANSACTION ||--o{ PAYMENT_ALLOCATION : "split into"
     BANK_TRANSACTION |o--o{ DU_MEMBERSHIP : "membership receipt"
@@ -342,17 +358,26 @@ erDiagram
     EVENT ||--o{ PERSON_COURSE : "completed at"
 
     PERSON ||--o{ CONSENT : grants
-    PERSON ||--o{ AUDIT_LOG : "subject of"
+    PERSON ||--o{ GDPR_AUDIT : "subject of"
+    PERSON ||--o{ PERSON_SENSITIVE_DATA : has
+    EVENT }o--o{ PERSON_SENSITIVE_DATA : "context of"
+    PERSON ||--o{ PARENT_INVITATION : "guardian invite"
     PERSON ||--o{ RECOMMENDATION : "as mentor"
     PERSON ||--o{ REPORT_MERGE : "candidate A"
     PERSON ||--o{ REPORT_MERGE : "candidate B"
-    ACCOUNT ||--o{ AUDIT_LOG : "performed by"
+    PERSON ||--o{ MERGE_REQUEST : "as source"
+    PERSON ||--o{ MERGE_REQUEST : "as target"
+    MERGE_REQUEST ||--o{ MERGE_APPROVAL : "approved by"
+    MERGE_REQUEST ||--o{ MERGE_LOG : "logged as"
+    UNIT ||--o{ NAME_EXCEPTION : approves
+    ACCOUNT ||--o{ GDPR_AUDIT : "performed by"
     REGISTRATION ||--o{ SUBSTITUTE_OFFER : offers
     REGISTRATION ||--o{ RECOMMENDATION : requires
     UNIT ||--o{ REGISTRATION_FORM : has
     UNIT ||--o{ UNIT_MODULE : enables
     UNIT ||--o{ UNIT_SETTING : has
     UNIT ||--o{ MANDATE : has
+    UNIT ||--o| UNIT_MAIL_SETTING : "mail config"
     REGISTRATION_FORM ||--o{ FORM_FIELD : contains
     CUSTOM_FIELD ||--o{ FORM_FIELD : "field source"
 
@@ -371,8 +396,6 @@ erDiagram
         string ico
         bool is_hq
         int location_id FK "GPS umisteni (volitelne)"
-        string smtp_email "Google email pro odchozi komunikaci (volitelne)"
-        string smtp_app_password_enc "Heslo aplikaci (Google)"
     }
     UNIT_REGION {
         int id PK
@@ -542,6 +565,13 @@ erDiagram
         string matched_by "auto / manual"
         datetime matched_at
     }
+    REFUND {
+        int id PK
+        int registration_id FK
+        decimal amount
+        string state "pending / sent"
+        datetime created_at
+    }
     BANK_ACCOUNT {
         int id PK
         int unit_id FK
@@ -588,8 +618,8 @@ erDiagram
         int unit_id FK
         int patrol_id FK "optional"
         string name
-        string visibility "owner sees / edits"
-        string permission "advisor sees / edits"
+        string visibility "none / view / edit (vlastnik uctu)"
+        string permission "none / view / edit (radce)"
     }
     CUSTOM_FIELD_VALUE {
         int id PK
@@ -680,14 +710,81 @@ erDiagram
         string key "e.g. reminder_frequency_days"
         string value
     }
-    AUDIT_LOG {
+    UNIT_MAIL_SETTING {
         int id PK
-        int account_id FK "who (NULL = system)"
-        int person_id FK "affected person"
-        string type "merge / unmerge / security / change"
-        string entity
-        string description
+        int unit_id FK
+        string from_email "odesilatel (volitelne)"
+        string smtp_email "Google email pro odchozi komunikaci"
+        string smtp_password_enc "sifrovane heslo aplikaci (libsodium)"
+    }
+    GDPR_AUDIT {
+        int id PK
+        string action "anonymize / purge / ..."
+        int person_id FK "affected person (NULL = bulk)"
+        string scope "person / unit / guests / sensitive"
+        int by_account_id FK "who (NULL = system)"
+        string detail
         datetime created_at
+    }
+    PERSON_SENSITIVE_DATA {
+        int id PK
+        int person_id FK
+        int event_id FK "kontext akce (volitelne)"
+        string category "health / allergy / medication / diet"
+        string content "obsah (mazano po retencni lhute)"
+        datetime created_at
+    }
+    PARENT_INVITATION {
+        int id PK
+        int child_person_id FK
+        string email
+        string token
+        datetime expires
+        int invited_by_account_id FK
+        datetime accepted_at "NULL = nevyrizena"
+        datetime created_at
+    }
+    NAME_WHITELIST {
+        int id PK
+        string name
+        string kind "first / last"
+    }
+    NAME_EXCEPTION {
+        int id PK
+        int unit_id FK
+        string name
+        string kind "first / last"
+        int approved_by_account_id FK "schvalil HVO"
+        datetime created_at
+    }
+    MERGE_REQUEST {
+        int id PK
+        string kind "person / child"
+        int source_person_id FK "tombstone po slouceni"
+        int target_person_id FK "vysledna osoba"
+        int initiator_account_id FK
+        int keep_account_id FK "ktery ucet zustava"
+        string state "pending / ready / rejected / completed / reverted"
+        datetime created_at
+        datetime completed_at
+    }
+    MERGE_APPROVAL {
+        int id PK
+        int merge_request_id FK
+        string party "initiator / candidate / hvo / parent"
+        int account_id FK
+        bool approved "NULL = nerozhodnuto"
+        datetime decided_at
+    }
+    MERGE_LOG {
+        int id PK
+        int merge_request_id FK
+        int source_person_id FK
+        int target_person_id FK
+        json snapshot "pro revert"
+        int merged_by_account_id FK
+        datetime created_at
+        datetime reverted_at "NULL = platne"
     }
     REPORT_MERGE {
         int id PK
@@ -695,5 +792,28 @@ erDiagram
         int person_b_id FK
         string reason "reporting merge (records stay separate)"
         datetime created_at
+    }
+    PERSON_UNIT_HISTORY {
+        int id PK
+        int person_unit_id FK
+        string from_membership "predchozi stav clenstvi"
+        string to_membership "novy stav clenstvi"
+        string from_record "predchozi record_state"
+        string to_record "novy record_state"
+        string note
+        int changed_by_account_id FK
+        datetime changed_at
+    }
+    SCHEDULED_TASK {
+        int id PK
+        string handler "klic do registru handleru"
+        json params "volitelne parametry"
+        string cron "NULL = jednorazove"
+        bool enabled
+        datetime next_run_at "NULL = hned"
+        datetime last_run_at
+        string last_status "ok / error / running"
+        string last_output
+        datetime locked_at "zamek proti soubehu"
     }
 ```
