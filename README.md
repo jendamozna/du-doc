@@ -164,7 +164,7 @@ flowchart TD
 
 - Typy oddílů: IČO ústředí, Pobočný spolek (vlastní IČO), kolektivní člen (bez DU v názvu, vlastní IČO)
 - Ústředí je **speciální typ oddílu** určený pro celostátní akce. **Nemá registrované členy**.
-- Registrace - Je možné vytvořit formulář (na úrovni oddílu) určený k registraci s možností zvolit políčka k vyplnění o členovi (lze vybírat z chytré tabulky)
+- Registrace - chytré sloupce oddílu (viz níže) lze **zařadit do přihlášky na akci** jako volitelná nebo povinná pole; vyplněná hodnota se uloží k osobě
 - Oddíl si vede vlastní seznam lokací (GPS souřadnice a volitelně adresa), které jsou viditelné jen v rámci klubu; lze je přiřadit jako sídlo oddílu i jako místo konání akce
 
 #### Družina
@@ -242,7 +242,7 @@ Tím se stejným modelem pokryjí oba případy z otázky: **ubytování** (jedn
 
 **Šablona dále definuje:**
 
-- **povinná a nabízená pole** přihlašovacího formuláře (napojení na registrační formulář / chytré sloupce — např. tituly a trvalé bydliště u certifikátu, kontakty na mentora u doporučení),
+- **povinná a nabízená pole** přihlašovacího formuláře (**zařazení chytrých sloupců oddílu** do přihlášky jako volitelné/povinné — např. tituly a trvalé bydliště u certifikátu, kontakty na mentora u doporučení),
 - **zapnuté subsystémy** (hlídky Stezky, workshopy, doporučení mentora, více účastníků u skupinových, vazba na kurz ústředí),
 - **výchozí povinné dokumenty** (např. potvrzení o lékařské způsobilosti),
 - **výchozí hodnoty** cen podle typu účastníka, storno termínů, kapacity a počtu náhradníků, podpory dobrovolníků, referenčního data pro výpočet věku (**věk ke konci roku** vs. k datu akce).
@@ -463,13 +463,12 @@ erDiagram
     ACCOUNT ||--o{ GDPR_AUDIT : "performed by"
     REGISTRATION ||--o{ SUBSTITUTE_OFFER : offers
     REGISTRATION ||--o{ RECOMMENDATION : requires
-    UNIT ||--o{ REGISTRATION_FORM : has
     UNIT ||--o{ UNIT_MODULE : enables
     UNIT ||--o{ UNIT_SETTING : has
     UNIT ||--o{ MANDATE : has
     UNIT ||--o| UNIT_MAIL_SETTING : "mail config"
-    REGISTRATION_FORM ||--o{ FORM_FIELD : contains
-    CUSTOM_FIELD ||--o{ FORM_FIELD : "field source"
+    EVENT ||--o{ EVENT_CUSTOM_FIELD : collects
+    CUSTOM_FIELD ||--o{ EVENT_CUSTOM_FIELD : "included in"
 
     REGION {
         int id PK
@@ -804,18 +803,11 @@ erDiagram
         string state "requested / confirmed / rejected"
         datetime confirmed_at
     }
-    REGISTRATION_FORM {
+    EVENT_CUSTOM_FIELD {
         int id PK
-        int unit_id FK
-        string name
-        bool active
-    }
-    FORM_FIELD {
-        int id PK
-        int form_id FK
-        int custom_field_id FK "optional (field source)"
-        string name
-        bool required
+        int event_id FK
+        int custom_field_id FK "chytry sloupec oddilu/druziny zarazeny do prihlasky"
+        bool required "true = povinne pole prihlasky, false = volitelne"
     }
     MANDATE {
         int id PK
