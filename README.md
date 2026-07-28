@@ -182,19 +182,43 @@ flowchart TD
 - Každá akce může být svazána s maximálně jedním bankovním účtem
 - Každá akce může mít místo konání vybrané z lokací oddílu (GPS)
 - Název, SS, max kapacita, počet náhradníků, ceny pro členy DU i ostatní, začátek akce, začátek a konec přihlašování, termíny pro storno podmínky
-- Pokud akce vyžaduje dobrovolníky, lze zadat cenu, začátek a konec přihlašování, systém nabídne samostatnou stránku pro přihlášení dobrovolníků
+- **Evidence dobrovolníků (volitelná, per akce):** je-li u akce zapnutá (`volunteers_enabled`), systém nabídne **samostatnou stránku pro přihlášení dobrovolníků** s vlastní cenou a začátkem/koncem přihlašování. Dobrovolníci se **evidují odděleně od účastníků** — mají vlastní kategorii přihlášky (`volunteer`), **nezapočítávají se do kapacity ani do počtu náhradníků** akce a vedou se ve zvláštním seznamu. Bez zapnutí se dobrovolnická stránka nenabízí.
 - Náhradníci - po uvolnění místa jsou informováni vedoucí akce, po výběru náhradníka, náhradník dostane časově omezenou nabídku, po vypršení propadá a vedoucí znovu vybírá.
-- Akce může mít definované sloupce s předdefinovanými hodnotami, ze kterých si účastníci při přihlášení vybírají; sloupec je buď exkluzivní (každou hodnotu může mít jen jeden účastník), nebo sdílený (stejnou hodnotu může zvolit více účastníků)
-- Sloupec může mít podmínku - vyplňují jej a hodnoty vybírají jen účastníci, kteří ji splňují (např. věk, členství DU, role); ostatním se sloupec nezobrazí
+- Akce může mít libovolný počet **výběrových číselníků** s předdefinovanými hodnotami, ze kterých si účastníci za daných podmínek vybírají (exkluzivně = hodnotu zvolí jen jeden účastník, nebo sdíleně = stejnou hodnotu více účastníků); položka může nést cenový příplatek — viz **Výběrové číselníky akce (obecný model)**
 - Akce může být veřejná, vnitřní nebo neveřejná. Každá akce má neveřejnou adresu (sdílecí odkaz), kterou lze sdílet a přihlašovat se přes ni, aniž by se akce publikovala ve veřejném výpisu. Veřejná akce se navíc zobrazuje ve veřejném výpisu portálu, interní akce je viditelná pouze po prihlášeným osobám, kteří jsou členy klubu.
+- Akce může definovat **povinné dokumenty**, které musí účastník k přihlášce nahrát (např. potvrzení o lékařské způsobilosti); u každého dokumentu se určí název a zda je povinný. Seznam a povinnost se přebírají z **šablony akce (ActionTemplate)** jako výchozí a lze je **přepsat v nastavení konkrétní akce**. U náhradníka se upload zpřístupní až po schválení přihlášky.
+
+#### Výběrové číselníky akce (obecný model)
+
+Obecný, znovupoužitelný mechanismus: vedoucí u libovolné akce nadefinuje **libovolný počet číselníků** (`EVENT_FIELD`), z nichž si účastník při přihlášení vybírá předdefinované hodnoty. Model je společný pro různé účely (např. výběr lůžka/pokoje, turnusu, dopravy, trika, role).
+
+- **Číselník** (`EVENT_FIELD`) patří akci a má název a množinu **položek** (`EVENT_FIELD_OPTION`) — předdefinovaných hodnot. Volitelně nese **veřejný komentář** (`comment`, popis/instrukce pro účastníka) i **neveřejnou poznámku** (`internal_note`, jen pro vedoucí).
+- **Režim výběru** (`selection_mode`):
+  - **exkluzivní** — položku může zvolit **nejvýše jeden účastník** (1:1, např. konkrétní lůžko); po výběru se ostatním přestane nabízet,
+  - **sdílený** — stejnou položku může zvolit **více účastníků**; počet omezuje **kapacita položky** (viz níže).
+- **Kapacita položky** (`EVENT_FIELD_OPTION.capacity`): max počet účastníků, kteří mohou danou položku zvolit — `1` = **unikátní** (např. konkrétní stanoviště nebo lůžko), `> 1` = **více** (např. ubytovací kapacita budovy), `NULL` = bez limitu. Po naplnění se položka přestane nabízet; exkluzivní režim odpovídá kapacitě `1` u všech položek.
+- **Podmínka způsobilosti** (`condition`, `NULL` = všichni): číselník se zobrazuje a hodnoty vybírají jen účastníci, kteří podmínku splňují (např. věk, členství DU, role); ostatním se skryje.
+- **Počet voleb** (`max_select`): číselník je buď **jednovýběrový** (`max_select = 1`, např. typ ubytování), nebo **vícevýběrový** (`max_select > 1` / `NULL` = bez limitu, např. výběr jídel).
+- **Povinnost a fáze** (`required_phase`, `NULL` = nepovinný): u povinného číselníku určuje, kdy nejpozději musí účastník volbu provést:
+  - `on_submit` — už **při odeslání přihlášky** (bez volby nelze přihlášku odeslat; výchozí),
+  - `before_payment` — nejpozději **před výzvou k platbě / úhradou**,
+  - `before_event` — nejpozději **před konáním akce**.
+  - U **náhradníka** se povinný výběr (stejně jako dokumenty) vynucuje až **po schválení přihlášky**.
+- **Cenový příplatek položky** (`EVENT_FIELD_OPTION.price_modifier`, může být `0` i záporný): výběr položky upraví cenu přihlášky. **Celková cena = základní cena podle typu účastníka (`EVENT_PRICE`) + součet příplatků zvolených položek.**
+- **Výběr účastníka** je vazba registrace ↔ položka (`REGISTRATION_FIELD_VALUE`); u vícevýběrového číselníku vznikne více vazeb.
+
+Tím se stejným modelem pokryjí oba případy z otázky: **ubytování** (jednovýběrový číselník budova/stan, kde „budova“ nese vyšší příplatek) i **strava** (vícevýběrový číselník snídaně/oběd/večeře, každá položka s vlastní cenou).
 
 #### Ceny a storna na akcích
 
 - Systém umožňuje definovat více cen platných v různých termínech pro různé typy účastníků - DU, bez DU, dobrovolníky, oddílové vedoucí i děti oddílových vedoucích a sponzorské ceny
+- Volitelné příplatky (ubytování, strava apod.) se modelují přes **výběrové číselníky** — každá položka může nést cenový příplatek; výsledná cena přihlášky = základní cena + součet příplatků zvolených položek (viz **Výběrové číselníky akce**)
 - Systém umožnuje definovat storno poplatky procentuálně v různých termínech
 - Vratky schvaluje a odesílá Účetní nebo HVO ručně po skončení akce
 
 #### Typy akcí
+
+Každý typ akce odpovídá **šabloně akce (ActionTemplate)** — viz níže. Šablona určuje, co daný typ zapíná a vyžaduje.
 
 - Pravidelné kluby - pro účely zíápisu docházky
 - Jednorázové akce - bez potřeby registrace
@@ -203,16 +227,61 @@ flowchart TD
 - S certifikátem - v přihlašovacím formuláři je navíc pole pro tituly (před/za) a povinná adresu trvalého bydliště
 - S doporučením mentora, vedoucího - v přihlašovacím formuláři je pole na vyplněné kontaktů. Systém osloví zadané mentory a vedoucí o doplnění očekávání vedoucího/účastníka a potvrzení přihlášky
 - Skupinové - v přihlašovacím formuláři lze vyplnit více účastníků včetně jejich zákonných zástupců najednou
-- Stezka - umožňuje po registraci z účastníků vytvořit hlídky pro účely závodu na akci - přiřadit jméno, vybrat kapitána, viz implementační detaily
+- Stezka - umožňuje po registraci z účastníků vytvořit hlídky pro účely závodu na akci (přiřadit jméno, vybrat kapitána, přiřadit rozhodčí ke stanovištím) - viz **Hlídky na závodních akcích**
 - Workshopové - eviduje workshopy (název, popis, gps, lektor, min věk, potřeby, ...), časové bloky pro jejich zařazení a přihlašování účastníků do jednotlivých běhů workshopů
+
+#### Šablony akcí (ActionTemplate)
+
+- Každý typ akce odpovídá **šabloně (ActionTemplate)** — předpřipravené konfiguraci, ze které HVO/Vedoucí zakládá konkrétní akci. Šablona sjednocuje, co daný typ zapíná a vyžaduje, aby se pro každou akci nemuselo nastavovat vše ručně.
+- Šablona definuje:
+  - **typ** (`club` / `one_off` / `weekend` / `course` / `certificate` / `recommendation` / `group` / `race` / `workshop`),
+  - **povinná a nabízená pole** přihlašovacího formuláře (napojení na registrační formulář / chytré sloupce — např. tituly a trvalé bydliště u typu s certifikátem, kontakty na mentora u doporučení),
+  - **zapnuté subsystémy** (hlídky Stezky, workshopy, doporučení mentora, více účastníků u skupinových, vazba na kurz ústředí),
+  - **výchozí povinné dokumenty** (např. potvrzení o lékařské způsobilosti),
+  - **výchozí hodnoty** cen podle typu účastníka, storno termínů, kapacity a počtu náhradníků, podpory dobrovolníků, referenčního data pro výpočet věku (**věk ke konci roku** vs. k datu akce).
+- **Rozsah šablony:** systémové šablony spravuje ADM (ústředí) a jsou dostupné všem oddílům; oddíl si může nad jejich rámec založit vlastní (unit-scoped) šablony.
+- **Snapshot při založení akce:** akce si při vzniku uloží odkaz na šablonu (`action_template_id`); pozdější úprava šablony nemění už založené akce.
+- Šablony jsou vstupem pro AI návrh nové akce (viz `AI_support.md`) — předvyplní název, termíny a storno podle typu.
+
+#### Hlídky na závodních akcích (Stezka)
+
+Akce typu **Stezka** umožní z registrovaných účastníků sestavit **hlídky** (družstva) pro závod. Vedoucí (majitel registrace) skládá hlídky z účastníků své registrace a potvrzených podregistrací (**club scope** = vlastní registrace + podregistrace, jejichž stav není `Canceled` / `Expired` / `New`).
+
+- **Vlastnictví:** hlídku vlastní registrace, která ji založila (`owner_registration_id`); upravovat/smazat ji smí jen vlastník. Název hlídky je v rámci akce unikátní.
+- **Členství:** účastník je nejvýše v jedné hlídce. Jeden člen je kapitán (`role = leader`), ostatní `member`. Při vstupu do prázdné hlídky kategorie Stezka/Pěšinka se první člen stane kapitánem automaticky; u ostatních kategorií se kapitán volí ručně.
+- **Výpočet věku:** referenční datum pro výpočet věku řídí konfigurační volba akce **„věk ke konci roku"** (`age_at_year_end`). Je-li zapnutá (výchozí), věk se počítá ke **konci aktuálního roku** (31. 12.): `věk = rok(31. 12. letošního roku) − rok(datum narození)`; je-li vypnutá, počítá se k **datu konání akce**. Rozdíl let přes date diff. Chybí-li datum narození, člena nelze plně ověřit a kontrola konzistence to hlásí.
+- **Kategorie a pravidla složení:**
+
+| Kategorie         | Počet členů | Způsobilost                  | Věková pravidla                                    |
+| ----------------- | ----------- | ---------------------------- | -------------------------------------------------- |
+| **Stezka**        | přesně 3    | každý závodník               | nejstarší ≤ 16; součet věků ≤ 42                   |
+| **Pěšinka**       | přesně 3    | každý závodník               | nejstarší ≤ 12                                     |
+| **Šerpa s dětmi** | 3–4         | závodník / šerpa / dítě < 16 | právě 1 doprovod ≥ 16; 1–3 děti (věk < 4 nebo > 8) |
+| **Pocestní**      | 2–3         | každý závodník               | nejmladší ≥ 9                                      |
+
+- **Kontrola konzistence:** pravidla složení ověřuje jediná čistá funkce. Poruší-li hlídka pravidla po změně relevantního pole člena (věk, příznak závodníka, kategorie), **hlídka se rozpustí** — všichni členové se odpojí, hlídka se smaže a vlastník je informován s důvodem.
+- **Připomínka (job):** N dní před akcí systém upozorní vedoucí na závodníky bez hlídky (přeskočí, pokud už dnes připomínku dostali).
+- Každá mutace hlídky se **loguje** (založení, vstup, odchod, úprava, smazání; aktér = e-mail vedoucího).
+
+##### Stanoviště a rozhodčí
+
+Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke **stanovištím**. Stanoviště jsou modelována jako **výběrový číselník akce** (`EVENT_FIELD` s `assigned_by = leader`): jednotlivá stanoviště jsou jeho **položky** (`EVENT_FIELD_OPTION`) a přiřazení rozhodčího je `REGISTRATION_FIELD_VALUE`. Přiřazení ke stanovišti je vzájemně výlučné s členstvím v hlídce — účastník je buď závodník v hlídce, nebo dospělý na stanovišti, nikdy obojí.
+
+- **Číselník „Stanoviště“** patří akci; přiřazení stanoviště platí jen v rámci ní.
+- **Přiřazuje vedoucí** (`assigned_by = leader`) **až po registraci** — vybírá se pouze z osob z club scope (vlastní registrace + potvrzené podregistrace).
+- **Způsobilost rozhodčího** (`condition`): osoba z club scope, dospělá (≥ 16), která není závodník ani šerpa a není v žádné hlídce.
+- **Kapacita položky**: běžné stanoviště má `capacity = 1` (nejvýše jeden rozhodčí); pseudo-stanoviště „Jakékoliv“ má `capacity = NULL` (více rozhodčích). `max_select = 1` — rozhodčí je nejvýše na jednom stanovišti.
+- Přiřazení je **upsert** (nejvýše jedno na osobu a akci); stanoviště s `capacity = 1` nelze obsadit, je-li už zabrané jiným rozhodčím.
 
 #### Přihlašování na akce
 
 - Účastník, který nemá účet získa registrací identifikátor (token), kterým si může účet založit (po založení se účet propojí s existující osobou) a spravovat své přihlášky (storno, měnit nebo přidávat další účastníky)
+- **Nezletilý účastník (< 18 let):** věk se odvozuje z pole `datum narození` (`birth_date`). Přihlašuje-li se nezletilý sám (nemá navázaného rodiče, který registraci provádí), musí v přihlášce zadat **e-mail zákonného zástupce**. Systém pošle zástupci žádost o schválení; přihláška zůstává ve stavu `PendingGuardian` a nezapočítává se do kapacity, dokud zástupce neschválí (odkazem v e-mailu). Po schválení přihláška pokračuje standardním tokem (výzva k platbě apod.); neschválí-li zástupce do vypršení, přihláška expiruje. Schválením vzniká vazba rodič ↔ dítě. Chybí-li datum narození, přihlášku nelze vyhodnotit a systém e-mail zástupce vyžádá.
+- **Povinné dokumenty:** akce může vyžadovat nahrání dokumentů (např. **potvrzení o lékařské způsobilosti**, souhlas zákonného zástupce, kopie kartičky pojišťovny). Účastník je může nahrávat **postupně nebo najednou**; dokud nejsou nahrané všechny povinné dokumenty, přihláška je ve stavu `PendingDocuments` (čeká na nahrání povinných dokumentů). **Náhradník** dokumenty nahrává až **po schválení přihlášky** (po přijetí nabídky z náhradnického místa) — do té doby je upload skrytý/uzamčený. Vedoucí u každého dokumentu vidí stav (nahráno / schváleno / zamítnuto) a může nahrání vyžádat připomínkou.
 - Systém posílá potvrzení přihlášky s výzvou k zaplacení (QR kód + platební údaje, pokud je stanovena cena akce)
 - Systém připomíná nezaplacené platby - četnost lze upravit v Nastavení oddílu
 - Systém kategorizuje přihlášky: Učastník, Dobrovolník, Náhradník
-- Stavy přihlášky: Paid, New, Canceled, PartialPaid, Overpayment, PendingPayment, Expired
+- Stavy přihlášky: Paid, New, Canceled, PartialPaid, Overpayment, PendingPayment, PendingGuardian, PendingDocuments, Expired
 
 ### Docházka
 
@@ -297,6 +366,7 @@ erDiagram
     REGION ||--o{ UNIT_REGION : includes
     UNIT ||--o{ UNIT_REGION : "membership (versioned)"
     UNIT ||--o{ EVENT : organizes
+    UNIT ||--o{ ACTION_TEMPLATE : defines
     UNIT ||--o{ BANK_ACCOUNT : has
     UNIT ||--o{ PATROL : has
     UNIT ||--o{ PERSON_UNIT : tracks
@@ -325,18 +395,23 @@ erDiagram
     PATROL ||--o{ PATROL_MEMBER : contains
     PATROL ||--o{ CUSTOM_FIELD : scopes
 
+    ACTION_TEMPLATE ||--o{ EVENT : "instantiated as"
     EVENT ||--o{ EVENT_PRICE : has
     EVENT ||--o{ CANCELLATION_RULE : has
     EVENT ||--o{ EVENT_FIELD : has
     EVENT ||--o{ REGISTRATION : contains
+    EVENT ||--o{ EVENT_DOCUMENT : requires
     EVENT }o--o| BANK_ACCOUNT : "linked to"
     EVENT }o--o| REGION : "region snapshot"
 
     EVENT_FIELD ||--o{ EVENT_FIELD_OPTION : offers
     EVENT_FIELD_OPTION ||--o{ REGISTRATION_FIELD_VALUE : "chosen by"
     REGISTRATION ||--o{ REGISTRATION_FIELD_VALUE : selects
+    EVENT_DOCUMENT ||--o{ REGISTRATION_DOCUMENT : "fulfilled by"
+    REGISTRATION ||--o{ REGISTRATION_DOCUMENT : uploads
 
     EVENT ||--o{ RACE_PATROL : "race patrols"
+    REGISTRATION ||--o{ RACE_PATROL : owns
     RACE_PATROL ||--o{ RACE_PATROL_MEMBER : has
     REGISTRATION ||--o{ RACE_PATROL_MEMBER : "in patrol"
     EVENT ||--o{ WORKSHOP : offers
@@ -466,9 +541,10 @@ erDiagram
         int bank_account_id FK
         int region_id_snapshot FK "region at event creation"
         int location_id FK "GPS umisteni konani (volitelne)"
+        int action_template_id FK "sablona pri zalozeni akce (snapshot)"
         string name
         string ss "specific symbol"
-        string type "club / one_off / weekend / training / ..."
+        string type "club / one_off / weekend / course / certificate / recommendation / group / race / workshop"
         int course_id FK "udeluje kurz po absolvovani (jen vzdelavaci akce)"
         int capacity
         int substitute_count
@@ -480,6 +556,7 @@ erDiagram
         bool volunteers_enabled
         datetime volunteer_registration_from
         datetime volunteer_registration_to
+        bool age_at_year_end "vek pocitan ke konci roku (jinak k datu akce)"
     }
     EVENT_PRICE {
         int id PK
@@ -498,25 +575,54 @@ erDiagram
     EVENT_FIELD {
         int id PK
         int event_id FK
-        string name
-        string selection_mode "exclusive / shared"
-        string condition "podminka pro vyplneni (vek / DU / role; NULL = vsichni)"
+        string name "nazev ciselniku"
+        string comment "verejny popis / instrukce pro ucastnika (NULL = zadny)"
+        string internal_note "neverejna poznamka pro vedouci (NULL = zadna)"
+        string selection_mode "exclusive (1 ucastnik) / shared (vice ucastniku)"
+        string assigned_by "self (ucastnik) / leader (vedouci; napr. stanoviste rozhodcich)"
+        int max_select "kolik polozek smi ucastnik zvolit (1 = jedna; NULL = bez limitu)"
+        string required_phase "kdy je vyber povinny: on_submit / before_payment / before_event (NULL = nepovinny)"
+        string condition "podminka zpusobilosti (vek / DU / role; NULL = vsichni)"
     }
     EVENT_FIELD_OPTION {
         int id PK
         int event_field_id FK
         string value "preddefinovana hodnota"
-        int capacity "limit u shared (NULL = bez limitu)"
+        int capacity "max ucastniku na polozku: 1 = unikatni (napr. stanoviste), >1 = vice (napr. kapacita budovy), NULL = bez limitu"
+        decimal price_modifier "priplatek k zakladni cene (0 = bez vlivu; muze byt zaporny)"
     }
     REGISTRATION_FIELD_VALUE {
         int id PK
         int registration_id FK
         int event_field_option_id FK
     }
+    EVENT_DOCUMENT {
+        int id PK
+        int event_id FK
+        string name "napr. potvrzeni o lekarske zpusobilosti"
+        bool required
+    }
+    REGISTRATION_DOCUMENT {
+        int id PK
+        int registration_id FK
+        int event_document_id FK "ktery pozadavek plni"
+        string file
+        string state "pending / uploaded / approved / rejected"
+        datetime uploaded_at
+    }
+    ACTION_TEMPLATE {
+        int id PK
+        int unit_id FK "NULL = systemova sablona (ADM), jinak vlastni oddilu"
+        string type "club / one_off / weekend / course / certificate / recommendation / group / race / workshop"
+        string name
+        json config "povinna pole, zapnute subsystemy, vychozi ceny/storna/kapacita, vek ke konci roku, povinne dokumenty"
+        bool active
+    }
     RACE_PATROL {
         int id PK
         int event_id FK
-        string name
+        int owner_registration_id FK "vlastnik hlidky (jen ten smi upravit/smazat)"
+        string name "unikatni v ramci akce"
         int captain_registration_id FK "kapitan"
         string category "Stezka / Pesinka / Serpa_s_detmi / Pocestni"
     }
@@ -524,6 +630,7 @@ erDiagram
         int id PK
         int race_patrol_id FK
         int registration_id FK
+        string role "leader / member"
     }
     WORKSHOP {
         int id PK
@@ -553,8 +660,11 @@ erDiagram
         int price_id FK
         string vs "variable symbol"
         string category "participant / volunteer / substitute"
-        string state "New / PendingPayment / PartialPaid / Paid / Overpayment / Canceled / Expired"
+        string state "New / PendingGuardian / PendingDocuments / PendingPayment / PartialPaid / Paid / Overpayment / Canceled / Expired"
         bool is_substitute
+        string guardian_email "e-mail zak. zastupce (nezletily <18 bez rodice; NULL jinak)"
+        string guardian_approval_token "token pro schvaleni zastupcem"
+        datetime guardian_approved_at "NULL = neschvaleno"
         string token "management without account"
     }
     PAYMENT_ALLOCATION {
