@@ -2,7 +2,7 @@
 
 ## Přehled projektu
 
-Systém registrací na akce pro oddíly DU. Strukturu tvoří ústředí, regiony a oddíly. Ústředí zastřešuje všechny oddíly, vede společnou členskou databázi a pořádá celostátní akce; jeho centrální agendu (správa oddílů, regiony, deduplikace, reporty, vzdělávání) zajišťují moduly ústředí. Každý oddíl spravuje vlastní akce, registrace a účastníky. Člen je nezávislá entita — může patřit do více oddílů současně.
+Systém přihlášek na akce pro oddíly DU. Strukturu tvoří ústředí, regiony a oddíly. Ústředí zastřešuje všechny oddíly, vede společnou členskou databázi a pořádá celostátní akce; jeho centrální agendu (správa oddílů, regiony, deduplikace, reporty, vzdělávání) zajišťují moduly ústředí. Každý oddíl spravuje vlastní akce, přihlášky a účastníky. Člen je nezávislá entita — může patřit do více oddílů současně.
 
 **Rozsah:** Veřejný registrační portál, oddílová správa akcí, správa ústředí, self-management pro registrované.
 
@@ -81,8 +81,8 @@ flowchart TD
 - Rodič je osoba, která má vazbu na alespoň jedno dítě (typicky nezletilé)
 - Rodič může zastupovat jedno nebo více nezletilých dětí
 - Jedno dítě může být svázáno s více rodiči (oba zákonní zástupci)
-- Rodič může své zastupované děti přihlašovat na akce a spravovat jejich přihlášky (registrace, storno, platby za dítě) a údaje v systému (adresy, pojišťovny, ...)
-- Vazba rodič ↔ dítě vzniká registraci dítěte rodičem
+- Rodič může své zastupované děti přihlašovat na akce a spravovat jejich přihlášky (přihlášení na akci, storno, platby za dítě) a údaje v systému (adresy, pojišťovny, ...)
+- Vazba rodič ↔ dítě vzniká přihlášením dítěte na akci rodičem
 - Po dosažení zletilosti se zastoupení rodičem přepne do režimu jen pro čtení. Výjimkou je doplnění kontaktního e-mailu dítěte, pokud chybí — slouží k doručení výzvy k převzetí účtu. Zletilý člen může přístup rodiče kdykoli zcela zrušit.
 - Vazbu může zrušit sám rodič (vystoupení), případně HVO na žádost; zrušení se loguje. Zůstane-li nezletilé dítě bez navázaného rodiče, jeho údaje a přihlášky spravuje HVO, dokud se nepřipojí nový zákonný zástupce.
 - Oba rodiče mají plná práva, platí poslední zápis.
@@ -94,6 +94,10 @@ flowchart TD
   - **Osoba** = datový subjekt / účastník; může existovat bez přihlášení (host, nezletilé dítě spravované rodičem)
   - **Účet (uživatel)** = přihlašovací identita (heslo / OAuth), navázaná právě na jednu osobu
 - Jedna osoba má nejvýše jeden účet
+- **Pojmy** (důsledně v celé specifikaci):
+  - **Registrace** = založení **účtu v systému** (identita osoby); _přihlášení do systému_ = následné ověření (heslo / OAuth).
+  - **Přihláška na akci** = účast na konkrétní akci (entita `REGISTRATION`); _přihlásit se na akci_ = vytvořit přihlášku.
+  - Slovo „přihlášení“ samotné se používá jen pro login; účast je vždy „přihláška na akci“.
 
 #### Stav osoby (lifecycle)
 
@@ -105,7 +109,7 @@ flowchart TD
   - `neaktivní → registrovaný člen / host` (reaktivace, pokud se osoba vrátí)
   - `* → archivovaný` (GDPR: po uplynutí retenční doby se osobní a citlivá data anonymizují; zachovají se jen agregované/nepřímo identifikující údaje nutné pro reporting)
 - Stavy `neaktivní` a `archivovaný` jsou kolmé na členský stav výše — určují, zda je záznam živý, uspaný, nebo anonymizovaný.
-- U každého je evidována historie - změny, registrace, pod jakým oddílem
+- U každého je evidována historie - změny, přihlášky, pod jakým oddílem
 
 ### Retence a GDPR
 
@@ -171,7 +175,7 @@ flowchart TD
 ### Přihlašování do systému
 
 - Každý uživatel si může v systému změnit heslo
-- Každý si může vytvořit účet v systému a v něm editovat svojí identitu, kterou může použít při dalších registracích na akce
+- Každý si může vytvořit účet v systému a v něm editovat svojí identitu, kterou může použít při dalších přihláškách na akce
 - Pro přihlášení do aplikace půjde použít účet Google nebo Facebook (OAuth)
 - jeden účet může mít více propojených OAuth identit (Google, Facebook)
 
@@ -205,7 +209,7 @@ Obecný, znovupoužitelný mechanismus: vedoucí u libovolné akce nadefinuje **
   - `before_event` — nejpozději **před konáním akce**.
   - U **náhradníka** se povinný výběr (stejně jako dokumenty) vynucuje až **po schválení přihlášky**.
 - **Cenový příplatek položky** (`EVENT_FIELD_OPTION.price_modifier`, může být `0` i záporný): výběr položky upraví cenu přihlášky. **Celková cena = základní cena podle typu účastníka (`EVENT_PRICE`) + součet příplatků zvolených položek.**
-- **Výběr účastníka** je vazba registrace ↔ položka (`REGISTRATION_FIELD_VALUE`); u vícevýběrového číselníku vznikne více vazeb.
+- **Výběr účastníka** je vazba přihláška ↔ položka (`REGISTRATION_FIELD_VALUE`); u vícevýběrového číselníku vznikne více vazeb.
 
 Tím se stejným modelem pokryjí oba případy z otázky: **ubytování** (jednovýběrový číselník budova/stan, kde „budova“ nese vyšší příplatek) i **strava** (vícevýběrový číselník snídaně/oběd/večeře, každá položka s vlastní cenou).
 
@@ -221,13 +225,13 @@ Tím se stejným modelem pokryjí oba případy z otázky: **ubytování** (jedn
 Každý typ akce odpovídá **šabloně akce (ActionTemplate)** — viz níže. Šablona určuje, co daný typ zapíná a vyžaduje.
 
 - Pravidelné kluby - pro účely zíápisu docházky
-- Jednorázové akce - bez potřeby registrace
+- Jednorázové akce - bez potřeby přihlášky
 - Víkendovky/jednoosobové = Obecná přihláška
 - Kurz - vazba na nabízené kurzy ústředí
 - S certifikátem - v přihlašovacím formuláři je navíc pole pro tituly (před/za) a povinná adresu trvalého bydliště
 - S doporučením mentora, vedoucího - v přihlašovacím formuláři je pole na vyplněné kontaktů. Systém osloví zadané mentory a vedoucí o doplnění očekávání vedoucího/účastníka a potvrzení přihlášky
 - Skupinové - v přihlašovacím formuláři lze vyplnit více účastníků včetně jejich zákonných zástupců najednou
-- Stezka - umožňuje po registraci z účastníků vytvořit hlídky pro účely závodu na akci (přiřadit jméno, vybrat kapitána, přiřadit rozhodčí ke stanovištím) - viz **Hlídky na závodních akcích**
+- Stezka - umožňuje po přihlášení účastníků z nich vytvořit hlídky pro účely závodu na akci (přiřadit jméno, vybrat kapitána, přiřadit rozhodčí ke stanovištím) - viz **Hlídky na závodních akcích**
 - Workshopové - eviduje workshopy (název, popis, gps, lektor, min věk, potřeby, ...), časové bloky pro jejich zařazení a přihlašování účastníků do jednotlivých běhů workshopů
 
 #### Šablony akcí (ActionTemplate)
@@ -245,9 +249,9 @@ Každý typ akce odpovídá **šabloně akce (ActionTemplate)** — viz níže. 
 
 #### Hlídky na závodních akcích (Stezka)
 
-Akce typu **Stezka** umožní z registrovaných účastníků sestavit **hlídky** (družstva) pro závod. Vedoucí (majitel registrace) skládá hlídky z účastníků své registrace a potvrzených podregistrací (**club scope** = vlastní registrace + podregistrace, jejichž stav není `Canceled` / `Expired` / `New`).
+Akce typu **Stezka** umožní z přihlášených účastníků sestavit **hlídky** (družstva) pro závod. Vedoucí (majitel přihlášky) skládá hlídky z účastníků své přihlášky a potvrzených dílčích přihlášek (**club scope** = vlastní přihláška + dílčí přihlášky/podregistrace, jejichž stav není `Canceled` / `Expired` / `New`).
 
-- **Vlastnictví:** hlídku vlastní registrace, která ji založila (`owner_registration_id`); upravovat/smazat ji smí jen vlastník. Název hlídky je v rámci akce unikátní.
+- **Vlastnictví:** hlídku vlastní přihláška, která ji založila (`owner_registration_id`); upravovat/smazat ji smí jen vlastník. Název hlídky je v rámci akce unikátní.
 - **Členství:** účastník je nejvýše v jedné hlídce. Jeden člen je kapitán (`role = leader`), ostatní `member`. Při vstupu do prázdné hlídky kategorie Stezka/Pěšinka se první člen stane kapitánem automaticky; u ostatních kategorií se kapitán volí ručně.
 - **Výpočet věku:** referenční datum pro výpočet věku řídí konfigurační volba akce **„věk ke konci roku"** (`age_at_year_end`). Je-li zapnutá (výchozí), věk se počítá ke **konci aktuálního roku** (31. 12.): `věk = rok(31. 12. letošního roku) − rok(datum narození)`; je-li vypnutá, počítá se k **datu konání akce**. Rozdíl let přes date diff. Chybí-li datum narození, člena nelze plně ověřit a kontrola konzistence to hlásí.
 - **Kategorie a pravidla složení:**
@@ -268,15 +272,15 @@ Akce typu **Stezka** umožní z registrovaných účastníků sestavit **hlídky
 Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke **stanovištím**. Stanoviště jsou modelována jako **výběrový číselník akce** (`EVENT_FIELD` s `assigned_by = leader`): jednotlivá stanoviště jsou jeho **položky** (`EVENT_FIELD_OPTION`) a přiřazení rozhodčího je `REGISTRATION_FIELD_VALUE`. Přiřazení ke stanovišti je vzájemně výlučné s členstvím v hlídce — účastník je buď závodník v hlídce, nebo dospělý na stanovišti, nikdy obojí.
 
 - **Číselník „Stanoviště“** patří akci; přiřazení stanoviště platí jen v rámci ní.
-- **Přiřazuje vedoucí** (`assigned_by = leader`) **až po registraci** — vybírá se pouze z osob z club scope (vlastní registrace + potvrzené podregistrace).
+- **Přiřazuje vedoucí** (`assigned_by = leader`) **až po přihlášení na akci** — vybírá se pouze z osob z club scope (vlastní přihláška + potvrzené dílčí přihlášky).
 - **Způsobilost rozhodčího** (`condition`): osoba z club scope, dospělá (≥ 16), která není závodník ani šerpa a není v žádné hlídce.
 - **Kapacita položky**: běžné stanoviště má `capacity = 1` (nejvýše jeden rozhodčí); pseudo-stanoviště „Jakékoliv“ má `capacity = NULL` (více rozhodčích). `max_select = 1` — rozhodčí je nejvýše na jednom stanovišti.
 - Přiřazení je **upsert** (nejvýše jedno na osobu a akci); stanoviště s `capacity = 1` nelze obsadit, je-li už zabrané jiným rozhodčím.
 
 #### Přihlašování na akce
 
-- Účastník, který nemá účet získa registrací identifikátor (token), kterým si může účet založit (po založení se účet propojí s existující osobou) a spravovat své přihlášky (storno, měnit nebo přidávat další účastníky)
-- **Nezletilý účastník (< 18 let):** věk se odvozuje z pole `datum narození` (`birth_date`). Přihlašuje-li se nezletilý sám (nemá navázaného rodiče, který registraci provádí), musí v přihlášce zadat **e-mail zákonného zástupce**. Systém pošle zástupci žádost o schválení; přihláška zůstává ve stavu `PendingGuardian` a nezapočítává se do kapacity, dokud zástupce neschválí (odkazem v e-mailu). Po schválení přihláška pokračuje standardním tokem (výzva k platbě apod.); neschválí-li zástupce do vypršení, přihláška expiruje. Schválením vzniká vazba rodič ↔ dítě. Chybí-li datum narození, přihlášku nelze vyhodnotit a systém e-mail zástupce vyžádá.
+- Účastník, který nemá účet získá přihláškou identifikátor (token), kterým si může účet založit (po založení se účet propojí s existující osobou) a spravovat své přihlášky (storno, měnit nebo přidávat další účastníky)
+- **Nezletilý účastník (< 18 let):** věk se odvozuje z pole `datum narození` (`birth_date`). Přihlašuje-li se nezletilý sám (nemá navázaného rodiče, který přihlášku provádí), musí v přihlášce zadat **e-mail zákonného zástupce**. Systém pošle zástupci žádost o schválení; přihláška zůstává ve stavu `PendingGuardian` a nezapočítává se do kapacity, dokud zástupce neschválí (odkazem v e-mailu). Po schválení přihláška pokračuje standardním tokem (výzva k platbě apod.); neschválí-li zástupce do vypršení, přihláška expiruje. Schválením vzniká vazba rodič ↔ dítě. Chybí-li datum narození, přihlášku nelze vyhodnotit a systém e-mail zástupce vyžádá.
 - **Povinné dokumenty:** akce může vyžadovat nahrání dokumentů (např. **potvrzení o lékařské způsobilosti**, souhlas zákonného zástupce, kopie kartičky pojišťovny). Účastník je může nahrávat **postupně nebo najednou**; dokud nejsou nahrané všechny povinné dokumenty, přihláška je ve stavu `PendingDocuments` (čeká na nahrání povinných dokumentů). **Náhradník** dokumenty nahrává až **po schválení přihlášky** (po přijetí nabídky z náhradnického místa) — do té doby je upload skrytý/uzamčený. Vedoucí u každého dokumentu vidí stav (nahráno / schváleno / zamítnuto) a může nahrání vyžádat připomínkou.
 - Systém posílá potvrzení přihlášky s výzvou k zaplacení (QR kód + platební údaje, pokud je stanovena cena akce)
 - Systém připomíná nezaplacené platby - četnost lze upravit v Nastavení oddílu
