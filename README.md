@@ -22,13 +22,13 @@ flowchart TD
         ODDILY["<b>Běžné oddíly</b><br/>členové · hosté · družiny · dobrovolníci<br/>akce · platby · bankovní účty · chytré sloupce<br/>role: HVO, VO, VD, RÁD, ÚČE, ROD"]
     end
 
-    PORTAL["<b>Veřejný registrační portál</b><br/>(procházet akce, registrovat se)"]
+    PORTAL["<b>Veřejný registrační portál</b><br/>(procházet akce, přihlásit se na akci)"]
     OSOBA["<b>Osoba</b> (nezávislá entita)<br/>evidována ve více oddílech<br />1 osoba ⇢ max 1 účet"]
 
     MODULY --> REGIONY
     USTODD --> PORTAL
     ODDILY --> PORTAL
-    PORTAL -. "registrace / přihlášení" .-> OSOBA
+    PORTAL -. "registrace účtu / přihlášení do systému" .-> OSOBA
 
     classDef modul fill:#1e3a8a,stroke:#1e293b,stroke-width:2px,color:#ffffff;
     classDef oddil fill:#2563eb,stroke:#1e3a8a,stroke-width:1.5px,color:#ffffff;
