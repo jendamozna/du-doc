@@ -220,31 +220,34 @@ Tím se stejným modelem pokryjí oba případy z otázky: **ubytování** (jedn
 - Systém umožnuje definovat storno poplatky procentuálně v různých termínech
 - Vratky schvaluje a odesílá Účetní nebo HVO ručně po skončení akce
 
-#### Typy akcí
+#### Typy a šablony akcí
 
-Každý typ akce odpovídá **šabloně akce (ActionTemplate)** — viz níže. Šablona určuje, co daný typ zapíná a vyžaduje.
+- **Typ** (`type`) je klasifikace akce (`club` / `one_off` / `weekend` / `course` / `certificate` / `recommendation` / `group` / `race` / `workshop`) — řídí větvení logiky, zapnuté subsystémy, filtrování a reporty.
+- **Šablona (`ActionTemplate`)** je přednastavená konfigurace daného typu, ze které HVO/Vedoucí zakládá konkrétní akci, aby se vše nemuselo nastavovat ručně. **K jednomu typu může existovat více šablon** (systémová i vlastní oddílové s odlišnými výchozími hodnotami).
+- Akce si při vzniku uloží **odkaz na šablonu (`action_template_id`) i vlastní `type`** (snapshot); pozdější úprava šablony už založené akce nemění.
 
-- Pravidelné kluby - pro účely zíápisu docházky
-- Jednorázové akce - bez potřeby přihlášky
-- Víkendovky/jednoosobové = Obecná přihláška
-- Kurz - vazba na nabízené kurzy ústředí
-- S certifikátem - v přihlašovacím formuláři je navíc pole pro tituly (před/za) a povinná adresu trvalého bydliště
-- S doporučením mentora, vedoucího - v přihlašovacím formuláři je pole na vyplněné kontaktů. Systém osloví zadané mentory a vedoucí o doplnění očekávání vedoucího/účastníka a potvrzení přihlášky
-- Skupinové - v přihlašovacím formuláři lze vyplnit více účastníků včetně jejich zákonných zástupců najednou
-- Stezka - umožňuje po přihlášení účastníků z nich vytvořit hlídky pro účely závodu na akci (přiřadit jméno, vybrat kapitána, přiřadit rozhodčí ke stanovištím) - viz **Hlídky na závodních akcích**
-- Workshopové - eviduje workshopy (název, popis, gps, lektor, min věk, potřeby, ...), časové bloky pro jejich zařazení a přihlašování účastníků do jednotlivých běhů workshopů
+**Co jednotlivé typy zapínají / vyžadují** (výchozí obsah šablony):
 
-#### Šablony akcí (ActionTemplate)
+| Typ                             | Kód              | Zapíná / vyžaduje                                                                                                            |
+| ------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Pravidelné kluby                | `club`           | zápis docházky                                                                                                               |
+| Jednorázové akce                | `one_off`        | bez potřeby přihlášky                                                                                                        |
+| Víkendovky / jednoosobové       | `weekend`        | obecná přihláška                                                                                                             |
+| Kurz                            | `course`         | vazba na nabízené kurzy ústředí                                                                                              |
+| S certifikátem                  | `certificate`    | v přihlašovacím formuláři navíc tituly (před/za) a povinná adresa trvalého bydliště                                          |
+| S doporučením mentora/vedoucího | `recommendation` | pole na kontakty; systém osloví mentory/vedoucí o doplnění očekávání a potvrzení přihlášky                                   |
+| Skupinové                       | `group`          | v přihlašovacím formuláři více účastníků vč. zákonných zástupců najednou                                                     |
+| Stezka                          | `race`           | po přihlášení sestavení **hlídek** pro závod (jméno, kapitán, rozhodčí na stanovištích) — viz **Hlídky na závodních akcích** |
+| Workshopové                     | `workshop`       | evidence workshopů (název, popis, GPS, lektor, min. věk, potřeby), časové bloky a přihlašování do jednotlivých běhů          |
 
-- Každý typ akce odpovídá **šabloně (ActionTemplate)** — předpřipravené konfiguraci, ze které HVO/Vedoucí zakládá konkrétní akci. Šablona sjednocuje, co daný typ zapíná a vyžaduje, aby se pro každou akci nemuselo nastavovat vše ručně.
-- Šablona definuje:
-  - **typ** (`club` / `one_off` / `weekend` / `course` / `certificate` / `recommendation` / `group` / `race` / `workshop`),
-  - **povinná a nabízená pole** přihlašovacího formuláře (napojení na registrační formulář / chytré sloupce — např. tituly a trvalé bydliště u typu s certifikátem, kontakty na mentora u doporučení),
-  - **zapnuté subsystémy** (hlídky Stezky, workshopy, doporučení mentora, více účastníků u skupinových, vazba na kurz ústředí),
-  - **výchozí povinné dokumenty** (např. potvrzení o lékařské způsobilosti),
-  - **výchozí hodnoty** cen podle typu účastníka, storno termínů, kapacity a počtu náhradníků, podpory dobrovolníků, referenčního data pro výpočet věku (**věk ke konci roku** vs. k datu akce).
+**Šablona dále definuje:**
+
+- **povinná a nabízená pole** přihlašovacího formuláře (napojení na registrační formulář / chytré sloupce — např. tituly a trvalé bydliště u certifikátu, kontakty na mentora u doporučení),
+- **zapnuté subsystémy** (hlídky Stezky, workshopy, doporučení mentora, více účastníků u skupinových, vazba na kurz ústředí),
+- **výchozí povinné dokumenty** (např. potvrzení o lékařské způsobilosti),
+- **výchozí hodnoty** cen podle typu účastníka, storno termínů, kapacity a počtu náhradníků, podpory dobrovolníků, referenčního data pro výpočet věku (**věk ke konci roku** vs. k datu akce).
+
 - **Rozsah šablony:** systémové šablony spravuje ADM (ústředí) a jsou dostupné všem oddílům; oddíl si může nad jejich rámec založit vlastní (unit-scoped) šablony.
-- **Snapshot při založení akce:** akce si při vzniku uloží odkaz na šablonu (`action_template_id`); pozdější úprava šablony nemění už založené akce.
 - Šablony jsou vstupem pro AI návrh nové akce (viz `AI_support.md`) — předvyplní název, termíny a storno podle typu.
 
 #### Hlídky na závodních akcích (Stezka)
@@ -281,7 +284,8 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 
 - Účastník, který nemá účet získá přihláškou identifikátor (token), kterým si může účet založit (po založení se účet propojí s existující osobou) a spravovat své přihlášky (storno, měnit nebo přidávat další účastníky)
 - **Nezletilý účastník (< 18 let):** věk se odvozuje z pole `datum narození` (`birth_date`). Přihlašuje-li se nezletilý sám (nemá navázaného rodiče, který přihlášku provádí), musí v přihlášce zadat **e-mail zákonného zástupce**. Systém pošle zástupci žádost o schválení; přihláška zůstává ve stavu `PendingGuardian` a nezapočítává se do kapacity, dokud zástupce neschválí (odkazem v e-mailu). Po schválení přihláška pokračuje standardním tokem (výzva k platbě apod.); neschválí-li zástupce do vypršení, přihláška expiruje. Schválením vzniká vazba rodič ↔ dítě. Chybí-li datum narození, přihlášku nelze vyhodnotit a systém e-mail zástupce vyžádá.
-- **Povinné dokumenty:** akce může vyžadovat nahrání dokumentů (např. **potvrzení o lékařské způsobilosti**, souhlas zákonného zástupce, kopie kartičky pojišťovny). Účastník je může nahrávat **postupně nebo najednou**; dokud nejsou nahrané všechny povinné dokumenty, přihláška je ve stavu `PendingDocuments` (čeká na nahrání povinných dokumentů). **Náhradník** dokumenty nahrává až **po schválení přihlášky** (po přijetí nabídky z náhradnického místa) — do té doby je upload skrytý/uzamčený. Vedoucí u každého dokumentu vidí stav (nahráno / schváleno / zamítnuto) a může nahrání vyžádat připomínkou.
+- **Povinné dokumenty:** akce může vyžadovat nahrání dokumentů (např. **potvrzení o lékařské způsobilosti**, souhlas zákonného zástupce, kopie kartičky pojišťovny). Účastník je může nahrávat **postupně nebo najednou**; dokud nejsou nahrané všechny povinné dokumenty, přihláška je ve stavu `PendingDocuments` (čeká na nahrání povinných dokumentů). **Náhradník** dokumenty nahrává až **po schválení přihlášky** (po přijetí nabídky z náhradnického místa) — do té doby je upload skrytý/uzamčený.
+- **Schvalovací flow dokumentů:** vedoucí u každého nahraného dokumentu vidí stav (`uploaded` / `approved` / `rejected`) a dokument buď **schválí**, nebo **zamítne s komentářem** (`review_note`) s důvodem (např. nečitelný, prošlý, nesprávný dokument). Zamítnutí přepne dokument do `rejected`, zaznamená kdo a kdy posoudil (`reviewed_by_account_id`, `reviewed_at`) a **e-mailem vyzve účastníka k opětovnému nahrání**. Přihláška zůstává (příp. se vrátí) do stavu `PendingDocuments`, dokud nejsou všechny povinné dokumenty ve stavu `approved`. Nahrání lze vyžádat i připomínkou.
 - Systém posílá potvrzení přihlášky s výzvou k zaplacení (QR kód + platební údaje, pokud je stanovena cena akce)
 - Systém připomíná nezaplacené platby - četnost lze upravit v Nastavení oddílu
 - Systém kategorizuje přihlášky: Učastník, Dobrovolník, Náhradník
@@ -395,6 +399,7 @@ erDiagram
 
     ACCOUNT ||--o{ OAUTH_IDENTITY : has
     ACCOUNT ||--o{ USER_ROLE : has
+    ACCOUNT ||--o{ REGISTRATION_DOCUMENT : reviews
 
     PATROL ||--o{ PATROL_MEMBER : contains
     PATROL ||--o{ CUSTOM_FIELD : scopes
@@ -612,7 +617,10 @@ erDiagram
         int event_document_id FK "ktery pozadavek plni"
         string file
         string state "pending / uploaded / approved / rejected"
+        string review_note "komentar vedouciho pri zamitnuti (duvod; NULL = bez poznamky)"
+        int reviewed_by_account_id FK "kdo schvalil/zamitl (NULL = neposouzeno)"
         datetime uploaded_at
+        datetime reviewed_at "NULL = neposouzeno"
     }
     ACTION_TEMPLATE {
         int id PK
