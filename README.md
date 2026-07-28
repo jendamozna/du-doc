@@ -501,7 +501,7 @@ erDiagram
         string nickname
         string gender "male / female / other"
         date birth_date "required for registered member"
-        string email
+        string email "kontaktni e-mail (nemusi byt unikatni)"
     }
     PERSON_UNIT {
         int id PK
@@ -515,7 +515,7 @@ erDiagram
     ACCOUNT {
         int id PK
         int person_id FK "1:1"
-        string email
+        string login_email "prihlasovaci e-mail (unikatni); nezavisly na kontaktnim PERSON.email"
         string password_hash
     }
     OAUTH_IDENTITY {
@@ -679,7 +679,6 @@ erDiagram
         string vs "variable symbol"
         string category "participant / volunteer / substitute"
         string state "New / PendingGuardian / PendingDocuments / PendingPayment / PartialPaid / Paid / Overpayment / Canceled / Expired"
-        bool is_substitute
         string guardian_email "e-mail zak. zastupce (nezletily <18 bez rodice; NULL jinak)"
         string guardian_approval_token "token pro schvaleni zastupcem"
         datetime guardian_approved_at "NULL = neschvaleno"
@@ -774,7 +773,7 @@ erDiagram
         int course_id FK
         int source_event_id FK "z jake vzdelavaci akce (volitelne)"
         date completed_on
-        date valid_to
+        date valid_to "cache: completed_on + validity_months"
         string certificate_file
     }
     CONSENT {
