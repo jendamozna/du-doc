@@ -450,6 +450,7 @@ erDiagram
     PERSON ||--o{ CONSENT : grants
     PERSON ||--o{ GDPR_AUDIT : "subject of"
     PERSON ||--o{ PERSON_SENSITIVE_DATA : has
+    UNIT ||--o{ PERSON_SENSITIVE_DATA : owns
     EVENT }o--o{ PERSON_SENSITIVE_DATA : "context of"
     PERSON ||--o{ PARENT_INVITATION : "guardian invite"
     PERSON ||--o{ RECOMMENDATION : "as mentor"
@@ -849,7 +850,8 @@ erDiagram
     PERSON_SENSITIVE_DATA {
         int id PK
         int person_id FK
-        int event_id FK "kontext akce (volitelne)"
+        int unit_id FK "vlastnici oddil (izolace a mazani per oddil)"
+        int event_id FK "kontext akce (volitelne); rizeni retence - mazano do 30 dnu po skonceni akce"
         string category "health / allergy / medication / diet"
         string content "obsah (mazano po retencni lhute)"
         datetime created_at
