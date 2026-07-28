@@ -252,10 +252,10 @@ Tím se stejným modelem pokryjí oba případy z otázky: **ubytování** (jedn
 
 #### Hlídky na závodních akcích (Stezka)
 
-Akce typu **Stezka** umožní z přihlášených účastníků sestavit **hlídky** (družstva) pro závod. Vedoucí (majitel přihlášky) skládá hlídky z účastníků své přihlášky a potvrzených dílčích přihlášek (**club scope** = vlastní přihláška + dílčí přihlášky/podregistrace, jejichž stav není `Canceled` / `Expired` / `New`).
+Akce typu **Stezka** umožní z přihlášených osob sestavit **hlídky** (družstva) pro závod. V jedné přihlášce může být přihlášeno **více osob** (účastníků); vlastník přihlášky skládá hlídky z **osob** své přihlášky a potvrzených dílčích přihlášek (**club scope** = vlastní přihláška + dílčí přihlášky/podregistrace, jejichž stav není `Canceled` / `Expired` / `New`). Hlídka se skládá z těchto osob a jedna z nich je jejím **kapitánem**.
 
 - **Vlastnictví:** hlídku vlastní přihláška, která ji založila (`owner_registration_id`); upravovat/smazat ji smí jen vlastník. Název hlídky je v rámci akce unikátní.
-- **Členství:** účastník je nejvýše v jedné hlídce. Jeden člen je kapitán (`role = leader`), ostatní `member`. Při vstupu do prázdné hlídky kategorie Stezka/Pěšinka se první člen stane kapitánem automaticky; u ostatních kategorií se kapitán volí ručně.
+- **Členství:** každá osoba je nejvýše v jedné hlídce. Jeden člen (osoba) je kapitán (`role = leader`), ostatní `member`. Při vstupu do prázdné hlídky kategorie Stezka/Pěšinka se první člen stane kapitánem automaticky; u ostatních kategorií se kapitán volí ručně.
 - **Výpočet věku:** referenční datum pro výpočet věku řídí konfigurační volba akce **„věk ke konci roku"** (`age_at_year_end`). Je-li zapnutá (výchozí), věk se počítá ke **konci aktuálního roku** (31. 12.): `věk = rok(31. 12. letošního roku) − rok(datum narození)`; je-li vypnutá, počítá se k **datu konání akce**. Rozdíl let přes date diff. Chybí-li datum narození, člena nelze plně ověřit a kontrola konzistence to hlásí.
 - **Kategorie a pravidla složení:**
 
@@ -358,6 +358,10 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 ```mermaid
 %%{init: {
   "theme": "base",
+  "layout": "elk",
+  "elk": {
+    "nodePlacementStrategy": "LINEAR_SEGMENTS"
+  },
   "themeVariables": {
     "background": "#ffffff",
     "primaryColor": "#eff6ff",
@@ -370,6 +374,7 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
     "lineColor": "#475569"
   }
 }}%%
+
 erDiagram
     REGION ||--o{ UNIT_REGION : includes
     UNIT ||--o{ UNIT_REGION : "membership (versioned)"
@@ -409,6 +414,7 @@ erDiagram
     EVENT ||--o{ CANCELLATION_RULE : has
     EVENT ||--o{ EVENT_FIELD : has
     EVENT ||--o{ REGISTRATION : contains
+    REGISTRATION ||--o{ REGISTRATION : "sub-registrations"
     EVENT ||--o{ EVENT_DOCUMENT : requires
     EVENT }o--o| BANK_ACCOUNT : "linked to"
     EVENT }o--o| REGION : "region snapshot"
@@ -422,7 +428,7 @@ erDiagram
     EVENT ||--o{ RACE_PATROL : "race patrols"
     REGISTRATION ||--o{ RACE_PATROL : owns
     RACE_PATROL ||--o{ RACE_PATROL_MEMBER : has
-    REGISTRATION ||--o{ RACE_PATROL_MEMBER : "in patrol"
+    PERSON ||--o{ RACE_PATROL_MEMBER : "in patrol"
     EVENT ||--o{ WORKSHOP : offers
     WORKSHOP ||--o{ WORKSHOP_SLOT : "scheduled in"
     WORKSHOP }o--o| LOCATION : "held at"
@@ -633,16 +639,15 @@ erDiagram
     RACE_PATROL {
         int id PK
         int event_id FK
-        int owner_registration_id FK "vlastnik hlidky (jen ten smi upravit/smazat)"
+        int owner_registration_id FK "vlastnik hlidky = prihlaska, ktera ji zalozila (jen ten smi upravit/smazat)"
         string name "unikatni v ramci akce"
-        int captain_registration_id FK "kapitan"
         string category "Stezka / Pesinka / Serpa_s_detmi / Pocestni"
     }
     RACE_PATROL_MEMBER {
         int id PK
         int race_patrol_id FK
-        int registration_id FK
-        string role "leader / member"
+        int person_id FK "clen hlidky = osoba z club scope prihlasky vlastnika"
+        string role "leader (kapitan) / member"
     }
     WORKSHOP {
         int id PK
@@ -669,6 +674,7 @@ erDiagram
         int id PK
         int event_id FK
         int person_id FK
+        int parent_registration_id FK "nadrazena prihlaska pro dilci prihlasky/podregistrace (NULL = samostatna/hlavni); definuje club scope"
         int price_id FK
         string vs "variable symbol"
         string category "participant / volunteer / substitute"
@@ -925,17 +931,5 @@ erDiagram
         string note
         int changed_by_account_id FK
         datetime changed_at
-    }
-    SCHEDULED_TASK {
-        int id PK
-        string handler "klic do registru handleru"
-        json params "volitelne parametry"
-        string cron "NULL = jednorazove"
-        bool enabled
-        datetime next_run_at "NULL = hned"
-        datetime last_run_at
-        string last_status "ok / error / running"
-        string last_output
-        datetime locked_at "zamek proti soubehu"
     }
 ```
