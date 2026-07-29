@@ -54,6 +54,8 @@ flowchart TD
 - **Časové pásmo:** `Europe/Prague`. Časy se ukládají v UTC a zobrazují v místním čase včetně přechodu na letní/zimní čas; čistě datumové údaje bez času se pásmem nepřepočítávají.
 - **Formát data a času:** česky, den v týdnu s velkým počátečním písmenem, den a měsíc bez úvodních nul — `Středa 29.7. 14:19`. **Rok se zobrazuje jen tehdy, liší-li se od aktuálního** (`Středa 29.7.2025 14:19`).
 - **Jazyk:** čeština (rozhraní i e-maily).
+- **DPH systém neřeší** — oddíly jsou neplátci, ceny akcí jsou konečné. Jediným dopadem DPH je delší retenční lhůta u dokladů, které ji obsahují.
+- Ostatní provozní a technické požadavky (přihlašování přes Google/Facebook, ukládání dokumentů, šifrování přístupových údajů, odchozí pošta, plánované úlohy) viz [docs/non-functional.md](docs/non-functional.md).
 
 ### Role
 
@@ -409,7 +411,7 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 Tento dokument popisuje **co** systém dělá a proč — je určený zadavatelům, hlavním vedoucím, účetním a právníkům. Technické **jak** je vyčleněné do samostatných dokumentů:
 
 | Dokument                                                         | Obsah                                                      |
-| ---------------------------------------------------------------- | ---------------------------------------------------------- |
+| ---------------------------------------------------------------- | ---------------------------------------------------------- | --- | ------------------------------------------------ | ------------------------------------------------------------ | --- | ------------------------------ | ---------------------- |
 | [docs/data-model.md](docs/data-model.md)                         | ER diagram — entity, pole, číselníkové hodnoty, vazby      |
 | [docs/event-fields.md](docs/event-fields.md)                     | model výběrových číselníků akce                            |
 | [docs/registration-lifecycle.md](docs/registration-lifecycle.md) | stavový automat přihlášky — brány, události, lhůty         |
@@ -417,6 +419,5 @@ Tento dokument popisuje **co** systém dělá a proč — je určený zadavatel�
 | [docs/payment-matching.md](docs/payment-matching.md)             | pravidla párování plateb a výpočet stavu úhrady            |
 | [docs/reports.md](docs/reports.md)                               | definice metrik reportů, parametry a rozsah dat            |
 | [docs/fio-sync.md](docs/fio-sync.md)                             | stahování bankovních transakcí z Fio                       |
-| [docs/audit-log.md](docs/audit-log.md)                           | struktura auditního logu                                   |
-| [AI_support.md](AI_support.md)                                   | AI funkce nad systémem                                     |
+| [docs/audit-log.md](docs/audit-log.md)                           | struktura auditního logu                                   |     | [docs/non-functional.md](docs/non-functional.md) | OAuth, úložiště souborů, šifrování, e-maily, plánované úlohy |     | [AI_support.md](AI_support.md) | AI funkce nad systémem |
 | [TODO.md](TODO.md)                                               | hodnocení specifikace a co ještě dopsat                    |
