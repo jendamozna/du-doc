@@ -10,7 +10,10 @@ Implementační detail k modulu párování plateb ([README.md](../README.md) �
   - součet = cena → `Paid`,
   - součet > cena → `Overpayment`.
 - Cena přihlášky = základní cena podle typu účastníka (`EVENT_PRICE`) + součet příplatků zvolených položek číselníků (viz [event-fields.md](event-fields.md)).
-- **Splatnost** se neukládá, počítá se z přihlášky: `MIN(REGISTRATION.created_at + lhůta, EVENT.starts_at)`, kde lhůta je klíč v nastavení oddílu s defaultem 14 dní. Používají ji shodně výzvy k platbě, připomínky i report Platby ([reports.md](reports.md)).
+- **Splatnost je vlastnost akce** a zadává se jedním ze dvou způsobů: relativně (`EVENT.payment_due_days`, např. 14 dní od podání přihlášky), nebo absolutně (`EVENT.payment_due_date`, pevné datum pro celou akci). Vyplňuje se právě jedno z polí; výchozí hodnota přichází ze šablony akce, fallback je 14 dní. Termín přihlášky se pak počítá:
+  - relativně → `MIN(REGISTRATION.created_at + payment_due_days, EVENT.starts_at)`,
+  - absolutně → `payment_due_date` (u přihlášek podávaných po tomto datu platí splatnost ihned).
+    Stejný výpočet používají výzvy k platbě, připomínky i report Platby ([reports.md](reports.md)).
 - U každé alokace se eviduje `matched_by` (`auto` / `manual`), `match_method`, čas spárování a čas odeslání potvrzení.
 
 ## Způsoby spárování (`match_method`)

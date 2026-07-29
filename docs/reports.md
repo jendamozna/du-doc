@@ -184,12 +184,12 @@ Bucket podle data akce (`EVENT.starts_at`), varianta „cash-flow" podle `BANK_T
 | storna               | přihlášky `state = 'Canceled'`, počet + předepsaná částka + storno poplatek dle `CANCELLATION_RULE` |
 | zaplaceno včas/pozdě | podíl přihlášek, kde datum poslední alokace ≤ termín splatnosti (viz níže)                          |
 
-**Termín splatnosti** se nikde neukladá, počítá se relačně: `REGISTRATION.created_at + 14 dní` (lhůta je klíč v nastavení oddílu, default 14). Když akce začíná dřív, platí dřější z obou dat — `MIN(created_at + lhůta, EVENT.starts_at)`. Stejný výpočet používají výzvy k platbě a připomínky, aby report a notifikace nemohly dát různý výsledek.
+**Termín splatnosti** je vlastnost akce a má dvě varianty: relativní (`EVENT.payment_due_days` — počet dní od podání přihlášky, default 14) nebo absolutní (`EVENT.payment_due_date` — pevné datum). U přihlášky se odvodí jako `MIN(REGISTRATION.created_at + payment_due_days, EVENT.starts_at)`, resp. přímo `payment_due_date`. Stejný výpočet používají výzvy k platbě a připomínky, aby report a notifikace nemohly dát různý výsledek.
 
 **Hrany:**
 
-- Splatnost se **nepřepočítává**, když se změní cena přihlášky nebo lhůta v nastavení oddílu — rozhoduje `created_at` přihlášky. Historické reporty tím zůstávají stabilní.
-- Přihláška podaná později než 14 dní před akcí je splatná k začátku akce; přihláška podaná v den akce je splatná ihned a do „pozdě" spadne jen při úhradě po skončení dne.
+- U relativní splatnosti rozhoduje `created_at` přihlášky — změna nastavení akce se do již podáných přihlášek **nepromítá** a historické reporty zůstávají stabilní. U absolutní splatnosti se při změně data posunou všechny přihlášky akce naráz; report proto vrací v `meta` datum, se kterým počítal.
+- Přihláška podána později, než je splatnost akce (nebo méně než `payment_due_days` před začátkem), je splatná ihned a do „pozdě" spadne jen při úhradě po skončení dne podání.
 - U částečně zaplacených přihlášek rozhoduje **poslední** alokace, která dorovnala cenu; nedoplacená přihláška po splatnosti se počítá do pohledávek po splatnosti, ne do „pozdě zaplacených".
 - Odchozí transakce (`amount < 0`) se do inkasa nezapočítávají.
 - Vratky se evidují jako záporná alokace — do „inkasováno" vstupují se znaménkem, aby souhlasil zůstatek.
@@ -233,11 +233,11 @@ Nejcitlivější report — vstupuje do vykazování ústředí, proto je defini
 
 Reporty výše lze postavit nad stávajícím modelem s těmito výjimkami:
 
-| Chybí                                     | Potřebuje report    | Návrh                                                                      |
+| Chybí                                     | Potřebuje report   | Návrh                                                                      |
 | ----------------------------------------- | ------------------ | -------------------------------------------------------------------------- |
-| čas vzniku přihlášky                      | R7 (splatnost)     | `REGISTRATION.created_at` (datetime) — splatnost = `created_at + 14 dní`   |
+| čas vzniku přihlášky                      | R7 (splatnost)     | `REGISTRATION.created_at` (datetime) — výchozí bod relativní splatnosti    |
 | čas přechodu stavu přihlášky              | R7 (storna v čase) | `REGISTRATION.state_changed_at` nebo čtení z `AUDIT_LOG` (action `cancel`) |
-| lhůta splatnosti a hranice dobrovolníka   | R7, R5             | klíče v nastavení oddílu, default 14 dní a 50 hodin                        |
+| hranice krátkodobý/dlouhodobý dobrovolník | R5                 | klíč v nastavení oddílu, default 50 hodin                                  |
 
 Bez těchto polí se příslušné metriky nevrací (ne odhadují) a UI je skryje.
 

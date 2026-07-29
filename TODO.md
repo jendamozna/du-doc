@@ -22,7 +22,7 @@ Orientačně: **~65–70 % hotovo** pro backend/datovou vrstvu, **~35–40 %** p
 | Modul párování plateb              | 🟡 Dořešit      | Princip M:N ano, ale algoritmus párování (tolerance, parsování SS/VS, edge-cases) povrchně.              |
 | Deduplikace / merge                | 🟡 Dořešit      | Flow ano; řešení konfliktů pole-po-poli a revert jen rámcově.                                            |
 | Role a oprávnění                   | 🔴 Gap          | Největší mezera — chybí matice akce × role. „Práva se přidělují u akce" není specifikace.                |
-| Reporty                            | � Ready        | [docs/reports.md](docs/reports.md) — metriky, parametry, scope, hrany, požadavky na model.                 |
+| Reporty                            | � Ready         | [docs/reports.md](docs/reports.md) — metriky, parametry, scope, hrany, požadavky na model.               |
 | Notifikace / e-maily               | 🔴 Gap          | Spousta „systém pošle e-mail", ale žádný katalog (událost → šablona → příjemce → načasování).            |
 | Validace / invarianty              | 🔴 Gap          | Rozpuštěno v próze; chybí pravidla po polích (formáty, povinnosti dle stavu).                            |
 | API / hranice modulů               | 🔴 Gap          | Žádný kontrakt (endpointy/DTO) — pokud má AI dělat i backend API.                                        |
