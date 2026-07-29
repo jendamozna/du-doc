@@ -22,7 +22,7 @@ Business popis žije v [README.md](README.md), implementační detaily v `docs/`
 | Bankovní synchronizace (Fio)       | 🟢 Ready        | [docs/fio-sync.md](docs/fio-sync.md) — token, kurzor, idempotence, rate limit, chybové stavy.                 |
 | Splatnost a stav úhrady            | 🟢 Ready        | Relativní nebo absolutní splatnost na akci; stav se počítá ze součtu alokací.                                 |
 | Lifecycle osoby                    | 🟡 OK / dořešit | Stavy jsou, ale přechody bez guardů/triggerů.                                                                 |
-| Přihlašování na akce               | 🟢 Ready        | [docs/registration-lifecycle.md](docs/registration-lifecycle.md) — brány, události, guardy, lhůty.        |
+| Přihlašování na akce               | 🟢 Ready        | [docs/registration-lifecycle.md](docs/registration-lifecycle.md) — brány, události, guardy, lhůty.            |
 | Modul párování plateb              | 🟡 Dořešit      | [docs/payment-matching.md](docs/payment-matching.md); chybí tolerance částky, pořadí pravidel, víc kandidátů. |
 | Deduplikace / merge                | 🟡 Dořešit      | Flow ano; řešení konfliktů pole-po-poli a revert jen rámcově.                                                 |
 | Role a oprávnění                   | 🔴 Gap          | Největší mezera — chybí matice akce × role. „Práva se přidělují u akce" není specifikace.                     |

@@ -407,15 +407,15 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 
 Tento dokument popisuje **co** systém dělá a proč — je určený zadavatelům, hlavním vedoucím, účetním a právníkům. Technické **jak** je vyčleněné do samostatných dokumentů:
 
-| Dokument                                             | Obsah                                                      |
-| ---------------------------------------------------- | ---------------------------------------------------------- |
-| [docs/data-model.md](docs/data-model.md)             | ER diagram — entity, pole, číselníkové hodnoty, vazby      |
-| [docs/event-fields.md](docs/event-fields.md)         | model výběrových číselníků akce                            |
-| [docs/registration-lifecycle.md](docs/registration-lifecycle.md) | stavový automat přihlášky — brány, události, lhůty    |
-| [docs/race-patrols.md](docs/race-patrols.md)         | hlídky Stezky — výpočet věku, kontrola složení, stanoviště |
-| [docs/payment-matching.md](docs/payment-matching.md) | pravidla párování plateb a výpočet stavu úhrady            |
-| [docs/reports.md](docs/reports.md)                   | definice metrik reportů, parametry a rozsah dat            |
-| [docs/fio-sync.md](docs/fio-sync.md)                 | stahování bankovních transakcí z Fio                       |
-| [docs/audit-log.md](docs/audit-log.md)               | struktura auditního logu                                   |
-| [AI_support.md](AI_support.md)                       | AI funkce nad systémem                                     |
-| [TODO.md](TODO.md)                                   | hodnocení specifikace a co ještě dopsat                    |
+| Dokument                                                         | Obsah                                                      |
+| ---------------------------------------------------------------- | ---------------------------------------------------------- |
+| [docs/data-model.md](docs/data-model.md)                         | ER diagram — entity, pole, číselníkové hodnoty, vazby      |
+| [docs/event-fields.md](docs/event-fields.md)                     | model výběrových číselníků akce                            |
+| [docs/registration-lifecycle.md](docs/registration-lifecycle.md) | stavový automat přihlášky — brány, události, lhůty         |
+| [docs/race-patrols.md](docs/race-patrols.md)                     | hlídky Stezky — výpočet věku, kontrola složení, stanoviště |
+| [docs/payment-matching.md](docs/payment-matching.md)             | pravidla párování plateb a výpočet stavu úhrady            |
+| [docs/reports.md](docs/reports.md)                               | definice metrik reportů, parametry a rozsah dat            |
+| [docs/fio-sync.md](docs/fio-sync.md)                             | stahování bankovních transakcí z Fio                       |
+| [docs/audit-log.md](docs/audit-log.md)                           | struktura auditního logu                                   |
+| [AI_support.md](AI_support.md)                                   | AI funkce nad systémem                                     |
+| [TODO.md](TODO.md)                                               | hodnocení specifikace a co ještě dopsat                    |

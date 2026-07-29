@@ -23,17 +23,17 @@ evaluate(registration):
 
 ## Stavy
 
-| Stav               | Význam                                        | Počítá se do kapacity | Terminální |
-| ------------------ | --------------------------------------------- | --------------------- | ---------- |
-| `New`              | vznikla; čeká na první vyhodnocení nebo na nabídku místa (náhradník) | ne     | ne         |
-| `PendingGuardian`  | čeká na schválení zákonným zástupcem          | ne                    | ne         |
-| `PendingDocuments` | chybí nebo nejsou schválené povinné dokumenty | ano                   | ne         |
-| `PendingPayment`   | nezaplaceno                                   | ano                   | ne         |
-| `PartialPaid`      | zaplacena jen část ceny                       | ano                   | ne         |
-| `Paid`             | uhrazeno přesně (nebo je akce zdarma)         | ano                   | ne         |
-| `Overpayment`      | uhrazeno víc, než je cena                     | ano                   | ne         |
-| `Canceled`         | stornována účastníkem nebo vedoucím           | ne                    | ano        |
-| `Expired`          | propadla, aniž byla dokončena                 | ne                    | ano        |
+| Stav               | Význam                                                               | Počítá se do kapacity | Terminální |
+| ------------------ | -------------------------------------------------------------------- | --------------------- | ---------- |
+| `New`              | vznikla; čeká na první vyhodnocení nebo na nabídku místa (náhradník) | ne                    | ne         |
+| `PendingGuardian`  | čeká na schválení zákonným zástupcem                                 | ne                    | ne         |
+| `PendingDocuments` | chybí nebo nejsou schválené povinné dokumenty                        | ano                   | ne         |
+| `PendingPayment`   | nezaplaceno                                                          | ano                   | ne         |
+| `PartialPaid`      | zaplacena jen část ceny                                              | ano                   | ne         |
+| `Paid`             | uhrazeno přesně (nebo je akce zdarma)                                | ano                   | ne         |
+| `Overpayment`      | uhrazeno víc, než je cena                                            | ano                   | ne         |
+| `Canceled`         | stornována účastníkem nebo vedoucím                                  | ne                    | ano        |
+| `Expired`          | propadla, aniž byla dokončena                                        | ne                    | ano        |
 
 Do kapacity akce se počítají jen přihlášky `category = 'participant'` v nekoncovém stavu mimo `New` a `PendingGuardian`.
 
@@ -84,21 +84,21 @@ stateDiagram-v2
 
 ## Události a jejich dopad
 
-| Událost                              | Spouštěč                          | Guard                                                          | Efekt                                                        |
-| ------------------------------------ | --------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------ |
-| `registration.created`               | účastník / rodič / vedoucí        | otevřené přihlašování, volná kapacita nebo místo náhradníka     | vznik přihlášky s `created_at`, přiřazení VS, `evaluate`      |
-| `guardian.requested`                 | `evaluate` → `PendingGuardian`    | osoba je nezletilá a nemá aktivní vazbu na rodiče               | e-mail zástupci s odkazem, nastavení lhůty                    |
-| `guardian.approved`                  | odkaz v e-mailu                   | token platný, lhůta neuplynula                                  | `guardian_approved_at`, vznik vazby rodič–dítě, `evaluate`    |
-| `guardian.expired`                   | job                               | lhůta uplynula a stav je `PendingGuardian`                      | stav `Expired`, notifikace účastníkovi                        |
-| `document.uploaded`                  | účastník                          | přihláška není terminální; u náhradníka až po přijetí nabídky   | dokument ke schválení, `evaluate`                             |
-| `document.approved` / `rejected`     | vedoucí                           | oprávnění „úprava přihlášek" na akci                            | záznam kdo/kdy/komentář, při zamítnutí e-mail, `evaluate`     |
-| `payment.allocated` / `deallocated`  | párování plateb, účetní           | —                                                               | `evaluate`, potvrzení o platbě (jednou na alokaci)            |
-| `price.changed`                      | změna ceny nebo volby v číselníku | akce ještě neskončila                                           | `evaluate` (může vrátit `Paid` → `PartialPaid`)               |
-| `substitute.offer.accepted`          | náhradník                         | nabídka platná, kapacita stále volná                            | `category` → `participant`, odemknutí dokumentů, `evaluate`   |
-| `substitute.offer.expired`           | job                               | nabídka nepřijata ve lhůtě                                      | nabídka propadá, **přihláška zůstává náhradníkem v `New`**    |
-| `registration.canceled`              | účastník, rodič nebo vedoucí      | stav není terminální                                            | stav `Canceled`, výpočet storno poplatku, uvolnění kapacity   |
-| `registration.expired`               | job                               | zapnuté vypršení nezaplacených a lhůta uplynula                 | stav `Expired`, uvolnění kapacity                             |
-| `event.canceled`                     | vedoucí                           | —                                                               | hromadné `Canceled` s nulovým storno poplatkem, vratky        |
+| Událost                             | Spouštěč                          | Guard                                                         | Efekt                                                       |
+| ----------------------------------- | --------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------- |
+| `registration.created`              | účastník / rodič / vedoucí        | otevřené přihlašování, volná kapacita nebo místo náhradníka   | vznik přihlášky s `created_at`, přiřazení VS, `evaluate`    |
+| `guardian.requested`                | `evaluate` → `PendingGuardian`    | osoba je nezletilá a nemá aktivní vazbu na rodiče             | e-mail zástupci s odkazem, nastavení lhůty                  |
+| `guardian.approved`                 | odkaz v e-mailu                   | token platný, lhůta neuplynula                                | `guardian_approved_at`, vznik vazby rodič–dítě, `evaluate`  |
+| `guardian.expired`                  | job                               | lhůta uplynula a stav je `PendingGuardian`                    | stav `Expired`, notifikace účastníkovi                      |
+| `document.uploaded`                 | účastník                          | přihláška není terminální; u náhradníka až po přijetí nabídky | dokument ke schválení, `evaluate`                           |
+| `document.approved` / `rejected`    | vedoucí                           | oprávnění „úprava přihlášek" na akci                          | záznam kdo/kdy/komentář, při zamítnutí e-mail, `evaluate`   |
+| `payment.allocated` / `deallocated` | párování plateb, účetní           | —                                                             | `evaluate`, potvrzení o platbě (jednou na alokaci)          |
+| `price.changed`                     | změna ceny nebo volby v číselníku | akce ještě neskončila                                         | `evaluate` (může vrátit `Paid` → `PartialPaid`)             |
+| `substitute.offer.accepted`         | náhradník                         | nabídka platná, kapacita stále volná                          | `category` → `participant`, odemknutí dokumentů, `evaluate` |
+| `substitute.offer.expired`          | job                               | nabídka nepřijata ve lhůtě                                    | nabídka propadá, **přihláška zůstává náhradníkem v `New`**  |
+| `registration.canceled`             | účastník, rodič nebo vedoucí      | stav není terminální                                          | stav `Canceled`, výpočet storno poplatku, uvolnění kapacity |
+| `registration.expired`              | job                               | zapnuté vypršení nezaplacených a lhůta uplynula               | stav `Expired`, uvolnění kapacity                           |
+| `event.canceled`                    | vedoucí                           | —                                                             | hromadné `Canceled` s nulovým storno poplatkem, vratky      |
 
 Každá změna stavu se zapisuje s časem, původcem a událostí, která ji vyvolala (systémové změny bez původce) — z toho čte report Platby i auditní log.
 
@@ -114,12 +114,12 @@ Každá změna stavu se zapisuje s časem, původcem a událostí, která ji vyv
 
 ## Časové lhůty
 
-| Lhůta                          | Výchozí          | Kde se nastavuje    |
-| ------------------------------ | ---------------- | ------------------- |
-| schválení zákonným zástupcem   | 7 dní od odeslání žádosti | nastavení oddílu |
-| platnost nabídky náhradníkovi  | 48 hodin         | nastavení oddílu    |
-| splatnost                      | 14 dní od podání | nastavení akce (relativní nebo absolutní) |
-| vypršení nezaplacené přihlášky | vypnuto          | nastavení oddílu    |
+| Lhůta                          | Výchozí                   | Kde se nastavuje                          |
+| ------------------------------ | ------------------------- | ----------------------------------------- |
+| schválení zákonným zástupcem   | 7 dní od odeslání žádosti | nastavení oddílu                          |
+| platnost nabídky náhradníkovi  | 48 hodin                  | nastavení oddílu                          |
+| splatnost                      | 14 dní od podání          | nastavení akce (relativní nebo absolutní) |
+| vypršení nezaplacené přihlášky | vypnuto                   | nastavení oddílu                          |
 
 Vypršení nezaplacené přihlášky je **záměrně vypnuté ve výchozím stavu** — přihlášku ruší vedoucí vědomě, aby systém sám nerušil místa lidem, kteří platí pozdě.
 
