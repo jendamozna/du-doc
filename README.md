@@ -232,7 +232,7 @@ Tím se stejným modelem pokryjí oba případy z otázky: **ubytování** (jedn
 
 | Typ                             | Kód              | Zapíná / vyžaduje                                                                                                                                                                                                                               |
 | ------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Pravidelné kluby                | `club`           | zápis docházky                                                                                                                                                                                                                                  |
+| Pravidelné kluby                | `club`           | zápis docházky; akce bez přihlášek (neotevírá registraci, neřeší cenu ani platbu) — každá schůzka je samostatná datovaná akce                                                                                                                    |
 | Jednorázové akce                | `one_off`        | bez potřeby přihlášky                                                                                                                                                                                                                           |
 | Víkendovky / jednoosobové       | `weekend`        | obecná přihláška                                                                                                                                                                                                                                |
 | Kurz                            | `course`         | vazba na nabízené kurzy ústředí                                                                                                                                                                                                                 |
@@ -295,9 +295,14 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 
 ### Docházka
 
-- Vedoucí můžou vytvářet události i zpětně - např. pravidelné kluby a rovnou vybrat libovolné účastníky ze seznamu osob z oddílu
-- Při evidenci dobrovolníku je možné zadat počet hodin
+- Docházka se vede **přímo na akci** (`EVENT`) — samostatná docházková událost neexistuje. Každý zápis je `ATTENDANCE_RECORD` (akce + osoba), unikátní v rámci akce.
+- Vedoucí můžou vytvářet akce i zpětně - např. pravidelné kluby (typ `club`) a rovnou vybrat libovolné účastníky ze seznamu osob z oddílu
+- **Klubová schůzka je akce bez přihlášek** — nemá otevřenou registraci (`registration_from`/`registration_to` prázdné, `public = false`), takže se u ní nespouští potvrzení přihlášky, výzvy k platbě ani připomínky. Účast se eviduje jen docházkovým záznamem.
+- U akce s přihláškami jsou obě evidence odlišené: `REGISTRATION` = kdo se přihlásil, `ATTENDANCE_RECORD` = kdo se skutečně zúčastnil a kolik odpracoval.
+- Záznam nese `present`, takže se rozliší **nepřítomnost** (zapsán, nedorazil) od **nezapsaného** (žádný záznam).
+- Při evidenci dobrovolníku je možné zadat počet hodin — vždy na `ATTENDANCE_RECORD` téže akce, takže hodiny z klubů i z víkendovek tečou jedním kanálem a report je sčítá z jednoho místa.
 - Systém rozděluje Krátkodobé dobrovolníky (pod 50hod.) a dlouhodobé (nad 50hod.)
+- Zápis docházky je **samostatné oprávnění na akci** — může ho mít i Rádce, který nemá přístup k přihláškám a platbám.
 
 #### Reporty
 
@@ -394,7 +399,6 @@ erDiagram
     UNIT ||--o{ PATROL : has
     UNIT ||--o{ PERSON_UNIT : tracks
     UNIT ||--o{ USER_ROLE : "scoped to"
-    UNIT ||--o{ ATTENDANCE_EVENT : has
     UNIT ||--o{ CUSTOM_FIELD : defines
     UNIT ||--o{ LOCATION : defines
     UNIT ||--o{ DU_MEMBERSHIP : "du members"
@@ -427,6 +431,7 @@ erDiagram
     EVENT ||--o{ REGISTRATION : contains
     REGISTRATION ||--o{ REGISTRATION : "sub-registrations"
     EVENT ||--o{ EVENT_DOCUMENT : requires
+    EVENT ||--o{ ATTENDANCE_RECORD : attendance
     EVENT }o--o| BANK_ACCOUNT : "linked to"
     EVENT }o--o| REGION : "region snapshot"
 
@@ -453,7 +458,6 @@ erDiagram
     BANK_ACCOUNT ||--o{ BANK_TRANSACTION : records
     BANK_TRANSACTION ||--o{ PAYMENT_ALLOCATION : "split into"
 
-    ATTENDANCE_EVENT ||--o{ ATTENDANCE_RECORD : contains
     CUSTOM_FIELD ||--o{ CUSTOM_FIELD_VALUE : has
     COURSE ||--o{ PERSON_COURSE : "offered as"
     COURSE ||--o{ EVENT : "awarded by"
@@ -743,18 +747,12 @@ erDiagram
         int unit_id FK "oddil, pres ktery je osoba clenem DU"
         int year UK
     }
-    ATTENDANCE_EVENT {
-        int id PK
-        int unit_id FK
-        string name
-        date date
-    }
     ATTENDANCE_RECORD {
         int id PK
-        int attendance_event_id FK
-        int person_id FK
-        bool present
-        decimal volunteer_hours
+        int event_id FK,UK "unikat: akce + osoba"
+        int person_id FK,UK
+        bool present "false = zapsan, ale nedorazil; zadny zaznam = nezapsan"
+        decimal volunteer_hours "odpracovane hodiny (jen dobrovolnicka ucast)"
     }
     CUSTOM_FIELD {
         int id PK
