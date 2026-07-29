@@ -396,7 +396,7 @@ erDiagram
     UNIT ||--o{ EVENT : organizes
     UNIT ||--o{ ACTION_TEMPLATE : defines
     UNIT ||--o{ BANK_ACCOUNT : has
-    UNIT ||--o{ PATROL : has
+    UNIT ||--o{ UNIT_PATROL : has
     UNIT ||--o{ PERSON_UNIT : tracks
     UNIT ||--o{ USER_ROLE : "scoped to"
     UNIT ||--o{ CUSTOM_FIELD : defines
@@ -410,7 +410,7 @@ erDiagram
     PERSON_UNIT ||--o{ PERSON_UNIT_HISTORY : "state changes"
     PERSON ||--o{ PARENT_CHILD : "as parent"
     PERSON ||--o{ PARENT_CHILD : "as child"
-    PERSON ||--o{ PATROL_MEMBER : is
+    PERSON ||--o{ UNIT_PATROL_MEMBER : is
     PERSON ||--o{ REGISTRATION : submits
     PERSON ||--o{ DU_MEMBERSHIP : has
     PERSON ||--o{ ATTENDANCE_RECORD : attends
@@ -421,8 +421,8 @@ erDiagram
     ACCOUNT ||--o{ USER_ROLE : has
     ACCOUNT ||--o{ REGISTRATION_DOCUMENT : reviews
 
-    PATROL ||--o{ PATROL_MEMBER : contains
-    PATROL ||--o{ CUSTOM_FIELD : scopes
+    UNIT_PATROL ||--o{ UNIT_PATROL_MEMBER : contains
+    UNIT_PATROL ||--o{ CUSTOM_FIELD : scopes
 
     ACTION_TEMPLATE ||--o{ EVENT : "instantiated as"
     EVENT ||--o{ EVENT_PRICE : has
@@ -555,14 +555,14 @@ erDiagram
         datetime valid_from
         datetime valid_to
     }
-    PATROL {
+    UNIT_PATROL {
         int id PK
         int unit_id FK
         string name
     }
-    PATROL_MEMBER {
+    UNIT_PATROL_MEMBER {
         int id PK
-        int patrol_id FK
+        int unit_patrol_id FK
         int person_id FK
         string role "leader / advisor / member"
     }
@@ -757,7 +757,7 @@ erDiagram
     CUSTOM_FIELD {
         int id PK
         int unit_id FK
-        int patrol_id FK "optional"
+        int unit_patrol_id FK "optional (druzina)"
         string name
         string visibility "none / view / edit (vlastnik uctu)"
         string permission "none / view / edit (radce)"
