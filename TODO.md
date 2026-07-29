@@ -12,7 +12,7 @@ Orientačně: **~65–70 % hotovo** pro backend/datovou vrstvu, **~35–40 %** p
 
 | Sekce                              | Stav            | Poznámka                                                                                                 |
 | ---------------------------------- | --------------- | -------------------------------------------------------------------------------------------------------- |
-| Datový model (ER)                  | 🟢 Ready        | ~50 entit, pole, enumy, FK. Nejsilnější část.                                                            |
+| Datový model (ER)                  | 🟢 Ready        | [docs/data-model.md](docs/data-model.md) — ~50 entit, pole, enumy, FK. Nejsilnější část.                 |
 | Výběrové číselníky (`EVENT_FIELD`) | 🟢 Ready        | Režimy, kapacita, fáze, ceny — dá se kódovat 1:1.                                                        |
 | Hlídky Stezky + stanoviště         | 🟢 Ready        | Kategorie, věková pravidla, konzistenční funkce, logování.                                               |
 | Typy a šablony akcí                | 🟢 Ready        | Tabulka typů + obsah šablony.                                                                            |
@@ -22,7 +22,7 @@ Orientačně: **~65–70 % hotovo** pro backend/datovou vrstvu, **~35–40 %** p
 | Modul párování plateb              | 🟡 Dořešit      | Princip M:N ano, ale algoritmus párování (tolerance, parsování SS/VS, edge-cases) povrchně.              |
 | Deduplikace / merge                | 🟡 Dořešit      | Flow ano; řešení konfliktů pole-po-poli a revert jen rámcově.                                            |
 | Role a oprávnění                   | 🔴 Gap          | Největší mezera — chybí matice akce × role. „Práva se přidělují u akce" není specifikace.                |
-| Reporty                            | 🔴 Gap          | Bulletů dost, ale bez přesných definic metrik (co přesně se počítá, filtry, hranice).                    |
+| Reporty                            | � Ready        | [docs/reports.md](docs/reports.md) — metriky, parametry, scope, hrany, požadavky na model.                 |
 | Notifikace / e-maily               | 🔴 Gap          | Spousta „systém pošle e-mail", ale žádný katalog (událost → šablona → příjemce → načasování).            |
 | Validace / invarianty              | 🔴 Gap          | Rozpuštěno v próze; chybí pravidla po polích (formáty, povinnosti dle stavu).                            |
 | API / hranice modulů               | 🔴 Gap          | Žádný kontrakt (endpointy/DTO) — pokud má AI dělat i backend API.                                        |
@@ -36,7 +36,7 @@ Orientačně: **~65–70 % hotovo** pro backend/datovou vrstvu, **~35–40 %** p
 3. **Katalog notifikací** — tabulka událost → příjemce → šablona → načasování/opakování.
 4. **Validační pravidla a byznys-invarianty** — po polích (formát e-mailu, kdy je `birth_date` povinné, IČO, unikátnosti).
 5. **Algoritmus párování plateb** — přesná pravidla, částečné alokace, přeplatky, ruční řešení.
-6. **Definice reportů** — přesné vzorce metrik (např. „unikátní dítě" napříč akcemi/oddíly).
+6. ~~**Definice reportů**~~ — hotovo, viz [docs/reports.md](docs/reports.md).
 7. **Nefunkční** — měna/timezone/locale, OAuth (Google/Facebook) config, šifrování (`*_enc`, libsodium), úložiště dokumentů, retenční joby.
 8. **API kontrakt / hranice modulů** — pokud AI staví i server (endpointy nebo aspoň use-case seznam).
 

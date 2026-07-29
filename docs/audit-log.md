@@ -1,0 +1,27 @@
+# Auditní log — model
+
+Implementační detail k [README.md](../README.md) → **Retence a GDPR**, kde je uvedená retenční lhůta a rozsah logovaných událostí. Schéma viz [data-model.md](data-model.md).
+
+## Struktura záznamu
+
+Změnové události napříč systémem se zapisují do jediné tabulky `AUDIT_LOG`:
+
+| Pole                              | Význam                                                                              |
+| --------------------------------- | ----------------------------------------------------------------------------------- |
+| `entity_type` + `entity_id`       | cíl operace; odkaz je **polymorfní**, tedy bez cizího klíče                         |
+| `action`                          | `create` / `update` / `delete` / `join` / `leave` / `approve` / `reject` / `cancel` |
+| `unit_id`                         | oddíl, kvůli izolaci a mazání per oddíl                                             |
+| `actor_account_id`, `actor_email` | aktér; `NULL` u účtu = systémový job nebo aktér bez účtu (správa přes token)        |
+| `detail`                          | JSON s tím, co se změnilo, případně důvodem                                         |
+| `created_at`                      | čas                                                                                 |
+
+- Doporučené indexy: `(entity_type, entity_id)` pro historii jednoho záznamu a `(unit_id, created_at)` pro výpis a retenční job.
+- Polymorfní odkaz je vědomý kompromis — cenou za jednu tabulku je chybějící referenční integrita na cíl.
+
+## Co se neloguje sem
+
+Tři evidence zůstávají oddělené, protože nejsou jen auditem:
+
+- `MERGE_LOG` — nese `snapshot` pro revert sloučení osob,
+- `PERSON_UNIT_HISTORY` — typované přechody stavů, které čtou reporty,
+- `GDPR_AUDIT` — doklad o výmazu s vlastní retencí a okruhem čtenářů.
