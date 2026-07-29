@@ -19,7 +19,7 @@ flowchart TD
     end
 
     subgraph REGIONY["Regiony — verzované seskupení běžných oddílů"]
-        ODDILY["<b>Běžné oddíly</b><br/>členové · hosté · družiny · dobrovolníci<br/>akce · platby · bankovní účty · chytré sloupce<br/>role: HVO, VO, VD, RÁD, ÚČE, ROD"]
+        ODDILY["<b>Běžné oddíly</b><br/>členové · hosté · družiny · dobrovolníci<br/>akce · platby · bankovní účty · chytré sloupce<br/>role: HVO, VO, VD, RÁD, ÚČE"]
     end
 
     PORTAL["<b>Veřejný registrační portál</b><br/>(procházet akce, přihlásit se na akci)"]
@@ -51,7 +51,8 @@ flowchart TD
 ### Role
 
 - Uživatel může být ve více rolích, např. Administrátor a zároveň jeden z vedoucích oddílu nebo dobrovolník a rodič
-- Role Hlavní vedoucí oddílu (HVO), Rádce (RÁD), Vedoucí oddílu (VO), Vedoucí družiny (VD), Administrátor (ADM), Účetní (ÚČE), Rodič (ROD)
+- Role Hlavní vedoucí oddílu (HVO), Rádce (RÁD), Vedoucí oddílu (VO), Vedoucí družiny (VD), Administrátor (ADM), Účetní (ÚČE)
+- **Rodič není ukládaná role** — postavení zákonného zástupce se **odvozuje z aktivní vazby `PARENT_CHILD`** (osoba je rodič, pokud má alespoň jednu vazbu ve stavu `active`). Rozsah práv je vždy **per dítě**, ne globální; role rodiče se proto nepřiděluje ani neodebírá a nemůže se rozejít se skutečnou vazbou (zrušení vazby, přechod do `readonly_after_adulthood`).
 - VO/VD nemají pevná globální práva, oprávnění se přidělují u akce / v rámci družiny.
 
 #### Účetní
@@ -191,7 +192,11 @@ flowchart TD
 - **Evidence dobrovolníků (volitelná, per akce):** je-li u akce zapnutá (`volunteers_enabled`), systém nabídne **samostatnou stránku pro přihlášení dobrovolníků** s vlastní cenou a začátkem/koncem přihlašování. Dobrovolníci se **evidují odděleně od účastníků** — mají vlastní kategorii přihlášky (`volunteer`), **nezapočítávají se do kapacity ani do počtu náhradníků** akce a vedou se ve zvláštním seznamu. Bez zapnutí se dobrovolnická stránka nenabízí.
 - Náhradníci - po uvolnění místa jsou informováni vedoucí akce, po výběru náhradníka, náhradník dostane časově omezenou nabídku, po vypršení propadá a vedoucí znovu vybírá.
 - Akce může mít libovolný počet **výběrových číselníků** s předdefinovanými hodnotami, ze kterých si účastníci za daných podmínek vybírají (exkluzivně = hodnotu zvolí jen jeden účastník, nebo sdíleně = stejnou hodnotu více účastníků); položka může nést cenový příplatek — viz **Výběrové číselníky akce (obecný model)**
-- Akce může být veřejná, vnitřní nebo neveřejná. Každá akce má neveřejnou adresu (sdílecí odkaz), kterou lze sdílet a přihlašovat se přes ni, aniž by se akce publikovala ve veřejném výpisu. Veřejná akce se navíc zobrazuje ve veřejném výpisu portálu, interní akce je viditelná pouze po prihlášeným osobám, kteří jsou členy klubu.
+- **Viditelnost akce** (`visibility`) má tři vzájemně výlučné úrovně:
+  - `public` (**veřejná**) — zobrazuje se ve veřejném výpisu portálu, přihlásit se může kdokoli,
+  - `internal` (**vnitřní**) — ve výpisu není; vidí ji jen přihlášená osoba s aktivní vazbou na pořádající oddíl (u akce ústředí všichni registrovaní členové),
+  - `private` (**neveřejná**) — dostupná výhradně přes sdílecí odkaz.
+    Sdílecí odkaz (`share_slug`) má **každá** akce bez ohledu na úroveň — je to přístupová cesta, ne publikace ve výpisu.
 - Akce může definovat **povinné dokumenty**, které musí účastník k přihlášce nahrát (např. potvrzení o lékařské způsobilosti); u každého dokumentu se určí název a zda je povinný. Seznam a povinnost se přebírají z **šablony akce (ActionTemplate)** jako výchozí a lze je **přepsat v nastavení konkrétní akce**. U náhradníka se upload zpřístupní až po schválení přihlášky.
 
 #### Výběrové číselníky akce (obecný model)
@@ -297,7 +302,7 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 
 - Docházka se vede **přímo na akci** (`EVENT`) — samostatná docházková událost neexistuje. Každý zápis je `ATTENDANCE_RECORD` (akce + osoba), unikátní v rámci akce.
 - Vedoucí můžou vytvářet akce i zpětně - např. pravidelné kluby (typ `club`) a rovnou vybrat libovolné účastníky ze seznamu osob z oddílu
-- **Klubová schůzka je akce bez přihlášek** — nemá otevřenou registraci (`registration_from`/`registration_to` prázdné, `public = false`), takže se u ní nespouští potvrzení přihlášky, výzvy k platbě ani připomínky. Účast se eviduje jen docházkovým záznamem.
+- **Klubová schůzka je akce bez přihlášek** — nemá otevřenou registraci (`registration_from`/`registration_to` prázdné, `visibility = private`), takže se u ní nespouští potvrzení přihlášky, výzvy k platbě ani připomínky. Účast se eviduje jen docházkovým záznamem.
 - U akce s přihláškami jsou obě evidence odlišené: `REGISTRATION` = kdo se přihlásil, `ATTENDANCE_RECORD` = kdo se skutečně zúčastnil a kolik odpracoval.
 - Záznam nese `present`, takže se rozliší **nepřítomnost** (zapsán, nedorazil) od **nezapsaného** (žádný záznam).
 - Při evidenci dobrovolníku je možné zadat počet hodin — vždy na `ATTENDANCE_RECORD` téže akce, takže hodiny z klubů i z víkendovek tečou jedním kanálem a report je sčítá z jednoho místa.
@@ -426,6 +431,7 @@ erDiagram
 
     ACTION_TEMPLATE ||--o{ EVENT : "instantiated as"
     EVENT ||--o{ EVENT_PRICE : has
+    EVENT_PRICE ||--o{ REGISTRATION : "priced by"
     EVENT ||--o{ CANCELLATION_RULE : has
     EVENT ||--o{ EVENT_FIELD : has
     EVENT ||--o{ REGISTRATION : contains
@@ -467,7 +473,7 @@ erDiagram
     PERSON ||--o{ GDPR_AUDIT : "subject of"
     PERSON ||--o{ PERSON_SENSITIVE_DATA : has
     UNIT ||--o{ PERSON_SENSITIVE_DATA : owns
-    EVENT }o--o{ PERSON_SENSITIVE_DATA : "context of"
+    EVENT ||--o{ PERSON_SENSITIVE_DATA : "context of"
     PERSON ||--o{ PARENT_INVITATION : "guardian invite"
     PERSON ||--o{ RECOMMENDATION : "as mentor"
     PERSON ||--o{ REPORT_MERGE : "candidate A"
@@ -492,8 +498,8 @@ erDiagram
         string name
         string state "active / merged / cancelled"
         date valid_from
-        date valid_to "NULL = active"
-        int merged_into_region_id FK "successor region"
+        date valid_to "NULL = aktivni"
+        int merged_into_region_id FK "nastupnicky region"
     }
     UNIT {
         int id PK
@@ -501,14 +507,14 @@ erDiagram
         string type "hq_ico / branch / collective"
         string ico
         bool is_hq
-        int location_id FK "GPS umisteni (volitelne)"
+        int location_id FK "sidlo (volitelne)"
     }
     UNIT_REGION {
         int id PK
         int unit_id FK
         int region_id FK
         date valid_from
-        date valid_to "NULL = current"
+        date valid_to "NULL = aktualni"
     }
     PERSON {
         int id PK
@@ -516,7 +522,7 @@ erDiagram
         string last_name
         string nickname
         string gender "male / female / other"
-        date birth_date "required for registered member"
+        date birth_date "povinne u registrovaneho clena"
         string email "kontaktni e-mail (nemusi byt unikatni)"
     }
     PERSON_UNIT {
@@ -531,7 +537,7 @@ erDiagram
     ACCOUNT {
         int id PK
         int person_id FK "1:1"
-        string login_email "prihlasovaci e-mail (unikatni); nezavisly na kontaktnim PERSON.email"
+        string login_email "prihlasovaci e-mail (unikatni)"
         string password_hash
     }
     OAUTH_IDENTITY {
@@ -545,7 +551,7 @@ erDiagram
         int id PK
         int account_id FK
         int unit_id FK "role scope"
-        string role "HVO / VO / VD / RAD / ADM / UCE / ROD"
+        string role "HVO / VO / VD / RAD / ADM / UCE"
     }
     PARENT_CHILD {
         int id PK
@@ -570,19 +576,19 @@ erDiagram
         int id PK
         int unit_id FK
         int bank_account_id FK
-        int region_id_snapshot FK "region at event creation"
-        int location_id FK "GPS umisteni konani (volitelne)"
-        int action_template_id FK "sablona pri zalozeni akce (snapshot)"
+        int region_id_snapshot FK "region pri zalozeni akce"
+        int location_id FK "misto konani (volitelne)"
+        int action_template_id FK "sablona (snapshot)"
         string name
         string ss "specific symbol"
         string type "club / one_off / weekend / course / certificate / recommendation / group / race / workshop"
-        int course_id FK "udeluje kurz po absolvovani (jen vzdelavaci akce)"
+        int course_id FK "udeluje kurz po absolvovani"
         int capacity
         int substitute_count
-        bool public
-        string share_slug "neverejny sdileci odkaz (bez publikace)"
+        string visibility "public / internal / private"
+        string share_slug "neverejny sdileci odkaz"
         datetime starts_at
-        datetime ends_at "konec akce (rizeni retence citlivych dat, vypocet veku k datu akce)"
+        datetime ends_at
         datetime registration_from
         datetime registration_to
         bool volunteers_enabled
@@ -608,20 +614,20 @@ erDiagram
         int id PK
         int event_id FK
         string name "nazev ciselniku"
-        string comment "verejny popis / instrukce pro ucastnika (NULL = zadny)"
-        string internal_note "neverejna poznamka pro vedouci (NULL = zadna)"
-        string selection_mode "exclusive (1 ucastnik) / shared (vice ucastniku)"
-        string assigned_by "self (ucastnik) / leader (vedouci; napr. stanoviste rozhodcich)"
-        int max_select "kolik polozek smi ucastnik zvolit (1 = jedna; NULL = bez limitu)"
-        string required_phase "kdy je vyber povinny: on_submit / before_payment / before_event (NULL = nepovinny)"
-        string condition "podminka zpusobilosti (vek / DU / role; NULL = vsichni)"
+        string comment "verejny popis pro ucastnika"
+        string internal_note "neverejna poznamka pro vedouci"
+        string selection_mode "exclusive / shared"
+        string assigned_by "self / leader"
+        int max_select "max poctu voleb (NULL = bez limitu)"
+        string required_phase "on_submit / before_payment / before_event (NULL = nepovinny)"
+        string condition "podminka zpusobilosti (NULL = vsichni)"
     }
     EVENT_FIELD_OPTION {
         int id PK
         int event_field_id FK
-        string value "preddefinovana hodnota"
-        int capacity "max ucastniku na polozku: 1 = unikatni (napr. stanoviste), >1 = vice (napr. kapacita budovy), NULL = bez limitu"
-        decimal price_modifier "priplatek k zakladni cene (0 = bez vlivu; muze byt zaporny)"
+        string value
+        int capacity "max ucastniku na polozku (1 = unikatni; NULL = bez limitu)"
+        decimal price_modifier "priplatek k zakladni cene (muze byt zaporny)"
     }
     REGISTRATION_FIELD_VALUE {
         int id PK
@@ -631,7 +637,7 @@ erDiagram
     EVENT_DOCUMENT {
         int id PK
         int event_id FK
-        string name "napr. potvrzeni o lekarske zpusobilosti"
+        string name
         bool required
     }
     REGISTRATION_DOCUMENT {
@@ -640,75 +646,75 @@ erDiagram
         int event_document_id FK "ktery pozadavek plni"
         string file
         string state "pending / uploaded / approved / rejected"
-        string review_note "komentar vedouciho pri zamitnuti (duvod; NULL = bez poznamky)"
-        int reviewed_by_account_id FK "kdo schvalil/zamitl (NULL = neposouzeno)"
+        string review_note "duvod zamitnuti"
+        int reviewed_by_account_id FK "kdo posoudil"
         datetime uploaded_at
         datetime reviewed_at "NULL = neposouzeno"
     }
     ACTION_TEMPLATE {
         int id PK
-        int unit_id FK "NULL = systemova sablona (ADM), jinak vlastni oddilu"
+        int unit_id FK "NULL = systemova sablona"
         string type "club / one_off / weekend / course / certificate / recommendation / group / race / workshop"
         string name
-        json config "povinna pole, zapnute subsystemy, vychozi ceny/storna/kapacita, vek ke konci roku, povinne dokumenty"
+        json config "vychozi nastaveni akce"
         bool active
     }
     RACE_PATROL {
         int id PK
         int event_id FK
-        int owner_registration_id FK "vlastnik hlidky = prihlaska, ktera ji zalozila (jen ten smi upravit/smazat)"
+        int owner_registration_id FK "prihlaska, ktera hlidku zalozila"
         string name "unikatni v ramci akce"
         string category "Stezka / Pesinka / Serpa_s_detmi / Pocestni"
     }
     RACE_PATROL_MEMBER {
         int id PK
         int race_patrol_id FK
-        int person_id FK "clen hlidky = osoba z club scope prihlasky vlastnika"
+        int person_id FK "osoba z club scope"
         string role "leader (kapitan) / member"
     }
     WORKSHOP_BLOCK {
         int id PK
         int event_id FK
-        string name "casovy blok akce, napr. dopoledni / odpoledni"
+        string name "casovy blok akce"
         datetime starts_at
         datetime ends_at
     }
     WORKSHOP {
         int id PK
         int event_id FK
-        int location_id FK "GPS (volitelne)"
+        int location_id FK "misto konani (volitelne)"
         string type "workshop / seminar"
         string name
         string description
         string instructor "lektor"
-        int min_age "min vek"
+        int min_age
         string requirements "potreby"
-        int capacity "max ucastniku (plati pro kazdy beh workshopu)"
+        int capacity "max ucastniku na beh"
     }
     WORKSHOP_OFFERING {
         int id PK
-        int block_id FK "casovy blok, ve kterem se workshop/seminar bezi"
-        int workshop_id FK "ktery workshop/seminar (muze se opakovat ve vice blocich)"
+        int workshop_block_id FK "casovy blok"
+        int workshop_id FK "workshop / seminar"
     }
     WORKSHOP_REGISTRATION {
         int id PK
         int workshop_offering_id FK
-        int registration_id FK "prihlaska (club scope), pres kterou je ucastnik zapsan"
-        int person_id FK "konkretni ucastnik z club scope prihlasky"
+        int registration_id FK "prihlaska (club scope)"
+        int person_id FK "ucastnik z club scope"
     }
     REGISTRATION {
         int id PK
         int event_id FK
         int person_id FK
-        int parent_registration_id FK "nadrazena prihlaska pro dilci prihlasky/podregistrace (NULL = samostatna/hlavni); definuje club scope"
+        int parent_registration_id FK "nadrazena prihlaska (NULL = hlavni); definuje club scope"
         int price_id FK
         string vs "variable symbol"
         string category "participant / volunteer / substitute"
         string state "New / PendingGuardian / PendingDocuments / PendingPayment / PartialPaid / Paid / Overpayment / Canceled / Expired"
-        string guardian_email "e-mail zak. zastupce (nezletily <18 bez rodice; NULL jinak)"
-        string guardian_approval_token "token pro schvaleni zastupcem"
+        string guardian_email "e-mail zak. zastupce (nezletily bez rodice)"
+        string guardian_approval_token
         datetime guardian_approved_at "NULL = neschvaleno"
-        string token "management without account"
+        string token "sprava prihlasky bez uctu"
     }
     PAYMENT_ALLOCATION {
         int id PK
@@ -718,14 +724,14 @@ erDiagram
         string matched_by "auto / manual"
         string match_method "ss_vs_amount / ss_vs_partial / ss_vs_overpayment / vs_exact_name / ss_exact_name / vs_partial_name / vs_overpayment_name / manual"
         datetime matched_at
-        datetime confirmation_sent_at "potvrzeni prijate sparovane platby odeslano (NULL = neodeslano)"
+        datetime confirmation_sent_at "NULL = neodeslano"
     }
     BANK_ACCOUNT {
         int id PK
         int unit_id FK
         string name
-        string account_number "cislo uctu"
-        string bank_code "kod banky"
+        string account_number
+        string bank_code
         string api_token_enc
     }
     BANK_TRANSACTION {
@@ -734,37 +740,37 @@ erDiagram
         string ss
         string vs
         decimal amount
-        string sender_name "nazev odesilatele"
-        string sender_account "ucet odesilatele"
-        string sender_bank_code "kod banky odesilatele"
+        string sender_name
+        string sender_account
+        string sender_bank_code
         string message "zprava pro prijemce"
-        string transaction_type "typ transakce"
+        string transaction_type
         date date
     }
     DU_MEMBERSHIP {
         int id PK
-        int person_id FK,UK "unikat: osoba + oddil + rok"
-        int unit_id FK "oddil, pres ktery je osoba clenem DU"
+        int person_id FK,UK "unikat: osoba + rok"
+        int unit_id FK "oddil clenstvi"
         int year UK
     }
     ATTENDANCE_RECORD {
         int id PK
         int event_id FK,UK "unikat: akce + osoba"
         int person_id FK,UK
-        bool present "false = zapsan, ale nedorazil; zadny zaznam = nezapsan"
-        decimal volunteer_hours "odpracovane hodiny (jen dobrovolnicka ucast)"
+        bool present "false = zapsan, nedorazil"
+        decimal volunteer_hours "odpracovane hodiny"
     }
     CUSTOM_FIELD {
         int id PK
         int unit_id FK
-        int unit_patrol_id FK "optional (druzina)"
+        int unit_patrol_id FK "druzina (volitelne)"
         string name
         string visibility "none / view / edit (vlastnik uctu)"
         string permission "none / view / edit (radce)"
     }
     CUSTOM_FIELD_VALUE {
         int id PK
-        int field_id FK
+        int custom_field_id FK
         int person_id FK
         string value
     }
@@ -775,17 +781,17 @@ erDiagram
     }
     LOCATION {
         int id PK
-        int unit_id FK "vlastnik (klub) - viditelne per klub"
+        int unit_id FK "vlastnik"
         string name
-        decimal lat "zemepisna sirka"
-        decimal lng "zemepisna delka"
+        decimal lat
+        decimal lng
         string address "volitelne"
     }
     PERSON_COURSE {
         int id PK
         int person_id FK
         int course_id FK
-        int source_event_id FK "z jake vzdelavaci akce (volitelne)"
+        int source_event_id FK "vzdelavaci akce (volitelne)"
         date completed_on
         date valid_to "cache: completed_on + validity_months"
         string certificate_file
@@ -796,7 +802,7 @@ erDiagram
         string type "processing / photo / health / ..."
         string purpose
         datetime granted_at
-        datetime revoked_at "NULL = valid"
+        datetime revoked_at "NULL = platny"
         date retention_until
     }
     SUBSTITUTE_OFFER {
@@ -810,7 +816,7 @@ erDiagram
     RECOMMENDATION {
         int id PK
         int registration_id FK
-        int mentor_person_id FK "NULL = email only"
+        int mentor_person_id FK "NULL = jen e-mail"
         string mentor_email
         string type "mentor / leader"
         string expectation
@@ -820,8 +826,8 @@ erDiagram
     EVENT_CUSTOM_FIELD {
         int id PK
         int event_id FK
-        int custom_field_id FK "chytry sloupec oddilu/druziny zarazeny do prihlasky"
-        bool required "true = povinne pole prihlasky, false = volitelne"
+        int custom_field_id FK "chytry sloupec zarazeny do prihlasky"
+        bool required "povinne pole prihlasky"
     }
     MANDATE {
         int id PK
@@ -835,38 +841,38 @@ erDiagram
         int unit_id FK
         string code "payment_matching / payment_confirmation / training / custom_fields / reports"
         bool active
-        json config "module-specific settings"
+        json config "nastaveni modulu"
         datetime activated_at
     }
     UNIT_SETTING {
         int id PK
         int unit_id FK
-        string key "e.g. reminder_frequency_days"
+        string key "napr. reminder_frequency_days"
         string value
     }
     UNIT_MAIL_SETTING {
         int id PK
         int unit_id FK
         string from_email "odesilatel (volitelne)"
-        string smtp_email "Google email pro odchozi komunikaci"
-        string smtp_password_enc "sifrovane heslo aplikaci (libsodium)"
+        string smtp_email "e-mail pro odchozi postu"
+        string smtp_password_enc "sifrovane heslo (libsodium)"
     }
     GDPR_AUDIT {
         int id PK
         string action "anonymize / purge / ..."
-        int person_id FK "affected person (NULL = bulk)"
+        int person_id FK "dotcena osoba (NULL = hromadne)"
         string scope "person / unit / guests / sensitive"
-        int by_account_id FK "who (NULL = system)"
+        int by_account_id FK "kdo (NULL = system)"
         string detail
         datetime created_at
     }
     PERSON_SENSITIVE_DATA {
         int id PK
         int person_id FK
-        int unit_id FK "vlastnici oddil (izolace a mazani per oddil)"
-        int event_id FK "kontext akce (volitelne); rizeni retence - mazano do 30 dnu po skonceni akce"
+        int unit_id FK "vlastnici oddil"
+        int event_id FK "kontext akce (volitelne)"
         string category "health / allergy / medication / diet"
-        string content "obsah (mazano po retencni lhute)"
+        string content
         datetime created_at
     }
     PARENT_INVITATION {
@@ -925,16 +931,16 @@ erDiagram
         int id PK
         int person_a_id FK
         int person_b_id FK
-        string reason "reporting merge (records stay separate)"
+        string reason "duvod"
         datetime created_at
     }
     PERSON_UNIT_HISTORY {
         int id PK
         int person_unit_id FK
-        string from_membership "predchozi stav clenstvi"
-        string to_membership "novy stav clenstvi"
-        string from_record "predchozi record_state"
-        string to_record "novy record_state"
+        string from_membership
+        string to_membership
+        string from_record
+        string to_record
         string note
         int changed_by_account_id FK
         datetime changed_at
