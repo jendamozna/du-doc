@@ -186,6 +186,9 @@ flowchart TD
 - Osobě s účtem se zobrazí možný kandidát na propojení (z jiného oddílu). Účet zadá Žádost o sloučení. Systém rozešle emailem žádost - iniciátorovi, HVO druhého oddílu a případně i účtu kandidáta na propojení. Po odsouhlasení všemi stranami (HVO se zobrazí pro porovnání náhled obou osob) může uživatel pokračovat se spojením: Záznamy obou osob se spojí do jedné osoby, konflikt základních polí se řeší volbou A/B, účet se naváže na sjednocenou osobu, pokud obě osoby mají účet, pak druhý účet se zruší (uživatel vybere), citlivá data zůstávají per oddíl, OAuth identity se přenesou pod ponechaný účet.
 - Podobně se zpracuje duplicitní dítě, které se zobrazí rodiči s tím, že další strana je rodič dítěte kandidáta a výsledek nespojí účty rodičů do jednoho, jen osobu dítěte. Nemá-li dítě žádného navázaného rodiče, schvaluje připojení HVO, kde je dítě evidováno.
 - Systém loguje, kdo kdy které osoby spojil, je možné zrušit merge pro nápravu chybného spojení.
+- Konflikt se řeší **pole po poli** — je-li jedna strana prázdná, vyhrává vyplněná hodnota; liší-li se, musí člověk vybrat. Nabízí se jen výběr z obou hodnot, ne ruční přepsání, aby šlo sloučení věrně vrátit zpět.
+- **Zrušení sloučení vrátí jen to, co v okamžiku sloučení existovalo.** Záznamy vzniklé až potom (nová přihláška, platba, členství) zůstanou u sjednocené osoby; systém je vypíše před potvrzením, ne až po něm.
+- Podrobná pravidla (schvalování, kolize přihlášek a členství, rozsah revertu) viz [docs/person-merge.md](docs/person-merge.md).
 
 ### Člen DU
 
@@ -418,6 +421,7 @@ Tento dokument popisuje **co** systém dělá a proč — je určený zadavatel�
 | [docs/race-patrols.md](docs/race-patrols.md)                     | hlídky Stezky — výpočet věku, kontrola složení, stanoviště |
 | [docs/payment-matching.md](docs/payment-matching.md)             | pravidla párování plateb a výpočet stavu úhrady            |
 | [docs/reports.md](docs/reports.md)                               | definice metrik reportů, parametry a rozsah dat            |
+| [docs/person-merge.md](docs/person-merge.md)                     | sloučení osob — schvalování, konflikty polí, revert        |
 | [docs/fio-sync.md](docs/fio-sync.md)                             | stahování bankovních transakcí z Fio                       |
 | [docs/audit-log.md](docs/audit-log.md)                           | struktura auditního logu                                   |     | [docs/non-functional.md](docs/non-functional.md) | OAuth, úložiště souborů, šifrování, e-maily, plánované úlohy |     | [AI_support.md](AI_support.md) | AI funkce nad systémem |
 | [TODO.md](TODO.md)                                               | hodnocení specifikace a co ještě dopsat                    |

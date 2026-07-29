@@ -24,7 +24,7 @@ Business popis žije v [README.md](README.md), implementační detaily v `docs/`
 | Lifecycle osoby                    | 🟡 OK / dořešit | Stavy jsou, ale přechody bez guardů/triggerů.                                                                           |
 | Přihlašování na akce               | 🟢 Ready        | [docs/registration-lifecycle.md](docs/registration-lifecycle.md) — brány, události, guardy, lhůty.                      |
 | Modul párování plateb              | 🟢 Ready        | [docs/payment-matching.md](docs/payment-matching.md) — pořadí pravidel, víc kandidátů, přeplatek a vratka.              |
-| Deduplikace / merge                | 🟡 Dořešit      | Flow ano; řešení konfliktů pole-po-poli a revert jen rámcově.                                                           |
+| Deduplikace / merge                | 🟢 Ready        | [docs/person-merge.md](docs/person-merge.md) — schvalování, konflikty polí, kolize vazeb, revert.                       |
 | Role a oprávnění                   | 🔴 Gap          | Největší mezera — chybí matice akce × role. „Práva se přidělují u akce" není specifikace.                               |
 | Reporty                            | 🟢 Ready        | [docs/reports.md](docs/reports.md) — metriky, parametry, scope, hrany, požadavky na model.                              |
 | Notifikace / e-maily               | 🔴 Gap          | Spousta „systém pošle e-mail", ale žádný katalog (událost → šablona → příjemce → načasování).                           |
@@ -36,7 +36,7 @@ Business popis žije v [README.md](README.md), implementační detaily v `docs/`
 ## Co dopsat (podle priority pro AI)
 
 1. **Autorizační matice** (akce × role × scope) — bez toho AI hádá práva. Nejvyšší priorita.
-2. **Stavové automaty** pro `PARENT_CHILD`, `MERGE_REQUEST`, `REGION` — stavy, přechody, spouštěče, guardy. Automat `REGISTRATION` je hotový ([docs/registration-lifecycle.md](docs/registration-lifecycle.md)), lifecycle osoby chybí.
+2. **Stavové automaty** pro `PARENT_CHILD` a `REGION` — stavy, přechody, spouštěče, guardy. Hotové jsou `REGISTRATION` ([docs/registration-lifecycle.md](docs/registration-lifecycle.md)) a `MERGE_REQUEST` ([docs/person-merge.md](docs/person-merge.md)); lifecycle osoby chybí.
 3. **Katalog notifikací** — tabulka událost → příjemce → šablona → načasování/opakování.
 4. **Validační pravidla a byznys-invarianty** — po polích (formát e-mailu, kdy je `birth_date` povinné, IČO, unikátnosti).
 5. ~~**Algoritmus párování plateb**~~ — hotovo, viz [docs/payment-matching.md](docs/payment-matching.md).

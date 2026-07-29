@@ -160,6 +160,7 @@ erDiagram
         string email "kontaktni e-mail (nemusi byt unikatni)"
         string address "trvale bydliste"
         string insurance_company
+        int merged_into_person_id FK "NULL = platna osoba; jinak tombstone po slouceni"
     }
     PERSON_UNIT {
         int id PK
@@ -571,6 +572,7 @@ erDiagram
         int keep_account_id FK "ktery ucet zustava"
         string state "pending / ready / rejected / completed / reverted"
         datetime created_at
+        datetime expires_at "propadnuti zadosti bez odezvy"
         datetime completed_at
     }
     MERGE_APPROVAL {
