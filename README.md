@@ -185,7 +185,7 @@ flowchart TD
 - Hlavní vedoucí přiřazuje k akcím Vedoucí - získají přístup k přihláškám, nastaví jim uroveň oprávnění, zda můžou editovat akci, přihlášky, ceny, atd.
 - Každá akce může být svazána s maximálně jedním bankovním účtem
 - Každá akce může mít místo konání vybrané z lokací oddílu (GPS)
-- Název, SS, max kapacita, počet náhradníků, ceny pro členy DU i ostatní, začátek akce, začátek a konec přihlašování, termíny pro storno podmínky
+- Název, SS, max kapacita, počet náhradníků, ceny pro členy DU i ostatní, začátek a konec akce, začátek a konec přihlašování, termíny pro storno podmínky
 - **Evidence dobrovolníků (volitelná, per akce):** je-li u akce zapnutá (`volunteers_enabled`), systém nabídne **samostatnou stránku pro přihlášení dobrovolníků** s vlastní cenou a začátkem/koncem přihlašování. Dobrovolníci se **evidují odděleně od účastníků** — mají vlastní kategorii přihlášky (`volunteer`), **nezapočítávají se do kapacity ani do počtu náhradníků** akce a vedou se ve zvláštním seznamu. Bez zapnutí se dobrovolnická stránka nenabízí.
 - Náhradníci - po uvolnění místa jsou informováni vedoucí akce, po výběru náhradníka, náhradník dostane časově omezenou nabídku, po vypršení propadá a vedoucí znovu vybírá.
 - Akce může mít libovolný počet **výběrových číselníků** s předdefinovanými hodnotami, ze kterých si účastníci za daných podmínek vybírají (exkluzivně = hodnotu zvolí jen jeden účastník, nebo sdíleně = stejnou hodnotu více účastníků); položka může nést cenový příplatek — viz **Výběrové číselníky akce (obecný model)**
@@ -218,7 +218,7 @@ Tím se stejným modelem pokryjí oba případy z otázky: **ubytování** (jedn
 - Systém umožňuje definovat více cen platných v různých termínech pro různé typy účastníků - DU, bez DU, dobrovolníky, oddílové vedoucí i děti oddílových vedoucích a sponzorské ceny
 - Volitelné příplatky (ubytování, strava apod.) se modelují přes **výběrové číselníky** — každá položka může nést cenový příplatek; výsledná cena přihlášky = základní cena + součet příplatků zvolených položek (viz **Výběrové číselníky akce**)
 - Systém umožnuje definovat storno poplatky procentuálně v různých termínech
-- Vratky schvaluje a odesílá Účetní nebo HVO ručně po skončení akce
+- Vratky systém neřeší
 
 #### Typy a šablony akcí
 
@@ -228,17 +228,17 @@ Tím se stejným modelem pokryjí oba případy z otázky: **ubytování** (jedn
 
 **Co jednotlivé typy zapínají / vyžadují** (výchozí obsah šablony):
 
-| Typ                             | Kód              | Zapíná / vyžaduje                                                                                                            |
-| ------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Pravidelné kluby                | `club`           | zápis docházky                                                                                                               |
-| Jednorázové akce                | `one_off`        | bez potřeby přihlášky                                                                                                        |
-| Víkendovky / jednoosobové       | `weekend`        | obecná přihláška                                                                                                             |
-| Kurz                            | `course`         | vazba na nabízené kurzy ústředí                                                                                              |
-| S certifikátem                  | `certificate`    | v přihlašovacím formuláři navíc tituly (před/za) a povinná adresa trvalého bydliště                                          |
-| S doporučením mentora/vedoucího | `recommendation` | pole na kontakty; systém osloví mentory/vedoucí o doplnění očekávání a potvrzení přihlášky                                   |
-| Skupinové                       | `group`          | v přihlašovacím formuláři více účastníků vč. zákonných zástupců najednou                                                     |
-| Stezka                          | `race`           | po přihlášení sestavení **hlídek** pro závod (jméno, kapitán, rozhodčí na stanovištích) — viz **Hlídky na závodních akcích** |
-| Workshopové                     | `workshop`       | evidence workshopů (název, popis, GPS, lektor, min. věk, potřeby), časové bloky a přihlašování do jednotlivých běhů          |
+| Typ                             | Kód              | Zapíná / vyžaduje                                                                                                                                                                                                                               |
+| ------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pravidelné kluby                | `club`           | zápis docházky                                                                                                                                                                                                                                  |
+| Jednorázové akce                | `one_off`        | bez potřeby přihlášky                                                                                                                                                                                                                           |
+| Víkendovky / jednoosobové       | `weekend`        | obecná přihláška                                                                                                                                                                                                                                |
+| Kurz                            | `course`         | vazba na nabízené kurzy ústředí                                                                                                                                                                                                                 |
+| S certifikátem                  | `certificate`    | v přihlašovacím formuláři navíc tituly (před/za) a povinná adresa trvalého bydliště                                                                                                                                                             |
+| S doporučením mentora/vedoucího | `recommendation` | pole na kontakty; systém osloví mentory/vedoucí o doplnění očekávání a potvrzení přihlášky                                                                                                                                                      |
+| Skupinové                       | `group`          | v přihlašovacím formuláři více účastníků vč. zákonných zástupců najednou                                                                                                                                                                        |
+| Stezka                          | `race`           | po přihlášení sestavení **hlídek** pro závod (jméno, kapitán, rozhodčí na stanovištích) — viz **Hlídky na závodních akcích**                                                                                                                    |
+| Workshopové                     | `workshop`       | akce má několik časových **bloků**; workshopy/semináře (2 typy: `workshop` / `seminar`) se nabízejí jako **běhy** v blocích a mohou se **opakovat ve více blocích**; každý běh má vlastní kapacitu; účastník si v každém bloku vybere jeden běh |
 
 **Šablona dále definuje:**
 
@@ -323,9 +323,17 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 - Aktivuje se doplněním tokenu k bankovnímu účtu
 - Párování je M:N — jedna bankovní transakce může pokrýt více přihlášek (např. rodič platí za více dětí jednou platbou) a jedna přihláška může být uhrazena více platbami (postupné / částečné platby)
 - Systém automaticky navrhuje párování podle SS=akce a VS=přihláška; když částka neodpovídá jediné přihlášce, umožní ruční rozdělení (alokaci) částky mezi více přihlášek
+- U každé alokace se eviduje **způsob spárování** (`match_method`):
+  - `ss_vs_amount` - shoda SS, VS i částky,
+  - `ss_vs_partial` - shoda SS, VS a čáštečná úhrada,
+  - `ss_vs_overpayment` - shoda SS, VS a přeplatek,
+  - `vs_exact_name` - shoda VS, částky a jména odesílatele platby s vlastníkem přihlášky nebo poznámky platby s názvem akce,
+  - `ss_exact_name` - shoda SS, částky a jména odesílatele platby s vlastníkem přihlášky,
+  - `vs_partial_name` - shoda VS, čáštečná úhrady a shoda jména odesílatele platby s vlastníkem přihlášky nebo poznámky platby s názvem akce,
+  - `vs_overpayment_name` - shoda VS, přeplatek a shoda jména odesílatele platby s vlastníkem přihlášky nebo poznámky platby s názvem akce,
+  - `manual` - ruční
 - Každá alokace eviduje napárovanou částku; stav přihlášky se počítá ze součtu alokací vůči ceně
-- Nealokovaný zůstatek transakce zůstává k ručnímu dořešení; přeplatky lze evidovat a vracet
-- Systém automaticky posílá poděkování po plném uhrazení přihlášky
+- Systém automaticky posílá potvrzení za každou napárovanou platbu (i částečnou); odeslání se eviduje, aby se neposílalo dvakrát
 
 #### Modul Potvrzení o platbě
 
@@ -429,17 +437,18 @@ erDiagram
     REGISTRATION ||--o{ RACE_PATROL : owns
     RACE_PATROL ||--o{ RACE_PATROL_MEMBER : has
     PERSON ||--o{ RACE_PATROL_MEMBER : "in patrol"
+    EVENT ||--o{ WORKSHOP_BLOCK : "has blocks"
     EVENT ||--o{ WORKSHOP : offers
-    WORKSHOP ||--o{ WORKSHOP_SLOT : "scheduled in"
     WORKSHOP }o--o| LOCATION : "held at"
-    WORKSHOP_SLOT ||--o{ WORKSHOP_REGISTRATION : has
-    REGISTRATION ||--o{ WORKSHOP_REGISTRATION : "enrolled in"
+    WORKSHOP_BLOCK ||--o{ WORKSHOP_OFFERING : contains
+    WORKSHOP ||--o{ WORKSHOP_OFFERING : "scheduled as"
+    WORKSHOP_OFFERING ||--o{ WORKSHOP_REGISTRATION : has
+    REGISTRATION ||--o{ WORKSHOP_REGISTRATION : "enrolled via"
+    PERSON ||--o{ WORKSHOP_REGISTRATION : attends
 
     REGISTRATION ||--o{ PAYMENT_ALLOCATION : "paid by"
-    REGISTRATION ||--o{ REFUND : "refunded by"
     BANK_ACCOUNT ||--o{ BANK_TRANSACTION : records
     BANK_TRANSACTION ||--o{ PAYMENT_ALLOCATION : "split into"
-    BANK_TRANSACTION |o--o{ DU_MEMBERSHIP : "membership receipt"
 
     ATTENDANCE_EVENT ||--o{ ATTENDANCE_RECORD : contains
     CUSTOM_FIELD ||--o{ CUSTOM_FIELD_VALUE : has
@@ -566,6 +575,7 @@ erDiagram
         bool public
         string share_slug "neverejny sdileci odkaz (bez publikace)"
         datetime starts_at
+        datetime ends_at "konec akce (rizeni retence citlivych dat, vypocet veku k datu akce)"
         datetime registration_from
         datetime registration_to
         bool volunteers_enabled
@@ -649,26 +659,35 @@ erDiagram
         int person_id FK "clen hlidky = osoba z club scope prihlasky vlastnika"
         string role "leader (kapitan) / member"
     }
+    WORKSHOP_BLOCK {
+        int id PK
+        int event_id FK
+        string name "casovy blok akce, napr. dopoledni / odpoledni"
+        datetime starts_at
+        datetime ends_at
+    }
     WORKSHOP {
         int id PK
         int event_id FK
         int location_id FK "GPS (volitelne)"
+        string type "workshop / seminar"
         string name
         string description
         string instructor "lektor"
         int min_age "min vek"
         string requirements "potreby"
+        int capacity "max ucastniku (plati pro kazdy beh workshopu)"
     }
-    WORKSHOP_SLOT {
+    WORKSHOP_OFFERING {
         int id PK
-        int workshop_id FK
-        string time_block "casovy blok"
-        int capacity
+        int block_id FK "casovy blok, ve kterem se workshop/seminar bezi"
+        int workshop_id FK "ktery workshop/seminar (muze se opakovat ve vice blocich)"
     }
     WORKSHOP_REGISTRATION {
         int id PK
-        int workshop_slot_id FK
-        int registration_id FK
+        int workshop_offering_id FK
+        int registration_id FK "prihlaska (club scope), pres kterou je ucastnik zapsan"
+        int person_id FK "konkretni ucastnik z club scope prihlasky"
     }
     REGISTRATION {
         int id PK
@@ -690,14 +709,9 @@ erDiagram
         int registration_id FK
         decimal amount "alokovana cast platby"
         string matched_by "auto / manual"
+        string match_method "ss_vs_amount / ss_vs_partial / ss_vs_overpayment / vs_exact_name / ss_exact_name / vs_partial_name / manual"
         datetime matched_at
-    }
-    REFUND {
-        int id PK
-        int registration_id FK
-        decimal amount
-        string state "pending / sent"
-        datetime created_at
+        datetime confirmation_sent_at "potvrzeni prijate sparovane platby odeslano (NULL = neodeslano)"
     }
     BANK_ACCOUNT {
         int id PK
@@ -724,8 +738,6 @@ erDiagram
         int id PK
         int person_id FK
         int year
-        int bank_transaction_id FK "uhrada prispevku"
-        bool paid
     }
     ATTENDANCE_EVENT {
         int id PK
