@@ -19,7 +19,7 @@ Implementační detail k modulu párování plateb ([README.md](../README.md) �
 ## Způsoby spárování (`match_method`)
 
 | Hodnota               | Shoda                                                                                 |
-| --------------------- | ------------------------------------------------------------------------------------- |
+| --------------------- | ------------------------------------------------------------------------------------- | --- | -------- | ---------------------------------------------- |
 | `ss_vs_amount`        | SS, VS i částka                                                                       |
 | `ss_vs_partial`       | SS, VS a částečná úhrada                                                              |
 | `ss_vs_overpayment`   | SS, VS a přeplatek                                                                    |
@@ -27,7 +27,8 @@ Implementační detail k modulu párování plateb ([README.md](../README.md) �
 | `ss_exact_name`       | SS, částka a jméno odesílatele = vlastník přihlášky                                   |
 | `vs_partial_name`     | VS, částečná úhrada a shoda jména odesílatele / poznámky platby                       |
 | `vs_overpayment_name` | VS, přeplatek a shoda jména odesílatele / poznámky platby                             |
-| `manual`              | ruční rozdělení účetní                                                                || `refund`              | vratka nebo převod přeplatku — záporná alokace                                        |
+| `manual`              | ruční rozdělení účetní                                                                |     | `refund` | vratka nebo převod přeplatku — záporná alokace |
+
 - SS identifikuje akci, VS přihlášku.
 - **Částky se porovnávají přesně, žádná tolerance se neuplatňuje.** Rozdíl o korunu není shoda — je to nedoplatek (`PartialPaid`), nebo přeplatek (`Overpayment`). Zaokrouhlovací pásmo by zavádělo tichou ztrátu penez a v účetnictví se hledá hůř než viditelný rozdíl.
 - Automatické párování běží hned po importu nových transakcí; ruční alokace lze kdykoli opravit.
@@ -36,13 +37,13 @@ Implementační detail k modulu párování plateb ([README.md](../README.md) �
 
 Pravidla tvoří **seřazený seznam**. Vyhodnocují se shora dolů a vyhrává první, které vrátí právě jednoho kandidáta:
 
-| # | Pravidlo                                       | Výsledný `match_method`                                | Alokace     |
-| - | ---------------------------------------------- | ------------------------------------------------------ | ----------- |
-| 1 | SS + VS + částka = zbývající cena               | `ss_vs_amount`                                          | automaticky |
-| 2 | SS + VS, částka menší / větší                    | `ss_vs_partial` / `ss_vs_overpayment`                   | automaticky |
-| 3 | VS + částka + jméno odesílatele nebo poznámka    | `vs_exact_name`                                         | automaticky |
-| 4 | SS + částka + jméno odesílatele                  | `ss_exact_name`                                         | návrh       |
-| 5 | VS + jméno, částka menší / větší               | `vs_partial_name` / `vs_overpayment_name`               | návrh       |
+| #   | Pravidlo                                      | Výsledný `match_method`                   | Alokace     |
+| --- | --------------------------------------------- | ----------------------------------------- | ----------- |
+| 1   | SS + VS + částka = zbývající cena             | `ss_vs_amount`                            | automaticky |
+| 2   | SS + VS, částka menší / větší                 | `ss_vs_partial` / `ss_vs_overpayment`     | automaticky |
+| 3   | VS + částka + jméno odesílatele nebo poznámka | `vs_exact_name`                           | automaticky |
+| 4   | SS + částka + jméno odesílatele               | `ss_exact_name`                           | návrh       |
+| 5   | VS + jméno, částka menší / větší              | `vs_partial_name` / `vs_overpayment_name` | návrh       |
 
 - **Automaticky** znamená, že alokace vznikne bez zásahu člověka; **návrh** znamená, že se transakce zobrazí účetní s předvyplněným rozdělením, které potvrdí nebo upraví. Hranice mezi oběma sloupci je konfigurace, ne konstanta v kódu.
 - Pravidla 1–2 stojí na symbolech, které systém sám vygeneroval, proto mají přednost před pravidly, která se opirají o jméno odesílatele nebo text poznámky.
