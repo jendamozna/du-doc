@@ -23,7 +23,7 @@ Business popis žije v [README.md](README.md), implementační detaily v `docs/`
 | Splatnost a stav úhrady            | 🟢 Ready        | Relativní nebo absolutní splatnost na akci; stav se počítá ze součtu alokací.                                 |
 | Lifecycle osoby                    | 🟡 OK / dořešit | Stavy jsou, ale přechody bez guardů/triggerů.                                                                 |
 | Přihlašování na akce               | 🟢 Ready        | [docs/registration-lifecycle.md](docs/registration-lifecycle.md) — brány, události, guardy, lhůty.            |
-| Modul párování plateb              | 🟡 Dořešit      | [docs/payment-matching.md](docs/payment-matching.md); chybí tolerance částky, pořadí pravidel, víc kandidátů. |
+| Modul párování plateb              | 🟢 Ready        | [docs/payment-matching.md](docs/payment-matching.md) — pořadí pravidel, víc kandidátů, přeplatek a vratka.    |
 | Deduplikace / merge                | 🟡 Dořešit      | Flow ano; řešení konfliktů pole-po-poli a revert jen rámcově.                                                 |
 | Role a oprávnění                   | 🔴 Gap          | Největší mezera — chybí matice akce × role. „Práva se přidělují u akce" není specifikace.                     |
 | Reporty                            | 🟢 Ready        | [docs/reports.md](docs/reports.md) — metriky, parametry, scope, hrany, požadavky na model.                    |
@@ -39,7 +39,7 @@ Business popis žije v [README.md](README.md), implementační detaily v `docs/`
 2. **Stavové automaty** pro `PARENT_CHILD`, `MERGE_REQUEST`, `REGION` — stavy, přechody, spouštěče, guardy. Automat `REGISTRATION` je hotový ([docs/registration-lifecycle.md](docs/registration-lifecycle.md)), lifecycle osoby chybí.
 3. **Katalog notifikací** — tabulka událost → příjemce → šablona → načasování/opakování.
 4. **Validační pravidla a byznys-invarianty** — po polích (formát e-mailu, kdy je `birth_date` povinné, IČO, unikátnosti).
-5. **Algoritmus párování plateb** — základ hotový ([docs/payment-matching.md](docs/payment-matching.md)); dopsat toleranci částky, pořadí vyhodnocování pravidel a chování při více kandidátech.
+5. ~~**Algoritmus párování plateb**~~ — hotovo, viz [docs/payment-matching.md](docs/payment-matching.md).
 6. ~~**Definice reportů**~~ — hotovo, viz [docs/reports.md](docs/reports.md).
 7. **Nefunkční** — lokalizace hotová (měna, timezone, formáty); dopsat OAuth (Google/Facebook) config, šifrování (`*_enc`), úložiště dokumentů a retenční joby.
 8. **API kontrakt / hranice modulů** — pokud AI staví i server (endpointy nebo aspoň use-case seznam).

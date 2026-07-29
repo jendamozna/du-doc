@@ -370,9 +370,9 @@ erDiagram
         int id PK
         int bank_transaction_id FK
         int registration_id FK
-        decimal amount "alokovana cast platby"
+        decimal amount "alokovana cast platby; zaporna = vratka"
         string matched_by "auto / manual"
-        string match_method "ss_vs_amount / ss_vs_partial / ss_vs_overpayment / vs_exact_name / ss_exact_name / vs_partial_name / vs_overpayment_name / manual"
+        string match_method "ss_vs_amount / ss_vs_partial / ss_vs_overpayment / vs_exact_name / ss_exact_name / vs_partial_name / vs_overpayment_name / manual / refund"
         datetime matched_at
         datetime confirmation_sent_at "NULL = neodeslano"
     }
@@ -400,6 +400,7 @@ erDiagram
         string transaction_type
         date date "datum transakce dle banky"
         datetime imported_at "kdy ji stahl import"
+        datetime ignored_at "ucetni oznacila jako neprirazovanou; NULL = v rade k parovani"
     }
     DU_MEMBERSHIP {
         int id PK
