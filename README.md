@@ -144,7 +144,7 @@ flowchart TD
 
 ### Deduplikace osob, merge
 
-- Systém ověřuje správnost českých jmen podle seznamu (spravovaného administrátorem), nabízí možnost přidání výjimky HVO v rámci oddílu.
+- Systém ověřuje správnost českých **křestních jmen** podle seznamu (spravovaného administrátorem), nabízí možnost přidání výjimky HVO v rámci oddílu. Příjmení se proti seznamu neověřují.
 - Osobě s účtem se zobrazí možný kandidát na propojení (z jiného oddílu). Účet zadá Žádost o sloučení. Systém rozešle emailem žádost - iniciátorovi, HVO druhého oddílu a případně i účtu kandidáta na propojení. Po odsouhlasení všemi stranami (HVO se zobrazí pro porovnání náhled obou osob) může uživatel pokračovat se spojením: Záznamy obou osob se spojí do jedné osoby, konflikt základních polí se řeší volbou A/B, účet se naváže na sjednocenou osobu, pokud obě osoby mají účet, pak druhý účet se zruší (uživatel vybere), citlivá data zůstávají per oddíl, OAuth identity se přenesou pod ponechaný účet.
 - Podobně se zpracuje duplicitní dítě, které se zobrazí rodiči s tím, že další strana je rodič dítěte kandidáta a výsledek nespojí účty rodičů do jednoho, jen osobu dítěte. Nemá-li dítě žádného navázaného rodiče, schvaluje připojení HVO, kde je dítě evidováno.
 - Systém loguje, kdo kdy které osoby spojil, je možné zrušit merge pro nápravu chybného spojení.
@@ -762,15 +762,17 @@ erDiagram
     BANK_TRANSACTION {
         int id PK
         int bank_account_id FK
+        string external_id UK "id transakce z banky (idempotentni import)"
         string ss
         string vs
         decimal amount
         string sender_name
         string sender_account
         string sender_bank_code
-        string message "zprava pro prijemce"
+        string message
         string transaction_type
-        date date
+        date date "datum transakce dle banky"
+        datetime imported_at "kdy ji stahl import"
     }
     DU_MEMBERSHIP {
         int id PK
@@ -923,14 +925,12 @@ erDiagram
     }
     NAME_WHITELIST {
         int id PK
-        string name
-        string kind "first / last"
+        string name "krestni jmeno"
     }
     NAME_EXCEPTION {
         int id PK
         int unit_id FK
-        string name
-        string kind "first / last"
+        string name "krestni jmeno mimo whitelist"
         int approved_by_account_id FK "schvalil HVO"
         datetime created_at
     }
