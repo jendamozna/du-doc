@@ -62,12 +62,12 @@ flowchart TD
 #### Administrátor
 
 - Spravuje oddíly a přiřazuje jim jejich Hlavní vedoucí
-- Vytváří účty hlavním vedoucím - system vygeneruje pozvánku emailem
+- Vytváří účty hlavním vedoucím — systém vygeneruje pozvánku e-mailem
 
 #### Hlavní vedoucí oddílu
 
 - Nastavuje bankovní účty
-- Vytváří účty účetním, vedoucím, rádcům - system vygeneruje pozvánku emailem
+- Vytváří účty účetním, vedoucím, rádcům — systém vygeneruje pozvánku e-mailem
 - Může do systému nahrát pověření od staršovstva
 - Může definovat družiny, jejich vedoucí a členy
 - Eviduje registrované členy (jméno, příjmení, pohlaví, datum narození)
@@ -79,13 +79,12 @@ flowchart TD
 
 #### Rodič (zákonný zástupce)
 
-- Rodič je osoba, která má vazbu na alespoň jedno dítě (typicky nezletilé)
 - Rodič může zastupovat jedno nebo více nezletilých dětí
 - Jedno dítě může být svázáno s více rodiči (oba zákonní zástupci)
 - Rodič může své zastupované děti přihlašovat na akce a spravovat jejich přihlášky (přihlášení na akci, storno, platby za dítě) a údaje v systému (adresy, pojišťovny, ...)
 - Vazba rodič ↔ dítě vzniká přihlášením dítěte na akci rodičem
 - Po dosažení zletilosti se zastoupení rodičem přepne do režimu jen pro čtení. Výjimkou je doplnění kontaktního e-mailu dítěte, pokud chybí — slouží k doručení výzvy k převzetí účtu. Zletilý člen může přístup rodiče kdykoli zcela zrušit.
-- Vazbu může zrušit sám rodič (vystoupení), případně HVO na žádost; zrušení se loguje. Zůstane-li nezletilé dítě bez navázaného rodiče, jeho údaje a přihlášky spravuje HVO, dokud se nepřipojí nový zákonný zástupce.
+- Vazbu může zrušit sám rodič (vystoupení), případně HVO na žádost; zrušení se loguje (`AUDIT_LOG`). Zůstane-li nezletilé dítě bez navázaného rodiče, jeho údaje a přihlášky spravuje HVO, dokud se nepřipojí nový zákonný zástupce.
 - Oba rodiče mají plná práva, platí poslední zápis.
 - Druhého zákonného zástupce přidává stávající rodič nebo HVO pozvánkou (e-mailem). Vazba vznikne přijetím pozvánky druhým rodičem. Nemá-li dítě žádného navázaného rodiče, schvaluje připojení HVO, kde je dítě evidováno.
 
@@ -95,6 +94,7 @@ flowchart TD
   - **Osoba** = datový subjekt / účastník; může existovat bez přihlášení (host, nezletilé dítě spravované rodičem)
   - **Účet (uživatel)** = přihlašovací identita (heslo / OAuth), navázaná právě na jednu osobu
 - Jedna osoba má nejvýše jeden účet
+- **Údaje osoby** jsou pole entity `PERSON`: jméno, příjmení, přezdívka, tituly před a za jménem, pohlaví, datum narození, kontaktní e-mail, adresa trvalého bydliště a zdravotní pojišťovna. Vyplňují se podle potřeby akce (např. tituly a adresa u akcí s certifikátem); cokoli nad tento rámec patří do **chytrých sloupců** oddílu.
 - **Pojmy** (důsledně v celé specifikaci):
   - **Registrace** = založení **účtu v systému** (identita osoby); _přihlášení do systému_ = následné ověření (heslo / OAuth).
   - **Přihláška na akci** = účast na konkrétní akci (entita `REGISTRATION`); _přihlásit se na akci_ = vytvořit přihlášku.
@@ -102,15 +102,14 @@ flowchart TD
 
 #### Stav osoby (lifecycle)
 
-- Host / registrovaný člen / člen DU je **stav jedné osoby**, nikoli samostatná entita:
-  - `host → registrovaný člen` (migrace provedená HVO - Registrovaný člen má povinné datum narození)
-  - `registrovaný člen → člen DU`
-  - `člen DU → registrovaný člen` (automatický přechod koncem roku, pokud nebyl zaplacen příspěvek na další rok — členství DU vyprší 31. 12.)
-  - `* → neaktivní` (osoba opustila oddíl nebo dlouhodobě bez aktivity; záznam zůstává kvůli historii, ale nezapočítává se do počtu členů a nedostává automatické výzvy)
-  - `neaktivní → registrovaný člen / host` (reaktivace, pokud se osoba vrátí)
-  - `* → archivovaný` (GDPR: po uplynutí retenční doby se osobní a citlivá data anonymizují; zachovají se jen agregované/nepřímo identifikující údaje nutné pro reporting)
-- Stavy `neaktivní` a `archivovaný` jsou kolmé na členský stav výše — určují, zda je záznam živý, uspaný, nebo anonymizovaný.
-- U každého je evidována historie - změny, přihlášky, pod jakým oddílem
+- Host / registrovaný člen je **stav jedné osoby** (`PERSON_UNIT.membership_state`: `guest` / `registered_member`), nikoli samostatná entita:
+  - `host → registrovaný člen` (`guest → registered_member`; migrace provedená HVO — registrovaný člen má povinné datum narození)
+  - `* → neaktivní` (`PERSON_UNIT.record_state = inactive`; osoba opustila oddíl nebo je dlouhodobě bez aktivity — záznam zůstává kvůli historii, ale nezapočítává se do počtu členů a nedostává automatické výzvy)
+  - `neaktivní → registrovaný člen / host` (`inactive → active`; reaktivace, pokud se osoba vrátí)
+  - `* → archivovaný` (`record_state = archived`; GDPR: po uplynutí retenční doby se osobní a citlivá data anonymizují, zachovají se jen agregované/nepřímo identifikující údaje nutné pro reporting)
+- **Členství DU není stav osoby** — odvozuje se z existence záznamu `DU_MEMBERSHIP` (viz **Člen DU**), takže `membership_state` žádnou hodnotu pro členy DU nemá.
+- Stavy `inactive` a `archived` jsou **kolmé** na členský stav výše — členský stav drží `membership_state`, životnost záznamu `record_state` (`active` / `inactive` / `archived`).
+- U každého je evidována historie — změny, přihlášky, pod jakým oddílem.
 
 ### Retence a GDPR
 
@@ -135,20 +134,29 @@ flowchart TD
 - **Nejdelší lhůta vyhrává:** je-li osoba zároveň člen i účastník akce s platbou, řídí se výmaz nejdelší relevantní lhůtou pro daný typ dat (citlivá data se ale mažou samostatně dřív).
 - **Automatické joby:** systém periodicky označuje záznamy po expiraci a spouští anonymizaci; citlivá data mají vlastní (kratší) job.
 
+#### Auditní log
+
+- Změnové události napříč systémem se zapisují do jedné společné tabulky `AUDIT_LOG` — mutace hlídek, zrušení vazby rodič ↔ dítě, změny přiřazení vedoucích k akci, úpravy akce a přihlášky, posouzení dokumentů.
+- Záznam nese **cíl** (`entity_type` + `entity_id`), **operaci** (`action`), **aktéra** a `detail` s tím, co se změnilo, případně důvodem. Odkaz na cílový záznam je polymorfní, tedy bez cizího klíče.
+- **Aktér nemusí mít účet** — přihlášku i hlídku lze spravovat přes token, proto se eviduje `actor_account_id` (`NULL` = systémový job nebo aktér bez účtu) i `actor_email`.
+- `unit_id` u záznamu umožňuje mazat a anonymizovat logy per oddíl a naplnit lhůtu **3 roky** z tabulky výše.
+- Mimo tuto tabulku zůstávají tři evidence, které nejsou jen auditem: `MERGE_LOG` (nese `snapshot` pro revert sloučení), `PERSON_UNIT_HISTORY` (typované přechody stavů, čtou je reporty) a `GDPR_AUDIT` (doklad o výmazu s vlastním okruhem čtenářů).
+
 ### Deduplikace osob, merge
 
-- system oveřuje správnost českých jmen podle seznamu (spravovaného administrátorem), nabízí možnost přidáni vyjímky HVO v rámci oddílu.
+- Systém ověřuje správnost českých jmen podle seznamu (spravovaného administrátorem), nabízí možnost přidání výjimky HVO v rámci oddílu.
 - Osobě s účtem se zobrazí možný kandidát na propojení (z jiného oddílu). Účet zadá Žádost o sloučení. Systém rozešle emailem žádost - iniciátorovi, HVO druhého oddílu a případně i účtu kandidáta na propojení. Po odsouhlasení všemi stranami (HVO se zobrazí pro porovnání náhled obou osob) může uživatel pokračovat se spojením: Záznamy obou osob se spojí do jedné osoby, konflikt základních polí se řeší volbou A/B, účet se naváže na sjednocenou osobu, pokud obě osoby mají účet, pak druhý účet se zruší (uživatel vybere), citlivá data zůstávají per oddíl, OAuth identity se přenesou pod ponechaný účet.
 - Podobně se zpracuje duplicitní dítě, které se zobrazí rodiči s tím, že další strana je rodič dítěte kandidáta a výsledek nespojí účty rodičů do jednoho, jen osobu dítěte. Nemá-li dítě žádného navázaného rodiče, schvaluje připojení HVO, kde je dítě evidováno.
 - Systém loguje, kdo kdy které osoby spojil, je možné zrušit merge pro nápravu chybného spojení.
 
 ### Člen DU
 
-- Je vlastnost osoby
-- Osoba se může stát členem DU od ledna následujícího roku po zaplacení příspěvku do listopadu
-- Členství DU trvá: leden–prosinec (kalendářní rok)
+- **Členství DU je samostatný záznam, ne stav osoby** (`DU_MEMBERSHIP`): osoba je členem DU v oddílu _X_ pro rok _R_ právě tehdy, existuje-li záznam `DU_MEMBERSHIP` s touto osobou, oddílem a rokem. `PERSON_UNIT.membership_state` proto hodnotu pro člena DU nemá.
+- Osoba se může stát členem DU od ledna následujícího roku po zaplacení příspěvku do listopadu — **systém platbu příspěvku neřeší**; členství pro daný rok zakládá HVO
+- Členství DU trvá: leden–prosinec (kalendářní rok). **Vyprší tím, že pro nový rok záznam nevznikne** — není potřeba žádný přechod stavu ani úklidová úloha k 31. 12.
 - Osoba je členem DU vždy pod konkrétním oddílem
 - Kombinace osoba + rok je unikátní (jedno členství DU na osobu a rok)
+- Kde se členství vyhodnocuje (cena podle typu účastníka, podmínka způsobilosti u číselníku, reporty), rozhoduje se vždy **k roku dané akce**, ne podle aktuálního data
 
 ### Region
 
@@ -167,8 +175,8 @@ flowchart TD
 
 - Typy oddílů: IČO ústředí, Pobočný spolek (vlastní IČO), kolektivní člen (bez DU v názvu, vlastní IČO)
 - Ústředí je **speciální typ oddílu** určený pro celostátní akce. **Nemá registrované členy**.
-- Registrace - chytré sloupce oddílu (viz níže) lze **zařadit do přihlášky na akci** jako volitelná nebo povinná pole; vyplněná hodnota se uloží k osobě
-- Oddíl si vede vlastní seznam lokací (GPS souřadnice a volitelně adresa), které jsou viditelné jen v rámci klubu; lze je přiřadit jako sídlo oddílu i jako místo konání akce
+- Registrace — chytré sloupce oddílu (viz níže) lze **zařadit do přihlášky na akci** jako volitelná nebo povinná pole; vyplněná hodnota se uloží k osobě
+- Oddíl si vede vlastní seznam lokací (GPS souřadnice a volitelně adresa), které jsou viditelné jen v rámci oddílu; lze je přiřadit jako sídlo oddílu i jako místo konání akce
 
 #### Družina
 
@@ -178,26 +186,25 @@ flowchart TD
 ### Přihlašování do systému
 
 - Každý uživatel si může v systému změnit heslo
-- Každý si může vytvořit účet v systému a v něm editovat svojí identitu, kterou může použít při dalších přihláškách na akce
 - Pro přihlášení do aplikace půjde použít účet Google nebo Facebook (OAuth)
-- jeden účet může mít více propojených OAuth identit (Google, Facebook)
+- Jeden účet může mít více propojených OAuth identit (Google, Facebook)
 
 ### Konfigurace akce
 
 - Hlavní vedoucí vytváří akce
-- Hlavní vedoucí přiřazuje k akcím Vedoucí - získají přístup k přihláškám, nastaví jim uroveň oprávnění, zda můžou editovat akci, přihlášky, ceny, atd.
+- **Přiřazení vedoucích k akci** (`EVENT_ASSIGNMENT`): HVO přiřadí k akci účty (Vedoucí, Rádce, Účetní) a každému nastaví rozsah oprávnění — úprava akce (`can_edit_event`), úprava přihlášek (`can_edit_registrations`), úprava cen a storen (`can_edit_prices`), zápis docházky (`can_record_attendance`). Samo přiřazení dává **čtení přihlášek** akce; bez přiřazení k akci vedoucí přístup nemá. Na účet a akci existuje nejvýše jedno přiřazení a eviduje se, kdo a kdy je založil.
 - Každá akce může být svazána s maximálně jedním bankovním účtem
 - Každá akce může mít místo konání vybrané z lokací oddílu (GPS)
 - Název, SS, max kapacita, počet náhradníků, ceny pro členy DU i ostatní, začátek a konec akce, začátek a konec přihlašování, termíny pro storno podmínky
 - **Evidence dobrovolníků (volitelná, per akce):** je-li u akce zapnutá (`volunteers_enabled`), systém nabídne **samostatnou stránku pro přihlášení dobrovolníků** s vlastní cenou a začátkem/koncem přihlašování. Dobrovolníci se **evidují odděleně od účastníků** — mají vlastní kategorii přihlášky (`volunteer`), **nezapočítávají se do kapacity ani do počtu náhradníků** akce a vedou se ve zvláštním seznamu. Bez zapnutí se dobrovolnická stránka nenabízí.
-- Náhradníci - po uvolnění místa jsou informováni vedoucí akce, po výběru náhradníka, náhradník dostane časově omezenou nabídku, po vypršení propadá a vedoucí znovu vybírá.
-- Akce může mít libovolný počet **výběrových číselníků** s předdefinovanými hodnotami, ze kterých si účastníci za daných podmínek vybírají (exkluzivně = hodnotu zvolí jen jeden účastník, nebo sdíleně = stejnou hodnotu více účastníků); položka může nést cenový příplatek — viz **Výběrové číselníky akce (obecný model)**
+- Náhradníci — po uvolnění místa jsou informováni vedoucí akce; po výběru náhradníka dostane náhradník časově omezenou nabídku, po vypršení propadá a vedoucí znovu vybírá.
+- Akce může mít libovolný počet **výběrových číselníků** (např. ubytování, strava, doprava, stanoviště) — viz **Výběrové číselníky akce (obecný model)**
 - **Viditelnost akce** (`visibility`) má tři vzájemně výlučné úrovně:
   - `public` (**veřejná**) — zobrazuje se ve veřejném výpisu portálu, přihlásit se může kdokoli,
   - `internal` (**vnitřní**) — ve výpisu není; vidí ji jen přihlášená osoba s aktivní vazbou na pořádající oddíl (u akce ústředí všichni registrovaní členové),
   - `private` (**neveřejná**) — dostupná výhradně přes sdílecí odkaz.
     Sdílecí odkaz (`share_slug`) má **každá** akce bez ohledu na úroveň — je to přístupová cesta, ne publikace ve výpisu.
-- Akce může definovat **povinné dokumenty**, které musí účastník k přihlášce nahrát (např. potvrzení o lékařské způsobilosti); u každého dokumentu se určí název a zda je povinný. Seznam a povinnost se přebírají z **šablony akce (ActionTemplate)** jako výchozí a lze je **přepsat v nastavení konkrétní akce**. U náhradníka se upload zpřístupní až po schválení přihlášky.
+- Akce může definovat **povinné dokumenty** k přihlášce; seznam a povinnost se přebírají ze **šablony akce** jako výchozí a lze je přepsat v nastavení konkrétní akce — detail a schvalovací flow viz **Přihlašování na akce**
 
 #### Výběrové číselníky akce (obecný model)
 
@@ -224,7 +231,7 @@ Tím se stejným modelem pokryjí oba případy z otázky: **ubytování** (jedn
 
 - Systém umožňuje definovat více cen platných v různých termínech pro různé typy účastníků - DU, bez DU, dobrovolníky, oddílové vedoucí i děti oddílových vedoucích a sponzorské ceny
 - Volitelné příplatky (ubytování, strava apod.) se modelují přes **výběrové číselníky** — každá položka může nést cenový příplatek; výsledná cena přihlášky = základní cena + součet příplatků zvolených položek (viz **Výběrové číselníky akce**)
-- Systém umožnuje definovat storno poplatky procentuálně v různých termínech
+- Systém umožňuje definovat storno poplatky procentuálně v různých termínech
 - Vratky systém neřeší
 
 #### Typy a šablony akcí
@@ -237,8 +244,8 @@ Tím se stejným modelem pokryjí oba případy z otázky: **ubytování** (jedn
 
 | Typ                             | Kód              | Zapíná / vyžaduje                                                                                                                                                                                                                               |
 | ------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Pravidelné kluby                | `club`           | zápis docházky; akce bez přihlášek (neotevírá registraci, neřeší cenu ani platbu) — každá schůzka je samostatná datovaná akce                                                                                                                   |
-| Jednorázové akce                | `one_off`        | bez potřeby přihlášky                                                                                                                                                                                                                           |
+| Pravidelné schůzky              | `club`           | **opakující se** oddílová činnost — každá schůzka je samostatná datovaná akce; zápis docházky, bez přihlášek (neotevírá registraci, neřeší cenu ani platbu)                                                                                     |
+| Jednorázové akce                | `one_off`        | **neopakující se** samostatná akce (výlet, brigáda, oddílová akce) — bez přihlášek; docházku lze zapsat, cenu a platbu neřeší                                                                                                                   |
 | Víkendovky / jednoosobové       | `weekend`        | obecná přihláška                                                                                                                                                                                                                                |
 | Kurz                            | `course`         | vazba na nabízené kurzy ústředí                                                                                                                                                                                                                 |
 | S certifikátem                  | `certificate`    | v přihlašovacím formuláři navíc tituly (před/za) a povinná adresa trvalého bydliště                                                                                                                                                             |
@@ -249,7 +256,7 @@ Tím se stejným modelem pokryjí oba případy z otázky: **ubytování** (jedn
 
 **Šablona dále definuje:**
 
-- **povinná a nabízená pole** přihlašovacího formuláře (**zařazení chytrých sloupců oddílu** do přihlášky jako volitelné/povinné — např. tituly a trvalé bydliště u certifikátu, kontakty na mentora u doporučení),
+- **povinná a nabízená pole** přihlašovacího formuláře — která pole osoby jsou u daného typu povinná (např. tituly a trvalé bydliště u certifikátu) a **zařazení chytrých sloupců oddílu** do přihlášky jako volitelných/povinných (např. kontakty na mentora u doporučení),
 - **zapnuté subsystémy** (hlídky Stezky, workshopy, doporučení mentora, více účastníků u skupinových, vazba na kurz ústředí),
 - **výchozí povinné dokumenty** (např. potvrzení o lékařské způsobilosti),
 - **výchozí hodnoty** cen podle typu účastníka, storno termínů, kapacity a počtu náhradníků, podpory dobrovolníků, referenčního data pro výpočet věku (**věk ke konci roku** vs. k datu akce).
@@ -275,7 +282,7 @@ Akce typu **Stezka** umožní z přihlášených osob sestavit **hlídky** (dru�
 
 - **Kontrola konzistence:** pravidla složení ověřuje jediná čistá funkce. Poruší-li hlídka pravidla po změně relevantního pole člena (věk, příznak závodníka, kategorie), **hlídka se rozpustí** — všichni členové se odpojí, hlídka se smaže a vlastník je informován s důvodem.
 - **Připomínka (job):** N dní před akcí systém upozorní vedoucí na závodníky bez hlídky (přeskočí, pokud už dnes připomínku dostali).
-- Každá mutace hlídky se **loguje** (založení, vstup, odchod, úprava, smazání; aktér = e-mail vedoucího).
+- Každá mutace hlídky se **loguje** do `AUDIT_LOG` (založení, vstup, odchod, úprava, smazání; aktér = účet vedoucího, u správy přes token jeho e-mail).
 
 ##### Stanoviště a rozhodčí
 
@@ -291,30 +298,30 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 
 - Účastník, který nemá účet získá přihláškou identifikátor (token), kterým si může účet založit (po založení se účet propojí s existující osobou) a spravovat své přihlášky (storno, měnit nebo přidávat další účastníky)
 - **Nezletilý účastník (< 18 let):** věk se odvozuje z pole `datum narození` (`birth_date`). Přihlašuje-li se nezletilý sám (nemá navázaného rodiče, který přihlášku provádí), musí v přihlášce zadat **e-mail zákonného zástupce**. Systém pošle zástupci žádost o schválení; přihláška zůstává ve stavu `PendingGuardian` a nezapočítává se do kapacity, dokud zástupce neschválí (odkazem v e-mailu). Po schválení přihláška pokračuje standardním tokem (výzva k platbě apod.); neschválí-li zástupce do vypršení, přihláška expiruje. Schválením vzniká vazba rodič ↔ dítě. Chybí-li datum narození, přihlášku nelze vyhodnotit a systém e-mail zástupce vyžádá.
-- **Povinné dokumenty:** akce může vyžadovat nahrání dokumentů (např. **potvrzení o lékařské způsobilosti**, souhlas zákonného zástupce, kopie kartičky pojišťovny). Účastník je může nahrávat **postupně nebo najednou**; dokud nejsou nahrané všechny povinné dokumenty, přihláška je ve stavu `PendingDocuments` (čeká na nahrání povinných dokumentů). **Náhradník** dokumenty nahrává až **po schválení přihlášky** (po přijetí nabídky z náhradnického místa) — do té doby je upload skrytý/uzamčený.
-- **Schvalovací flow dokumentů:** vedoucí u každého nahraného dokumentu vidí stav (`uploaded` / `approved` / `rejected`) a dokument buď **schválí**, nebo **zamítne s komentářem** (`review_note`) s důvodem (např. nečitelný, prošlý, nesprávný dokument). Zamítnutí přepne dokument do `rejected`, zaznamená kdo a kdy posoudil (`reviewed_by_account_id`, `reviewed_at`) a **e-mailem vyzve účastníka k opětovnému nahrání**. Přihláška zůstává (příp. se vrátí) do stavu `PendingDocuments`, dokud nejsou všechny povinné dokumenty ve stavu `approved`. Nahrání lze vyžádat i připomínkou.
+- **Povinné dokumenty:** akce může vyžadovat nahrání dokumentů (např. **potvrzení o lékařské způsobilosti**, souhlas zákonného zástupce, kopie kartičky pojišťovny). Po vytvoření přihlášky je každý požadovaný dokument ve stavu `pending` (očekává se nahrání). Účastník je může nahrávat **postupně nebo najednou**; dokud nejsou nahrané všechny povinné dokumenty, přihláška je ve stavu `PendingDocuments`. **Náhradník** dokumenty nahrává až **po schválení přihlášky** (po přijetí nabídky z náhradnického místa) — do té doby je upload skrytý/uzamčený.
+- **Schvalovací flow dokumentů** (`pending` → `uploaded` → `approved` / `rejected`): vedoucí u každého nahraného dokumentu vidí stav a dokument buď **schválí**, nebo **zamítne s komentářem** (`review_note`) s důvodem (např. nečitelný, prošlý, nesprávný dokument). Zamítnutí přepne dokument do `rejected`, zaznamená kdo a kdy posoudil (`reviewed_by_account_id`, `reviewed_at`) a **e-mailem vyzve účastníka k opětovnému nahrání**. Přihláška zůstává (příp. se vrátí) do stavu `PendingDocuments`, dokud nejsou všechny povinné dokumenty ve stavu `approved`. Nahrání lze vyžádat i připomínkou.
 - Systém posílá potvrzení přihlášky s výzvou k zaplacení (QR kód + platební údaje, pokud je stanovena cena akce)
-- Systém připomíná nezaplacené platby - četnost lze upravit v Nastavení oddílu
-- Systém kategorizuje přihlášky: Učastník, Dobrovolník, Náhradník
-- Stavy přihlášky: Paid, New, Canceled, PartialPaid, Overpayment, PendingPayment, PendingGuardian, PendingDocuments, Expired
+- Systém připomíná nezaplacené platby — četnost lze upravit v Nastavení oddílu
+- Systém kategorizuje přihlášky: Účastník, Dobrovolník, Náhradník
+- Stavy přihlášky (pořadí podle životního cyklu): `New`, `PendingGuardian`, `PendingDocuments`, `PendingPayment`, `PartialPaid`, `Paid`, `Overpayment`, `Canceled`, `Expired`
 
 ### Docházka
 
 - Docházka se vede **přímo na akci** (`EVENT`) — samostatná docházková událost neexistuje. Každý zápis je `ATTENDANCE_RECORD` (akce + osoba), unikátní v rámci akce.
-- Vedoucí můžou vytvářet akce i zpětně - např. pravidelné kluby (typ `club`) a rovnou vybrat libovolné účastníky ze seznamu osob z oddílu
+- Vedoucí můžou vytvářet akce i zpětně — např. pravidelné kluby (typ `club`) a rovnou vybrat libovolné účastníky ze seznamu osob z oddílu
 - **Klubová schůzka je akce bez přihlášek** — nemá otevřenou registraci (`registration_from`/`registration_to` prázdné, `visibility = private`), takže se u ní nespouští potvrzení přihlášky, výzvy k platbě ani připomínky. Účast se eviduje jen docházkovým záznamem.
 - U akce s přihláškami jsou obě evidence odlišené: `REGISTRATION` = kdo se přihlásil, `ATTENDANCE_RECORD` = kdo se skutečně zúčastnil a kolik odpracoval.
 - Záznam nese `present`, takže se rozliší **nepřítomnost** (zapsán, nedorazil) od **nezapsaného** (žádný záznam).
-- Při evidenci dobrovolníku je možné zadat počet hodin — vždy na `ATTENDANCE_RECORD` téže akce, takže hodiny z klubů i z víkendovek tečou jedním kanálem a report je sčítá z jednoho místa.
+- Při evidenci dobrovolníku je možné zadat počet hodin — vždy na `ATTENDANCE_RECORD` téže akce
 - Systém rozděluje Krátkodobé dobrovolníky (pod 50hod.) a dlouhodobé (nad 50hod.)
-- Zápis docházky je **samostatné oprávnění na akci** — může ho mít i Rádce, který nemá přístup k přihláškám a platbám.
+- Zápis docházky je **samostatné oprávnění na akci** (`EVENT_ASSIGNMENT.can_record_attendance`) — může ho mít i Rádce, který nemá přístup k přihláškám a platbám.
 
 #### Reporty
 
-- Seznam akcí/výprav, docházka členů/nečlenů/vedoucích/rádců/dobrovolníků
+- Seznam akcí/schůzek, docházka členů/nečlenů/vedoucích/rádců/dobrovolníků
 - Počty členů v čase — vývoj registrovaných členů / členů DU / hostů po měsících nebo letech (růst/úbytek oddílu).
 - Účast na akcích — kolik lidí chodí na akce v jednotlivých obdobích, naplněnost kapacit, podíl náhradníků.
-- Docházka klubů — průměrná návštěvnost pravidelných klubů v průběhu roku (sezónní výkyvy).
+- Docházka — průměrná návštěvnost pravidelných schůzek v průběhu roku (sezónní výkyvy).
 - Dobrovolnické hodiny — vývoj odpracovaných hodin, poměr krátkodobých/dlouhodobých dobrovolníků.
 - Retence / odchody — kolik osob přechází do neaktivní, míra reaktivací.
 - Platby — vývoj inkasa, podíl včas/pozdě zaplacených, storna.
@@ -327,8 +334,8 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 #### Pomocná evidence
 
 - Vedoucí může pro svůj oddíl nebo družinu definovat nové sloupce (do tabulky hostů/členů)
-- Sloupcům lze nastavit viditelnost - zda je vlastník účtu může vidět nebo upravovat
-- Sloupcům lze nastavit oprávnění - zda Rádci můžou vidět nebo upravovat
+- Sloupcům lze nastavit viditelnost — zda je vlastník účtu může vidět nebo upravovat
+- Sloupcům lze nastavit oprávnění — zda Rádci můžou vidět nebo upravovat
 
 #### Modul párování plateb
 
@@ -337,11 +344,11 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 - Systém automaticky navrhuje párování podle SS=akce a VS=přihláška; když částka neodpovídá jediné přihlášce, umožní ruční rozdělení (alokaci) částky mezi více přihlášek
 - U každé alokace se eviduje **způsob spárování** (`match_method`):
   - `ss_vs_amount` - shoda SS, VS i částky,
-  - `ss_vs_partial` - shoda SS, VS a čáštečná úhrada,
+  - `ss_vs_partial` - shoda SS, VS a částečná úhrada,
   - `ss_vs_overpayment` - shoda SS, VS a přeplatek,
   - `vs_exact_name` - shoda VS, částky a jména odesílatele platby s vlastníkem přihlášky nebo poznámky platby s názvem akce,
   - `ss_exact_name` - shoda SS, částky a jména odesílatele platby s vlastníkem přihlášky,
-  - `vs_partial_name` - shoda VS, čáštečná úhrady a shoda jména odesílatele platby s vlastníkem přihlášky nebo poznámky platby s názvem akce,
+  - `vs_partial_name` - shoda VS, částečná úhrada a shoda jména odesílatele platby s vlastníkem přihlášky nebo poznámky platby s názvem akce,
   - `vs_overpayment_name` - shoda VS, přeplatek a shoda jména odesílatele platby s vlastníkem přihlášky nebo poznámky platby s názvem akce,
   - `manual` - ruční
 - Každá alokace eviduje napárovanou částku; stav přihlášky se počítá ze součtu alokací vůči ceně
@@ -350,12 +357,12 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 #### Modul Potvrzení o platbě
 
 - Vyžaduje aktivní Platební modul
-- Účetní do systému zadá systému šablonu s razítkem/podpisem
+- Účetní nahraje šablonu potvrzení s razítkem/podpisem v nastavení modulu — šablona je záležitost **aplikační vrstvy** (soubor šablony + konfigurace), v datovém modelu pro ni není samostatná entita
 - Systém automaticky připraví potvrzení o platbě ke stažení
 
 #### Modul reporty ústředí
 
-- Počítá unikátni počet dětí v rámci všech akcí všech oddílů (počítá se jednou, ikdyž bylo na více akcích)
+- Počítá unikátní počet dětí v rámci všech akcí všech oddílů (počítá se jednou, i když bylo na více akcích)
 - Lze filtrovat a agregovat podle **regionu** (region akce = snapshot uložený při vzniku akce)
 - Zobrazí možné kandidáty (jméno, příjmení, datum narození). Systém nabídne "Reportovací sloučení" osob pro účely unikátních počtů, záznamy zůstanou oddělené
 - nepočítá hosty ostatních oddílů
@@ -374,6 +381,8 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 ## Datový model (ER diagram)
 
 > Návrh schématu odvozený ze specifikace. Spojovací (M:N) a historizační tabulky jsou uvedeny zvlášť.
+>
+> **Aktérské cizí klíče se v diagramu nekreslí.** Pole typu `*_by_account_id`, `actor_account_id` a `initiator_account_id` zaznamenávají, kdo operaci provedl; v databázi jsou to cizí klíče na `ACCOUNT`, ale relace se nekreslí, aby diagram nezahltila hvězda čar kolem `ACCOUNT`. Nakreslené vazby na `ACCOUNT` proto značí, že je účet **předmětem** záznamu (např. `EVENT_ASSIGNMENT`), ne jeho původcem.
 
 ```mermaid
 %%{init: {
@@ -424,12 +433,13 @@ erDiagram
 
     ACCOUNT ||--o{ OAUTH_IDENTITY : has
     ACCOUNT ||--o{ USER_ROLE : has
-    ACCOUNT ||--o{ REGISTRATION_DOCUMENT : reviews
 
     UNIT_PATROL ||--o{ UNIT_PATROL_MEMBER : contains
     UNIT_PATROL ||--o{ CUSTOM_FIELD : scopes
 
     ACTION_TEMPLATE ||--o{ EVENT : "instantiated as"
+    EVENT ||--o{ EVENT_ASSIGNMENT : delegates
+    ACCOUNT ||--o{ EVENT_ASSIGNMENT : "assigned to"
     EVENT ||--o{ EVENT_PRICE : has
     EVENT_PRICE ||--o{ REGISTRATION : "priced by"
     EVENT ||--o{ CANCELLATION_RULE : has
@@ -483,7 +493,7 @@ erDiagram
     MERGE_REQUEST ||--o{ MERGE_APPROVAL : "approved by"
     MERGE_REQUEST ||--o{ MERGE_LOG : "logged as"
     UNIT ||--o{ NAME_EXCEPTION : approves
-    ACCOUNT ||--o{ GDPR_AUDIT : "performed by"
+    UNIT ||--o{ AUDIT_LOG : logs
     REGISTRATION ||--o{ SUBSTITUTE_OFFER : offers
     REGISTRATION ||--o{ RECOMMENDATION : requires
     UNIT ||--o{ UNIT_MODULE : enables
@@ -521,15 +531,19 @@ erDiagram
         string first_name
         string last_name
         string nickname
+        string title_before
+        string title_after
         string gender "male / female / other"
         date birth_date "povinne u registrovaneho clena"
         string email "kontaktni e-mail (nemusi byt unikatni)"
+        string address "trvale bydliste"
+        string insurance_company
     }
     PERSON_UNIT {
         int id PK
         int person_id FK
         int unit_id FK
-        string membership_state "guest / registered_member / du_member"
+        string membership_state "guest / registered_member"
         string record_state "active / inactive / archived"
         datetime valid_from
         datetime valid_to
@@ -609,6 +623,17 @@ erDiagram
         int event_id FK
         decimal percent
         date valid_until
+    }
+    EVENT_ASSIGNMENT {
+        int id PK
+        int event_id FK,UK "unikat: akce + ucet"
+        int account_id FK,UK
+        bool can_edit_event
+        bool can_edit_registrations
+        bool can_edit_prices
+        bool can_record_attendance
+        int assigned_by_account_id FK
+        datetime assigned_at
     }
     EVENT_FIELD {
         int id PK
@@ -864,6 +889,17 @@ erDiagram
         string scope "person / unit / guests / sensitive"
         int by_account_id FK "kdo (NULL = system)"
         string detail
+        datetime created_at
+    }
+    AUDIT_LOG {
+        int id PK
+        string entity_type "race_patrol / race_patrol_member / registration / registration_document / event / event_assignment / parent_child / ..."
+        int entity_id "bez FK (polymorfni)"
+        string action "create / update / delete / join / leave / approve / reject / cancel"
+        int unit_id FK "izolace a mazani per oddil"
+        int actor_account_id FK "NULL = system nebo akter bez uctu"
+        string actor_email "akter bez uctu (token)"
+        json detail "co se zmenilo / duvod"
         datetime created_at
     }
     PERSON_SENSITIVE_DATA {
