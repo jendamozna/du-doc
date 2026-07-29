@@ -146,6 +146,8 @@ flowchart TD
 - Je vlastnost osoby
 - Osoba se může stát členem DU od ledna následujícího roku po zaplacení příspěvku do listopadu
 - Členství DU trvá: leden–prosinec (kalendářní rok)
+- Osoba je členem DU vždy pod konkrétním oddílem
+- Kombinace osoba + rok je unikátní (jedno členství DU na osobu a rok)
 
 ### Region
 
@@ -395,6 +397,7 @@ erDiagram
     UNIT ||--o{ ATTENDANCE_EVENT : has
     UNIT ||--o{ CUSTOM_FIELD : defines
     UNIT ||--o{ LOCATION : defines
+    UNIT ||--o{ DU_MEMBERSHIP : "du members"
     UNIT }o--o| LOCATION : "based at"
     EVENT }o--o| LOCATION : "held at"
 
@@ -709,7 +712,7 @@ erDiagram
         int registration_id FK
         decimal amount "alokovana cast platby"
         string matched_by "auto / manual"
-        string match_method "ss_vs_amount / ss_vs_partial / ss_vs_overpayment / vs_exact_name / ss_exact_name / vs_partial_name / manual"
+        string match_method "ss_vs_amount / ss_vs_partial / ss_vs_overpayment / vs_exact_name / ss_exact_name / vs_partial_name / vs_overpayment_name / manual"
         datetime matched_at
         datetime confirmation_sent_at "potvrzeni prijate sparovane platby odeslano (NULL = neodeslano)"
     }
@@ -736,8 +739,9 @@ erDiagram
     }
     DU_MEMBERSHIP {
         int id PK
-        int person_id FK
-        int year
+        int person_id FK,UK "unikat: osoba + oddil + rok"
+        int unit_id FK "oddil, pres ktery je osoba clenem DU"
+        int year UK
     }
     ATTENDANCE_EVENT {
         int id PK
