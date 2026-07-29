@@ -22,7 +22,7 @@ Business popis žije v [README.md](README.md), implementační detaily v `docs/`
 | Bankovní synchronizace (Fio)       | 🟢 Ready        | [docs/fio-sync.md](docs/fio-sync.md) — token, kurzor, idempotence, rate limit, chybové stavy.                 |
 | Splatnost a stav úhrady            | 🟢 Ready        | Relativní nebo absolutní splatnost na akci; stav se počítá ze součtu alokací.                                 |
 | Lifecycle osoby                    | 🟡 OK / dořešit | Stavy jsou, ale přechody bez guardů/triggerů.                                                                 |
-| Přihlašování na akce               | 🟡 OK / dořešit | Stavy popsané, chybí formální state machine (co přesně `New→PendingPayment→…`).                               |
+| Přihlašování na akce               | 🟢 Ready        | [docs/registration-lifecycle.md](docs/registration-lifecycle.md) — brány, události, guardy, lhůty.        |
 | Modul párování plateb              | 🟡 Dořešit      | [docs/payment-matching.md](docs/payment-matching.md); chybí tolerance částky, pořadí pravidel, víc kandidátů. |
 | Deduplikace / merge                | 🟡 Dořešit      | Flow ano; řešení konfliktů pole-po-poli a revert jen rámcově.                                                 |
 | Role a oprávnění                   | 🔴 Gap          | Největší mezera — chybí matice akce × role. „Práva se přidělují u akce" není specifikace.                     |
@@ -36,7 +36,7 @@ Business popis žije v [README.md](README.md), implementační detaily v `docs/`
 ## Co dopsat (podle priority pro AI)
 
 1. **Autorizační matice** (akce × role × scope) — bez toho AI hádá práva. Nejvyšší priorita.
-2. **Stavové automaty** pro `REGISTRATION`, `PARENT_CHILD`, `MERGE_REQUEST`, `REGION` — stavy, přechody, spouštěče, guardy.
+2. **Stavové automaty** pro `PARENT_CHILD`, `MERGE_REQUEST`, `REGION` — stavy, přechody, spouštěče, guardy. Automat `REGISTRATION` je hotový ([docs/registration-lifecycle.md](docs/registration-lifecycle.md)), lifecycle osoby chybí.
 3. **Katalog notifikací** — tabulka událost → příjemce → šablona → načasování/opakování.
 4. **Validační pravidla a byznys-invarianty** — po polích (formát e-mailu, kdy je `birth_date` povinné, IČO, unikátnosti).
 5. **Algoritmus párování plateb** — základ hotový ([docs/payment-matching.md](docs/payment-matching.md)); dopsat toleranci částky, pořadí vyhodnocování pravidel a chování při více kandidátech.

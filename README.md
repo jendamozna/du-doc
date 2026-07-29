@@ -118,6 +118,35 @@ flowchart TD
 - **Neaktivní** a **archivovaný** jsou **kolmé** na členský stav výše — jedno vyjadřuje typ vztahu k oddílu, druhé životnost záznamu.
 - U každého je evidována historie — změny, přihlášky, pod jakým oddílem.
 
+##### TODO - dořešit
+
+1. Dvě osy, ale jen jedna sada přechodů
+   Text sám říká, že členský stav (host / registrovaný člen) a stav záznamu (neaktivní / archivovaný) jsou kolmé, jenže přechody vypisuje v jednom seznamu. Chybí matice povolených kombinací a přechody zvlášť pro každou osu. Stav aktivní (v modelu record_state = active) se v próze vůbec nejmenuje.
+
+2. Guardy a kdo přechod provádí
+   Jen u host → registrovaný člen je řečeno „HVO" a „povinné datum narození". U ostatních přechodů není, kdo je smí provést, ani co je blokuje — např. jestli lze deaktivovat osobu s otevřenou nezaplacenou přihláškou, nebo archivovat osobu s nedořešenou pohledávkou. Chybí i opačný přechod registrovaný člen → host (je vůbec povolený?).
+
+3. Definice „dlouhodobě bez aktivity"
+   Není určeno, co je aktivita (přihláška, docházka, login?), jaká je lhůta, jak často job běží a zda se deaktivaci předchází upozorněním. Retenční tabulka zná jen 12 měsíců u hosta a 24 měsíců u účtu — vztah těchto lhůt ke stavu osoby není popsaný.
+
+4. Rozpor scope: stav je per oddíl, anonymizace je globální
+   record_state visí na vazbě osoba–oddíl, ale anonymizace maže data osoby jako celku. Není popsáno, co znamená „archivovaný v oddílu A, aktivní v oddílu B" a kdo smí spustit výmaz, když je osoba aktivní jinde.
+
+5. Terminálnost archivace a návrat po ní
+   Není řečeno, že archivace je nevratná (data jsou pryč) a že návrat osoby po anonymizaci znamená novou osobu — tedy potenciální duplicitu, kterou pak řeší deduplikace a reportovací sloučení.
+
+6. Dopady stavu na ostatní vazby
+   Co se při deaktivaci stane s členstvím v družině, vazbou rodič–dítě, rolemi účtu, přiřazením k akcím a s tím, jestli si osoba může dál založit přihlášku.
+
+7. Vazba osoba ↔ účet
+   Deaktivace osoby vs. platnost loginu není nikde popsaná, přestože retenční tabulka mazání nečinného účtu řeší.
+
+8. Obsah historie
+   „U každého je evidována historie" je jediná věta, přestože na ní stojí report Retence — chybí, že se zapisuje výchozí a cílový stav obou os, kdo, kdy a proč, a že u systémových změn je původce prázdný.
+
+9. Interakce s členstvím DU
+   Není řečeno, zda může být neaktivní nebo archivovaná osoba členem DU pro daný rok a jak se to promítne do počtů.
+
 ### Retence a GDPR
 
 - Citlivá data jsou izolovaná per oddíl, každý oddíl proto maže/anonymizuje jen svoji verzi
@@ -305,7 +334,7 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 - **Splatnost:** u relativní splatnosti je přihláška splatná za nastavený počet dní od podání, nejpozději ale k začátku akce; u absolutní platí datum akce pro všechny stejně. Později podáná přihláška je splatná ihned. Změna nastavení akce nemění splatnost už podáných přihlášek (u relativní varianty).
 - Systém připomíná nezaplacené platby — četnost lze upravit v Nastavení oddílu
 - Systém kategorizuje přihlášky: Účastník, Dobrovolník, Náhradník
-- Stavy přihlášky (pořadí podle životního cyklu): nová → čeká na zákonného zástupce → čeká na dokumenty → čeká na platbu → částečně zaplaceno → zaplaceno / přeplatek; kdykoli stornována nebo expirovaná
+- Stavy přihlášky (pořadí podle životního cyklu): nová → čeká na zákonného zástupce → čeká na dokumenty → čeká na platbu → částečně zaplaceno → zaplaceno / přeplatek; kdykoli stornována nebo expirovaná. Cesta není jednosměrná — zamítnutý dokument nebo vratka vrátí přihlášku zpět. Přesná pravidla přechodů viz [docs/registration-lifecycle.md](docs/registration-lifecycle.md).
 
 ### Docházka
 
@@ -382,6 +411,7 @@ Tento dokument popisuje **co** systém dělá a proč — je určený zadavatel�
 | ---------------------------------------------------- | ---------------------------------------------------------- |
 | [docs/data-model.md](docs/data-model.md)             | ER diagram — entity, pole, číselníkové hodnoty, vazby      |
 | [docs/event-fields.md](docs/event-fields.md)         | model výběrových číselníků akce                            |
+| [docs/registration-lifecycle.md](docs/registration-lifecycle.md) | stavový automat přihlášky — brány, události, lhůty    |
 | [docs/race-patrols.md](docs/race-patrols.md)         | hlídky Stezky — výpočet věku, kontrola složení, stanoviště |
 | [docs/payment-matching.md](docs/payment-matching.md) | pravidla párování plateb a výpočet stavu úhrady            |
 | [docs/reports.md](docs/reports.md)                   | definice metrik reportů, parametry a rozsah dat            |
