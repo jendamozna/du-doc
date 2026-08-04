@@ -9,8 +9,8 @@ Implementační detail k [README.md](../README.md) → **Hlídky na závodních 
 ## Vlastnictví a členství
 
 - Hlídku vlastní přihláška, která ji založila (`RACE_PATROL.owner_registration_id`); upravovat a mazat ji smí jen vlastník. Název je unikátní v rámci akce.
-- Každá osoba je nejvýše v jedné hlídce (`RACE_PATROL_MEMBER`). Jeden člen má `role = leader` (kapitán), ostatní `member`.
-- Při vstupu do prázdné hlídky kategorie Stezka/Pěšinka se první člen stane kapitánem automaticky; u ostatních kategorií se kapitán volí ručně.
+- Každá osoba je nejvýše v jedné hlídce (`RACE_PATROL_MEMBER`).
+- Kapitána (`role = leader`) lze zvolit jen v kategoriích Stezka a Pěšinka, kde je povinný; automaticky se jím stane první přidaný člen a lze ho později změnit. V ostatních kategoriích jsou všichni členové `member`.
 
 ## Výpočet věku
 

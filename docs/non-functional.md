@@ -25,7 +25,7 @@ Systém ukládá tři druhy souborů: **dokumenty přihlášek** (potvrzení od 
 
 ## Šifrování a hesla
 
-- Pole s příponou `_enc` (`api_token_enc`, `smtp_password_enc`) jsou šifrovaná symetricky (libsodium secretbox) s **klíčem z konfigurace prostředí nebo KMS**, nikdy z databáze. Každý záznam má vlastní nonce.
+- Pole s příponou `_enc` (`api_token_enc`, `smtp_password_enc`) jsou šifrovaná symetricky (libsodium secretbox) s **klíčem z konfigurace prostředí**, nikdy z databáze. Každý záznam má vlastní nonce.
 - Šifruje se **jen to, co systém musí přečíst zpět** — přístupové údaje k bance a k odchozí poště. Nic jiného.
 - Uživatelská hesla se **hashují** (Argon2id), nešifrují. Reset hesla je jednorázový token s krátkou platností.
 - Šifrované ani hashované hodnoty se nikdy nevypisují do logů, chybových hlášek ani do exportů.

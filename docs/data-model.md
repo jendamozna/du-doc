@@ -1,6 +1,6 @@
 # Datový model (ER diagram)
 
-Implementační detail ke specifikaci [README.md](../README.md). Byznysová pravidla, která model naplňuje, jsou popsána tam; tady je jen jejich promítnutí do schématu.
+Implementační detail ke specifikaci [README.md](../README.md).
 
 > Návrh schématu odvozený ze specifikace. Spojovací (M:N) a historizační tabulky jsou uvedeny zvlášť.
 >
