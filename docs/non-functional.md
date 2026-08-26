@@ -1,6 +1,14 @@
 # Nefunkční požadavky
 
-Implementační detail k [README.md](../README.md) → **Požadavky**, kde jsou uvedené měna, časové pásmo a formáty. Tento dokument popisuje zbytek provozních a technických požadavků. Schéma viz [data-model.md](data-model.md).
+Implementační detail k [README.md](../README.md) → **Požadavky**. Schéma viz [data-model.md](data-model.md).
+
+## Lokalizace a formáty
+
+- **Měna:** výhradně CZK. Všechny částky (ceny, storna, platby, alokace) jsou v korunách; zobrazují se s oddělovačem tisíců a symbolem, např. `1 250 Kč`, desetinná čárka.
+- **Časové pásmo:** `Europe/Prague`. Časy se ukládají v UTC a zobrazují v místním čase včetně přechodu na letní/zimní čas; čistě datumové údaje bez času se pásmem nepřepočítávají.
+- **Formát data a času:** česky, den v týdnu s velkým počátečním písmenem, den a měsíc bez úvodních nul — `Středa 29.7. 14:19`. **Rok se zobrazuje jen tehdy, liší-li se od aktuálního** (`Středa 29.7.2025 14:19`).
+- **Jazyk:** čeština (rozhraní i e-maily).
+- **DPH systém neřeší** — oddíly jsou neplátci, ceny akcí jsou konečné. Jediným dopadem DPH je delší retenční lhůta u dokladů, které ji obsahují.
 
 ## Přihlašování přes OAuth
 
@@ -72,7 +80,5 @@ Systém ukládá tři druhy souborů: **dokumenty přihlášek** (potvrzení od 
 
 ## Co systém záměrně neřeší
 
-- **DPH** — oddíly jsou neplátci DPH a akce jsou nezisková činnost.
-- **Vícejazyčnost** — rozhraní i e-maily jsou česky.
 - **Odchozí platební příkazy** — vratky vyplácí účetní ve své bance, systém je jen eviduje ([payment-matching.md](payment-matching.md)).
 - **Účetnictví** — systém eviduje platby a jejich přiřazení, není účetní software.
