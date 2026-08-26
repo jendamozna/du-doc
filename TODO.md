@@ -2,14 +2,6 @@
 
 Hodnocení dokumentu z pohledu „může podle toho AI/tým naprogramovat aplikaci".
 
-## Celkový verdikt
-
-Dokument je **silný na úrovni domény + datového modelu** (PRD/spec), ne na úrovni implementačního zadání. AI podle něj **spolehlivě postaví DB schéma a CRUD** a **dobře zvládne detailně popsané subsystémy** (číselníky, hlídky Stezky, párování plateb, reporty). Na **one-shot celé aplikace to ale nestačí** — chybí autorizační matice, formální stavové automaty, katalog notifikací, validační pravidla a API/UI kontrakt. AI by musela dělat hodně vlastních rozhodnutí.
-
-Orientačně: **~75 % hotovo** pro backend/datovou vrstvu, **~45 %** pro kompletní funkční aplikaci vč. autorizace, UI a integrací.
-
-Business popis žije v [README.md](README.md), implementační detaily v `docs/` — viz rozcestník na konci README.
-
 ## Hodnocení po sekcích
 
 | Sekce                              | Stav            | Poznámka                                                                                                   |
@@ -39,14 +31,17 @@ Business popis žije v [README.md](README.md), implementační detaily v `docs/`
 2. **Stavové automaty** pro `PARENT_CHILD` a `REGION` — stavy, přechody, spouštěče, guardy. Hotové jsou `REGISTRATION` ([docs/registration-lifecycle.md](docs/registration-lifecycle.md)) a `MERGE_REQUEST` ([docs/person-merge.md](docs/person-merge.md)); lifecycle osoby chybí.
 3. **Katalog notifikací** — tabulka událost → příjemce → šablona → načasování/opakování.
 4. **Validační pravidla a byznys-invarianty** — po polích (formát e-mailu, kdy je `birth_date` povinné, IČO, unikátnosti).
-5. ~~**Algoritmus párování plateb**~~ — hotovo, viz [docs/payment-matching.md](docs/payment-matching.md).
-6. ~~**Definice reportů**~~ — hotovo, viz [docs/reports.md](docs/reports.md).
-7. ~~**Nefunkční požadavky**~~ — hotovo, viz [docs/non-functional.md](docs/non-functional.md).
-8. **API kontrakt / hranice modulů** — pokud AI staví i server (endpointy nebo aspoň use-case seznam).
+5. **API kontrakt / hranice modulů** — pokud AI staví i server (endpointy nebo aspoň use-case seznam).
+6. **Hromadné přihlášení vedoucím (mimo portál)** — celá kapitola „Přihlašování na akce" popisuje jen samoobslužný tok přes veřejný portál (účastník nebo rodič si podává přihlášku sám). U docházky je explicitně řešeno, že vedoucí může akci založit zpětně a rovnou vybrat libovolné účastníky ze seznamu osob oddílu — obdobný hromadný zápis pro **přihlášky** ale specifikace nezmiňuje. Chybí odpověď na to, jestli HVO/Vedoucí smí za skupinu existujících členů (např. celou družinu) založit přihlášky najednou bez toho, aby si je každý podával sám, jaký stav taková přihláška dostane (rovnou čeká na platbu?) a jak se to promítne do kapacity a pořadí náhradníků.
+7. **Pořadí podání přihlášky vs. založení `DU_MEMBERSHIP`** — cena a způsobilost se vyhodnocují k roku dané akce (README → **Člen DU**), ne podle aktuálního data, takže účastník přihlášený v prosinci na lednovou akci může platit cenu pro DU, pokud HVO členství pro nový rok už založil. Není ale řečeno, zda se cena přihlášky **zafixuje v okamžiku podání**, nebo se **přepočítává** až do splatnosti/platby — výsledek se liší podle toho, kdy HVO členství pro nový rok stihne založit vůči podání přihlášky.
+8. **Nezletilý Rádce** — text jen konstatuje, že „Rádci nevidí citlivá data dětí, nejsou plnoletí" (README → **Rádce**), ale účet Rádce zakládá HVO pozvánkou stejně jako dospělým rolím, bez zmínky o zastoupení zákonným zástupcem. Chybí, zda pozvánku/založení role musí schválit rodič, jak se role promítá do existující vazby rodič ↔ dítě a kdo právně odpovídá za činy nezletilého Rádce v systému (zápis docházky, úprava chytrých sloupců).
+9. **Členský příspěvek DU vs. více oddílů** — `DU_MEMBERSHIP` má unikátní klíč jen osoba + rok ([data-model.md](docs/data-model.md#L406-L410)), `unit_id` do klíče nepatří, takže osoba může mít max. jedno členství DU za rok v celém systému, přestože může být evidovaná ve víc oddílech současně (README → **Osoba vs. uživatelský účet**). Není řečeno, který oddíl smí členství založit, když je osoba aktivní ve víc oddílech, zda cena DU platí i na akcích jiného oddílu než toho, co členství založil, a co se stane při přesunu osoby mezi oddíly v průběhu roku.
+10. **Výběr a párování členského příspěvku DU** — „systém platbu příspěvku neřeší" (README → **Člen DU**), ale příspěvek není akce, takže chybí, jak se vybírá a páruje, a kde se platí (účet organizace, nebo oddílu) — navazuje na bod 9. Návrh k vložení do sekce „Člen DU":
+    - Členský příspěvek DU se vybírá na úrovni organizace jako zvláštní platební položka s vlastním SS, párovaná stejným mechanismem jako akce (VS = osoba/přihláška příspěvku).
+    - Příspěvek je jednou za osobu a kalendářní rok — zaplacení povýší osobu na „člena DU" globálně, bez ohledu na počet oddílů, kde je evidována.
+    - Stav „člen DU" a evidenci plateb příspěvku spravuje a vidí organizace (ORG-A/ORG-Ú); oddíl vidí jen výsledný stav členství.
 
 ## Jaká úroveň „stačí" pro AI
 
 - **Pro scaffolding (DB, entity, základní CRUD, dobře popsané subsystémy):** současná úroveň **stačí**.
 - **Pro implementaci bez hádání (autorizace, platby, notifikace, reporty, UI):** potřeba doplnit **body 1–4** jako minimum; ideálně i 5–7.
-
-Doporučené pořadí: začít **autorizační maticí** a **stavovým automatem přihlášky** — mají největší dopad a nejlíp se z nich generuje kód.
