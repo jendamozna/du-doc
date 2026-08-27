@@ -6,6 +6,8 @@ Systém přihlášek na akce pro oddíly DU. Strukturu tvoří ústředí, regio
 
 **Rozsah:** Veřejný registrační portál, oddílová správa akcí, správa ústředí, self-management pro registrované.
 
+**Rozhraní je navržené mobile-first** — rodiče i vedoucí pracují převážně z telefonu, desktop je menšinový scénář (účetní, ústředí). Detail viz [docs/non-functional.md](docs/non-functional.md).
+
 ---
 
 ## Přehled architektury
@@ -51,19 +53,10 @@ flowchart TD
 1. Hromadné přihlášení vedoucím (mimo portál)
    Celá kapitola „Přihlašování na akce" popisuje jen samoobslužný tok přes veřejný portál (účastník nebo rodič si podává přihlášku sám). U docházky je explicitně řešeno, že vedoucí může akci založit zpětně a rovnou vybrat libovolné účastníky ze seznamu osob oddílu — obdobný hromadný zápis pro **přihlášky** ale specifikace nezmiňuje. Chybí odpověď na to, jestli HVO/Vedoucí smí za skupinu existujících členů (např. celou družinu) založit přihlášky najednou bez toho, aby si je každý podával sám, jaký stav taková přihláška dostane (rovnou čeká na platbu?) a jak se to promítne do kapacity a pořadí náhradníků.
 
-2. Pořadí podání přihlášky vs. založení `DU_MEMBERSHIP`
-   Cena a způsobilost se vyhodnocují k roku dané akce (README → **Člen DU**), ne podle aktuálního data, takže účastník přihlášený v prosinci na lednovou akci může platit cenu pro DU, pokud HVO členství pro nový rok už založil. Není ale řečeno, zda se cena přihlášky **zafixuje v okamžiku podání**, nebo se **přepočítává** až do splatnosti/platby — výsledek se liší podle toho, kdy HVO členství pro nový rok stihne založit vůči podání přihlášky.
-
-3. Nezletilý Rádce
+2. Nezletilý Rádce
    Text jen konstatuje, že „Rádci nevidí citlivá data dětí, nejsou plnoletí" (README → **Rádce**), ale účet Rádce zakládá HVO pozvánkou stejně jako dospělým rolím, bez zmínky o zastoupení zákonným zástupcem. Chybí, zda pozvánku/založení role musí schválit rodič, jak se role promítá do existující vazby rodič ↔ dítě a kdo právně odpovídá za činy nezletilého Rádce v systému (zápis docházky, úprava chytrých sloupců).
 
-4. Výběr a párování členského příspěvku DU
-   „systém platbu příspěvku neřeší" (README → **Člen DU**), ale příspěvek není akce, takže chybí, jak se vybírá a páruje, a kde se platí (účet organizace, nebo oddílu). Návrh k vložení do sekce „Člen DU":
-   - Členský příspěvek DU se vybírá na úrovni organizace jako zvláštní platební položka s vlastním SS, párovaná stejným mechanismem jako akce (VS = osoba/přihláška příspěvku).
-   - Příspěvek je jednou za osobu a kalendářní rok — zaplacení povýší osobu na „člena DU" globálně, bez ohledu na počet oddílů, kde je evidována.
-   - Stav „člen DU" a evidenci plateb příspěvku spravuje a vidí organizace (ORG-A/ORG-Ú); oddíl vidí jen výsledný stav členství.
-
-5. Oddílová pokladna - párovani s hotovostními platbami?
+3. Oddílová pokladna - párovani s hotovostními platbami?
 
 ---
 
@@ -147,6 +140,7 @@ flowchart TD
 | Údaje hosta / jednorázového účastníka (nečlen)              | 12 měsíců od poslední aktivity, pak anonymizace               | žádný trvající vztah                                    |
 | Členská evidence (registrovaný člen, člen DU)               | po dobu členství + 10 let                                     | doložitelnost pro dotace/kontroly (MŠMT obvykle 10 let) |
 | Docházka, dobrovolnické hodiny                              | 10 let                                                        | výkaznictví k dotacím                                   |
+| Přístup vedoucích k akci (přiřazení a jeho odebrání)        | 10 let od skončení akce                                       | doložení, kdo měl přístup k údajům účastníků            |
 | Účetní doklady (platby, párování, vratky)                   | 5 let (běžné), 10 let u dokladů s DPH                         | zákon o účetnictví / zákon o DPH                        |
 | Souhlasy se zpracováním (GDPR)                              | po dobu zpracování + 4 roky po odvolání                       | doložení souhlasu, promlčecí doba                       |
 | Úrazy / pojistné události nezletilých                       | do zletilosti dítěte + 4 roky                                 | promlčecí lhůty nároků nezletilých                      |
@@ -162,7 +156,7 @@ flowchart TD
 - Změnové události napříč systémem se zapisují do jednoho společného auditního logu — mutace hlídek, zrušení vazby rodič ↔ dítě, změny přiřazení vedoucích k akci, úpravy akce a přihlášky, posouzení dokumentů.
 - Záznam nese **cíl**, **operaci**, **aktéra** a detail s tím, co se změnilo, případně důvodem. **Aktér nemusí mít účet** — přihlášku i hlídku lze spravovat přes odkaz z e-mailu, proto se užívá i e-mail aktéra; u automatických úloh je aktérem systém.
 - Log je vedený **per oddíl**, takže ho lze mazat a anonymizovat samostatně a naplňovat lhůtu **3 roky** z tabulky výše.
-- Mimo tento log zůstávají tři evidence, které nejsou jen auditem: **záznam o sloučení osob** (umožňuje sloučení vrátit zpět), **historie stavů osoby** (čtou ji reporty) a **doklad o výmazu podle GDPR** (vlastní retence a okruh čtenářů).
+- Mimo tento log zůstávají čtyři evidence, které nejsou jen auditem: **záznam o sloučení osob** (umožňuje sloučení vrátit zpět), **historie stavů osoby** (čtou ji reporty), **historie přístupu vedoucích k akci** (vlastní retence 10 let) a **doklad o výmazu podle GDPR** (vlastní retence a okruh čtenářů).
 - Detail modelu viz [docs/audit-log.md](docs/audit-log.md).
 
 ### Deduplikace osob, merge
@@ -181,12 +175,17 @@ flowchart TD
 - **Členství je globální vůči osobě a roku** — osoba má nejvýše jedno členství DU za kalendářní rok v celém systému, bez ohledu na to, v kolika oddílech je evidovaná.
 - Součástí záznamu je **evidenční oddíl**, který členství založil. Slouží k dohledatelnosti a k výkaznictví (report se ptá, který oddíl člena vykázá), **neomezuje ale platnost členství**.
 - **Platné členství DU se uznává ve všech oddílech, kde je osoba evidovaná** — cena pro členy DU i podmínky způsobilosti platí i na akcích jiného oddílu než toho evidenčního. Přesun osoby mezi oddíly v průběhu roku členství nezaniká ani nezakládá nové.
-- Osoba se může stát členem DU od ledna následujícího roku po zaplacení příspěvku do listopadu — **systém platbu příspěvku neřeší**; členství pro daný rok zakládá HVO některého z oddílů, kde je osoba evidovaná — ten se tím stane evidenčním oddílem.
-- **První založení vyhrává** — je-li osoba evidovaná ve víc oddílech, nerozhoduje se, kdo má přednost. Druhý HVO už členství založit nemůže a systém mu místo chyby ukáže, který oddíl ho pro daný rok založil.
+- Osoba se může stát členem DU od ledna následujícího roku po zaplacení příspěvku do listopadu.
+- **Příspěvek se vybírá hromadně přes oddíl.** HVO vybere osoby ze své členské základny, systém spočítá částku (počet osob × sazba pro daný rok) a vygeneruje **jeden QR kód pro hromadnou platbu** na účet ústředí. HVO zaplatí jednou platbou za všechny vybrané.
+- **Sazbu příspěvku pro daný rok stanovuje ADM** a je společná pro celý systém.
+- **Členství vzniká spárováním platby, ne ručním zápisem.** Hromadnou platbu páruje **účetní ústředí** stejným mechanismem jako platby za akce (SS = příspěvek DU, VS = dávka); spárováním systém všem osobám dávky nastaví příznak člena DU — založí záznam o členství s evidenčním oddílem = oddíl, který dávku podal.
+- **Dávka je nedělitelná.** Po vygenerování QR se seznam osob uzamkne (jinak by částka nesouhlasila s QR); změna znamená dávku zrušit a založit novou. Částečná úhrada příznak nikomu nenastaví — dávka zůstane jako nedoplatek, dokud ji HVO nedoplatí.
+- Do dávky lze zařadit jen osobu, která pro daný rok **ještě členství nemá** a **není v jiné nevypořádané dávce**.
+- **První zaplacená dávka vyhrává** — je-li osoba evidovaná ve víc oddílech, nerozhoduje se, kdo má přednost. Podají-li dávku dva oddíly, uspěje ta, jejíž platba dorazila první; druhá položka se přeskočí a rozdíl řeší účetní ústředí jako přeplatek dávky.
 - **Evidenční oddíl lze přepsat:** HVO jiného oddílu, kde je osoba evidovaná, požádá o převedení a potvrdí ho HVO stávajícího evidenčního oddílu, nebo ADM. Změna se loguje a mění **jen výkaznictví**, ne platnost členství — to platí dál ve všech oddílech.
 - Členství DU trvá: leden–prosinec (kalendářní rok). **Vyprší tím, že pro nový rok záznam nevznikne** — není potřeba žádný přechod stavu ani úklidová úloha k 31. 12.
 - Kombinace osoba + rok je unikátní (jedno členství DU na osobu a rok)
-- Kde se členství vyhodnocuje (cena podle typu účastníka, podmínka způsobilosti u číselníku, reporty), rozhoduje se vždy **k roku dané akce**, ne podle aktuálního data
+- Kde se členství vyhodnocuje (cena podle typu účastníka, podmínka způsobilosti u číselníku, reporty), rozhoduje se vždy **k roku dané akce**, ne podle aktuálního data. U ceny se navíc vyhodnotí jen **jednou, při podání přihlášky** — pozdější vznik členství cenu už nemění (viz **Ceny a storna na akcích**).
 
 ### Region
 
@@ -223,6 +222,7 @@ flowchart TD
 
 - Hlavní vedoucí vytváří akce
 - **Přiřazení vedoucích k akci:** HVO přiřadí k akci konkrétní lidi (Vedoucí, Rádce) a každému nastaví rozsah oprávnění — úprava akce, úprava přihlášek, úprava cen a storen, zápis docházky. Samo přiřazení dává **čtení přihlášek** akce; bez přiřazení k akci vedoucí přístup nemá. Eviduje se, kdo a kdy přiřazení založil. **Účetní oddílu se k akci nepřiřazuje** — má oprávnění pro celý oddíl (viz **Účetní oddílu**).
+- **Přiřazení je verzované a nemaže se** — odebrání přístupu záznam jen uzavře (kdo a kdy odebral), změna rozsahu oprávnění uzavře starý a založí nový. I po letech tak lze zjistit, **kdo měl k akci a jejím přihláškám přístup a v jakém období**. Retenci určuje vlastní řádek v tabulce **Retence a GDPR** (10 let), ne 3letá lhůta auditního logu.
 - Každá akce může být svazána s maximálně jedním bankovním účtem
 - Každá akce může mít místo konání vybrané z lokací oddílu (GPS)
 - Název, SS, max kapacita, počet náhradníků, ceny pro členy DU i ostatní, začátek a konec akce, začátek a konec přihlašování, termíny pro storno podmínky
@@ -254,6 +254,9 @@ Tím se stejným modelem pokryje **ubytování** (jednovýběrový číselník b
 #### Ceny a storna na akcích
 
 - Systém umožňuje definovat více cen platných v různých termínech pro různé typy účastníků - DU, bez DU, dobrovolníky, oddílové vedoucí i děti oddílových vedoucích a sponzorské ceny
+- **Cena se fixuje v okamžiku podání přihlášky.** Rozhoduje typ účastníka a cenové období platné k tomuto okamžiku; pozdější zdražení, zlevnění ani vznik členství DU už cenu neřídí. Účastník tak vidí ve výzvě k platbě i v QR týž údaj, jaký platil při podání.
+- **Změnit už zafixovanou cenu může jen vedoucí** s oprávněním k úpravě cen a storen, a to ručně u konkrétní přihlášky (např. dodatečně prokázané členství DU); změna se loguje a přepočítá stav úhrady.
+- **Výjimkou jsou příplatky z číselníků** — změní-li účastník volbu (jiné ubytování, strava), cena se přepočte, protože se mění sama objednaná služba, ne ceník.
 - Volitelné příplatky (ubytování, strava apod.) se modelují přes **výběrové číselníky** — každá položka může nést cenový příplatek; výsledná cena přihlášky = základní cena + součet příplatků zvolených položek (viz **Výběrové číselníky akce**)
 - Systém umožňuje definovat storno poplatky procentuálně v různých termínech
 - Vratky systém neřeší

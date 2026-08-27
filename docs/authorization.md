@@ -12,6 +12,8 @@ Oprávnění nevzniká z jednoho zdroje — skládá se ze tří nezávislých v
 
 **Vyhodnocení:** výchozí stav je **zákaz**. Uživatel s více rolemi má sjednocení jejich práv (README → _Uživatel může být ve více rolích_). Zákaz čtení citlivých dat je ale **absolutní** a sjednocením se nepřebíjí (viz **Citlivá data**).
 
+**Přiřazení k akci je verzované.** Odebrání přístupu stávající `EVENT_ASSIGNMENT` jen uzavře (`revoked_at`, `revoked_by_account_id`), nemaze ho; změna rozsahu příznaků uzavře starý záznam a založí nový. Kontrola oprávnění pracuje výhradně se záznamy `revoked_at IS NULL`; uzavřené slouží jen k zodpovězení otázky „kdo měl k akci přístup v dubnu 2027" z intervalu `assigned_at`–`revoked_at`. Retence této historie je 10 let od skončení akce (README → **Retence a GDPR**), ne 3 roky jako auditní log.
+
 ## Aktéři
 
 | Aktér                  | Zdroj oprávnění                            | Rozsah                                    |
@@ -59,15 +61,20 @@ Legenda v maticích: **RW** = čtení i zápis · **R** = jen čtení · **A** =
 
 ## Platby
 
-| Operace                                 | ADM | HVO | VO / VD | RÁD | ÚČE | Ostatní     |
-| --------------------------------------- | --- | --- | ------- | --- | --- | ----------- |
-| Nastavit bankovní účet a token          | —   | RW  | —       | —   | R   | —           |
-| Číst bankovní transakce                 | —   | R   | —       | —   | R   | —           |
-| Nahrát výpis / ručně zapsat platbu      | —   | RW  | —       | —   | RW  | —           |
-| Párovat platby, ruční rozdělení         | —   | RW  | —       | —   | RW  | —           |
-| Řešit přeplatek (vratka / převod / dar) | —   | RW  | —       | —   | RW  | —           |
-| Odeslat výzvu k platbě                  | —   | RW  | —       | —   | RW  | —           |
-| Vygenerovat potvrzení o platbě          | —   | RW  | —       | —   | RW  | R (vlastní) |
+| Operace                                 | ADM | HVO | VO / VD | RÁD | ÚČE          | Ostatní     |
+| --------------------------------------- | --- | --- | ------- | --- | ------------ | ----------- |
+| Nastavit bankovní účet a token          | —   | RW  | —       | —   | R            | —           |
+| Číst bankovní transakce                 | —   | R   | —       | —   | R            | —           |
+| Nahrát výpis / ručně zapsat platbu      | —   | RW  | —       | —   | RW           | —           |
+| Párovat platby, ruční rozdělení         | —   | RW  | —       | —   | RW           | —           |
+| Řešit přeplatek (vratka / převod / dar) | —   | RW  | —       | —   | RW           | —           |
+| Odeslat výzvu k platbě                  | —   | RW  | —       | —   | RW           | —           |
+| Vygenerovat potvrzení o platbě          | —   | RW  | —       | —   | RW           | R (vlastní) |
+| Sestavit a odeslat dávku příspěvků DU   | R   | RW  | —       | —   | R            | —           |
+| Párovat platbu dávky příspěvků DU       | R   | —   | —       | —   | RW (ústředí) | —           |
+| Spravovat sazbu příspěvku DU            | RW  | —   | —       | —   | —            | —           |
+
+Dávky příspěvků páruje **účetní ústředí** — `ÚČE` se `unit_id` ústředí. Nejde o novou roli: příspěvky chodí na účet ústředí, takže platí stejné pravidlo jako u akcí („účetní páruje platby svého oddílu"). Účetní běžného oddílu do dávek nevidí, HVO vidí jen dávky vlastního oddílu.
 
 ## Osoby, družiny a docházka
 

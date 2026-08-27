@@ -26,10 +26,12 @@ Tabulka všech e-mailových událostí zmíněných napříč specifikací ([REA
 
 ## Platby a účetnictví
 
-| Kód                      | Událost (spouštěč)                          | Příjemce            | Načasování                  | Opakování / poznámka                                                                    | Zdroj                                      |
-| ------------------------ | ------------------------------------------- | ------------------- | --------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------ |
-| `EMAIL_PAYMENT_REMINDER` | nezaplacená přihláška po splatnosti (job)   | účastník / rodič    | podle nastavení oddílu      | **jen u účtu s bankovním API** (`provider = 'fio'`); u ruční evidence se neposílá vůbec | [payment-matching.md](payment-matching.md) |
-| `EMAIL_FIO_SYNC_FAILURE` | opakované selhání importu transakcí z banky | Účetní oddílu a HVO | po opakovaném selhání (job) | dokud selhání trvá — přesná frekvence není specifikovaná                                | [fio-sync.md](fio-sync.md#L33)             |
+| Kód                       | Událost (spouštěč)                          | Příjemce               | Načasování                  | Opakování / poznámka                                                                    | Zdroj                                      |
+| ------------------------- | ------------------------------------------- | ---------------------- | --------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------ |
+| `EMAIL_PAYMENT_REMINDER`  | nezaplacená přihláška po splatnosti (job)   | účastník / rodič       | podle nastavení oddílu      | **jen u účtu s bankovním API** (`provider = 'fio'`); u ruční evidence se neposílá vůbec | [payment-matching.md](payment-matching.md) |
+| `EMAIL_FIO_SYNC_FAILURE`  | opakované selhání importu transakcí z banky | Účetní oddílu a HVO    | po opakovaném selhání (job) | dokud selhání trvá — přesná frekvence není specifikovaná                                | [fio-sync.md](fio-sync.md#L33)             |
+| `EMAIL_DU_FEE_BATCH_QR`   | uzamčení dávky příspěvků DU                 | HVO (odesílatel dávky) | ihned                       | jednorázově; QR + platební údaje účtu ústředí                                           | [README.md](../README.md) → **Člen DU**    |
+| `EMAIL_DU_FEE_BATCH_PAID` | spárování platby dávky účetní ústředí       | HVO                    | po spárování                | jednorázově; seznam osob, kterým vzniklo členství, a přeskočené položky                 | [README.md](../README.md) → **Člen DU**    |
 
 ## Rodič ↔ dítě
 

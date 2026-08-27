@@ -73,6 +73,15 @@ Systém ukládá tři druhy souborů: **dokumenty přihlášek** (potvrzení od 
 - Časy se vyhodnocují v `Europe/Prague`, aby „denně" znamenalo místní den včetně přechodu času.
 - Selhání úlohy se hlásí administrátorovi; tichý výpadek importu plateb by se projevil až upomínkami zaplaceným lidem.
 
+## Rozhraní a zařízení
+
+- Návrh je **mobile-first**: rozhraní se kreslí nejdřív pro telefon a teprve pak rozšiřuje na tablet a desktop. Rodiče podají přihlášku a zaplatí z mobilu, vedoucí zapisuje docházku na schůzce a v terénu — desktop je menšinový scénář, typicky účetní při párování plateb a správa ústředí.
+- **Responzivní webová aplikace**, ne nativní apka — odpadá distribuce přes obchody a odkazy z e-mailů (token přihlášky, schválení zástupcem, pozvánka) se otevírají přímo.
+- Každou operaci, kterou dělá účastník nebo rodič, musí jít dokončit na telefonu — včetně **nahrání dokumentů fotoaparátem** (proto je mezi povolenými typy HEIC) a načtení QR k platbě v bankovní aplikaci.
+- Husté tabulky (seznam přihlášek, párování plateb, reporty) mají na úzkém displeji **alternativní zobrazení** místo horizontálního scrollování; export do tabulky zůstává doménou desktopu.
+- Ovládací prvky jsou dimenzované na dotyk a formuláře používají správné typy vstupů (e-mail, telefon, datum), aby se na mobilu nabídla odpovídající klávesnice.
+- Rozhraní musí být použitelné i na **pomalém mobilním připojení** — těžké agregace se dopočítávají až na vyžádání, ne při prvním načtení stránky.
+
 ## Rozsah a výkon
 
 - Řádově tisíce osob a stovky akcí ročně na oddíl — návrh nemusí řešit horizontální škálování, ale **musí zvládnout reporty ústředí nad všemi oddíly** ([reports.md](reports.md)).

@@ -29,7 +29,7 @@ Obecný, znovupoužitelný mechanismus: vedoucí u libovolné akce nadefinuje li
 | `price_modifier` | příplatek k základní ceně; může být `0` i záporný                                                       |
 
 - Po naplnění kapacity se položka přestane nabízet.
-- **Celková cena přihlášky = základní cena podle typu účastníka (`EVENT_PRICE`) + součet příplatků zvolených položek.**
+- **Celková cena přihlášky = základní cena zafixovaná při podání (`REGISTRATION.base_price`) + součet příplatků zvolených položek.** Příplatky se na rozdíl od základní ceny **přepočítávají** při každé změně volby — mění se objednaná služba, ne ceník.
 
 ## Výběr účastníka
 

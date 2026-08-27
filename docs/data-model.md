@@ -38,6 +38,10 @@ erDiagram
     UNIT ||--o{ CUSTOM_FIELD : defines
     UNIT ||--o{ LOCATION : defines
     UNIT ||--o{ DU_MEMBERSHIP : "registers (evidencni oddil)"
+    UNIT ||--o{ DU_FEE_BATCH : submits
+    DU_FEE_BATCH ||--o{ DU_FEE_BATCH_ITEM : contains
+    DU_FEE_BATCH ||--o{ DU_MEMBERSHIP : "creates on payment"
+    DU_FEE_BATCH ||--o{ PAYMENT_ALLOCATION : "paid by"
     UNIT }o--o| LOCATION : "based at"
     EVENT }o--o| LOCATION : "held at"
 
@@ -49,6 +53,7 @@ erDiagram
     PERSON ||--o{ UNIT_PATROL_MEMBER : is
     PERSON ||--o{ REGISTRATION : submits
     PERSON ||--o{ DU_MEMBERSHIP : "has (globalne, 1 za rok)"
+    PERSON ||--o{ DU_FEE_BATCH_ITEM : "listed in"
     PERSON ||--o{ ATTENDANCE_RECORD : attends
     PERSON ||--o{ CUSTOM_FIELD_VALUE : has
     PERSON ||--o{ PERSON_COURSE : completes
@@ -61,7 +66,7 @@ erDiagram
 
     ACTION_TEMPLATE ||--o{ EVENT : "instantiated as"
     EVENT ||--o{ EVENT_ASSIGNMENT : delegates
-    ACCOUNT ||--o{ EVENT_ASSIGNMENT : "assigned to"
+    ACCOUNT ||--o{ EVENT_ASSIGNMENT : "assigned to (versioned)"
     EVENT ||--o{ EVENT_PRICE : has
     EVENT_PRICE ||--o{ REGISTRATION : "priced by"
     EVENT ||--o{ CANCELLATION_RULE : has
@@ -252,7 +257,7 @@ erDiagram
     }
     EVENT_ASSIGNMENT {
         int id PK
-        int event_id FK,UK "unikat: akce + ucet"
+        int event_id FK,UK "unikat: akce + ucet, jen mezi otevrenymi zaznamy"
         int account_id FK,UK
         bool can_edit_event
         bool can_edit_registrations
@@ -260,6 +265,8 @@ erDiagram
         bool can_record_attendance
         int assigned_by_account_id FK
         datetime assigned_at
+        int revoked_by_account_id FK "kdo pristup odebral; NULL = pristup trva"
+        datetime revoked_at "NULL = pristup trva; zaznam se nemaze"
     }
     EVENT_FIELD {
         int id PK
@@ -358,7 +365,8 @@ erDiagram
         int event_id FK
         int person_id FK
         int parent_registration_id FK "nadrazena prihlaska (NULL = hlavni); definuje club scope"
-        int price_id FK
+        int price_id FK "EVENT_PRICE platna k okamziku podani; zafixovana"
+        decimal base_price "snapshot zakladni ceny pri podani"
         string vs "variable symbol"
         string category "participant / volunteer / substitute"
         string state "New / PendingGuardian / PendingDocuments / PendingPayment / PartialPaid / Paid / Overpayment / Canceled / Expired"
@@ -371,7 +379,8 @@ erDiagram
     PAYMENT_ALLOCATION {
         int id PK
         int bank_transaction_id FK
-        int registration_id FK
+        int registration_id FK "vylucne s fee_batch_id"
+        int fee_batch_id FK "hromadna platba prispevku DU; vylucne s registration_id"
         decimal amount "alokovana cast platby; zaporna = vratka"
         string matched_by "auto / manual"
         string match_method "ss_vs_amount / ss_vs_partial / ss_vs_overpayment / vs_exact_name / ss_exact_name / vs_partial_name / vs_overpayment_name / manual / refund"
@@ -413,6 +422,30 @@ erDiagram
         int person_id FK,UK "unikat: osoba + rok, globalne pres cely system"
         int unit_id FK "evidencni oddil - kdo clenstvi zalozil; neomezuje platnost"
         int year UK
+        int fee_batch_id FK "davka, jejiz platba clenstvi zalozila; NULL = zalozil ADM rucne"
+    }
+    DU_FEE_RATE {
+        int id PK
+        int year UK "unikat: rok; sazbu spravuje ADM"
+        decimal amount
+    }
+    DU_FEE_BATCH {
+        int id PK
+        int unit_id FK "oddil, ktery davku podal = budouci evidencni oddil"
+        int year
+        string vs UK "variabilni symbol davky"
+        decimal total_amount "pocet polozek x sazba; zamrzne pri uzamceni"
+        string state "draft / locked / paid / canceled"
+        datetime locked_at "vygenerovani QR; seznam osob se uz nemeni"
+        datetime paid_at "sparovano ucetni ustredi; NULL = nezaplaceno"
+        int created_by_account_id FK
+        datetime created_at
+    }
+    DU_FEE_BATCH_ITEM {
+        int id PK
+        int batch_id FK,UK "unikat: davka + osoba"
+        int person_id FK,UK
+        datetime skipped_at "clenstvi vzniklo jinou davkou driv; NULL = zpracovano"
     }
     ATTENDANCE_RECORD {
         int id PK

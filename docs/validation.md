@@ -42,21 +42,22 @@ Ostatní pole (`nickname`, `insurance_company`, `address`) jsou povinná jen teh
 
 ## Unikátnosti
 
-| Entita               | Klíč                                      | Poznámka                                                                   |
-| -------------------- | ----------------------------------------- | -------------------------------------------------------------------------- |
-| `ACCOUNT`            | `login_email`                             | přihlašovací e-mail; `PERSON.email` unikátní **není**                      |
-| `ACCOUNT`            | `person_id`                               | jedna osoba má nejvýše jeden účet                                          |
-| `OAUTH_IDENTITY`     | `provider` + `provider_user_id`           | jedna externí identita patří jednomu účtu                                  |
-| `USER_ROLE`          | `account_id` + `unit_id` + `role`         | tatáž role se v oddílu nepřiděluje dvakrát                                 |
-| `DU_MEMBERSHIP`      | `person_id` + `year`                      | **`unit_id` do klíče nepatří** — jedno členství DU na osobu a rok globálně |
-| `ATTENDANCE_RECORD`  | `event_id` + `person_id`                  | nejvýše jeden docházkový záznam na osobu a akci                            |
-| `EVENT_ASSIGNMENT`   | `event_id` + `account_id`                 | jedno přiřazení na účet a akci                                             |
-| `BANK_TRANSACTION`   | `bank_account_id` + `external_id`         | idempotentní zápis — opakované stažení ani nahrání výpisu platbu nezdvojí  |
-| `RACE_PATROL`        | `event_id` + `name`                       | název hlídky je unikátní v rámci akce                                      |
-| `RACE_PATROL_MEMBER` | `person_id` + `event_id` (přes hlídku)    | osoba je nejvýše v jedné hlídce téže akce                                  |
-| `EVENT`              | `share_slug`                              | sdílecí odkaz je globálně unikátní a nepředvídatelný                       |
-| `REGISTRATION`       | `vs`                                      | variabilní symbol musí párování jednoznačně identifikovat                  |
-| `PERSON_UNIT`        | `person_id` + `unit_id` (otevřený záznam) | osoba má v oddílu nejvýše jeden platný záznam                              |
+| Entita               | Klíč                                        | Poznámka                                                                   |
+| -------------------- | ------------------------------------------- | -------------------------------------------------------------------------- | --- | ------------------- | ------------------------ | ----------------------------------------------- |
+| `ACCOUNT`            | `login_email`                               | přihlašovací e-mail; `PERSON.email` unikátní **není**                      |
+| `ACCOUNT`            | `person_id`                                 | jedna osoba má nejvýše jeden účet                                          |
+| `OAUTH_IDENTITY`     | `provider` + `provider_user_id`             | jedna externí identita patří jednomu účtu                                  |
+| `USER_ROLE`          | `account_id` + `unit_id` + `role`           | tatáž role se v oddílu nepřiděluje dvakrát                                 |
+| `DU_MEMBERSHIP`      | `person_id` + `year`                        | **`unit_id` do klíče nepatří** — jedno členství DU na osobu a rok globálně |     | `DU_FEE_RATE`       | `year`                   | jedna sazba příspěvku na rok                    |
+| `DU_FEE_BATCH`       | `vs`                                        | variabilní symbol musí dávku jednoznačně identifikovat                     |
+| `DU_FEE_BATCH_ITEM`  | `batch_id` + `person_id`                    | osoba je v jedné dávce nejvýše jednou                                      |     | `ATTENDANCE_RECORD` | `event_id` + `person_id` | nejvýše jeden docházkový záznam na osobu a akci |
+| `EVENT_ASSIGNMENT`   | `event_id` + `account_id` (otevřený záznam) | jedno **aktivní** přiřazení na účet a akci; uzavřených může být víc        |
+| `BANK_TRANSACTION`   | `bank_account_id` + `external_id`           | idempotentní zápis — opakované stažení ani nahrání výpisu platbu nezdvojí  |
+| `RACE_PATROL`        | `event_id` + `name`                         | název hlídky je unikátní v rámci akce                                      |
+| `RACE_PATROL_MEMBER` | `person_id` + `event_id` (přes hlídku)      | osoba je nejvýše v jedné hlídce téže akce                                  |
+| `EVENT`              | `share_slug`                                | sdílecí odkaz je globálně unikátní a nepředvídatelný                       |
+| `REGISTRATION`       | `vs`                                        | variabilní symbol musí párování jednoznačně identifikovat                  |
+| `PERSON_UNIT`        | `person_id` + `unit_id` (otevřený záznam)   | osoba má v oddílu nejvýše jeden platný záznam                              |
 
 ## Invarianty po entitách
 
@@ -75,10 +76,13 @@ Ostatní pole (`nickname`, `insurance_company`, `address`) jsou povinná jen teh
 - Dobrovolnická pole (`volunteer_registration_*`) dávají smysl jen při `volunteers_enabled = true`.
 - Akce bez přihlášek (typ `club`, `one_off`) nesmí mít ceny, storno pravidla ani otevřenou registraci.
 - `bank_account_id` musí patřit **témuž oddílu** jako akce.
+- `EVENT_ASSIGNMENT` se **nemaže** — odebrání přístupu vyplní `revoked_at` a `revoked_by_account_id`; `revoked_at >= assigned_at` a uzavřený záznam už nelze měnit. Změna rozsahu příznaků uzavře starý záznam a založí nový.
+- Kontrola oprávnění pracuje výhradně se záznamy `revoked_at IS NULL`; uzavřené jsou doklad o minulém přístupu ([authorization.md](authorization.md)).
 
 ### Ceny a storna
 
 - `EVENT_PRICE`: intervaly platnosti pro **tutéž** `membership_type` se nesmí překrývat.
+- `REGISTRATION.base_price` a `price_id` se určí **při podání** z ceníku platného k `created_at` a od té chvíle se samy nemění — přepsat je smí jen vedoucí s `can_edit_prices` (loguje se). Změna `EVENT_PRICE` ani nové `DU_MEMBERSHIP` už podanou přihlášku nepřeceňuje.
 - `CANCELLATION_RULE.percent` ∈ ⟨0; 100⟩.
 - **Výsledná cena může být záporná?** Ne — součet základní ceny a příplatků (`price_modifier` může být záporný) se ošetří na minimum 0.
 
@@ -103,11 +107,21 @@ Ostatní pole (`nickname`, `insurance_company`, `address`) jsou povinná jen teh
 - `PAYMENT_ALLOCATION`: součet alokací jedné transakce **nesmí překročit** její částku (v absolutní hodnotě).
 - Do párování vstupují **jen příchozí** platby.
 - Záporná alokace (`refund`) nesmí stáhnout součet u přihlášky pod nulu.
-- Alokace musí odkazovat na přihlášku akce **téhož oddílu**, jako je bankovní účet transakce.
+- Alokace musí odkazovat na přihlášku akce **téhož oddílu**, jako je bankovní účet transakce (u dávky příspěvků na účet ústředí).
 - `external_id` je povinné u **všech** zdrojů — u ručního zápisu se generuje (`manual:<uuid>`), u importu výpisu odvodí z otisku řádku (`stmt:<hash>`).
 - **VS ani SS nejsou u transakce povinné** — v nahraném výpisu i u ručního zápisu často chybí; příslušná párovací pravidla se pak jen přeskočí.
 - `voided_at` lze nastavit **jen** u transakce se `source != 'import'` a **jen** když nemá žádnou alokaci.
 - `api_token_enc` smí být vyplněný jen při `provider = 'fio'`; `provider = 'manual'` vylučuje synchronizační pole (`last_sync_at`, `sync_state`, `last_external_id`).
+- `PAYMENT_ALLOCATION` má vyplněné **právě jedno** z `registration_id` / `fee_batch_id` — alokace míří buď na přihlášku, nebo na dávku příspěvků.
+
+### Příspěvek DU
+
+- Osobu lze zařadit do dávky jen tehdy, je-li **evidovaná v oddílu dávky** a **nemá pro `year` členství** ani položku v jiné dávce ve stavu `draft`/`locked`.
+- `total_amount = počet položek × DU_FEE_RATE.amount` pro `year`; hodnota **zamrzne při uzamčení**, pozdější změna sazby ji nemění.
+- Ve stavu `locked` a `paid` nelze měnit položky. Oprava = `canceled` + nová dávka.
+- **Příznak člena DU se nastaví jen při úplné úhradě** — částečná alokace nechává dávku v `locked` a nezaloží žádné `DU_MEMBERSHIP`.
+- Vznikne-li mezi uzamčením a platbou členství osoby jinou dávkou, položka dostane `skipped_at`, členství se nezaloží podruhé a rozdíl se řeší jako přeplatek dávky.
+- Dávka se páruje proti bankovnímu účtu **ústředí**, ne oddílu, který ji podal.
 
 ### Osoba a vazby
 

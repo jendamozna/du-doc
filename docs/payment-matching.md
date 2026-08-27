@@ -9,7 +9,7 @@ Implementační detail k modulu párování plateb ([README.md](../README.md) �
   - součet < cena → `PartialPaid`,
   - součet = cena → `Paid`,
   - součet > cena → `Overpayment`.
-- Cena přihlášky = základní cena podle typu účastníka (`EVENT_PRICE`) + součet příplatků zvolených položek číselníků (viz [event-fields.md](event-fields.md)).
+- Cena přihlášky = **základní cena zafixovaná při podání** (`REGISTRATION.base_price`, odvozená z `EVENT_PRICE` platné k `created_at` a typu účastníka) + součet příplatků aktuálně zvolených položek číselníků (viz [event-fields.md](event-fields.md)). Pozdější změna ceníku ani vznik členství DU už podanou přihlášku nepřeceňuje — základní cenu může změnit jen vedoucí ručně.
 - **Splatnost je vlastnost akce** a zadává se jedním ze dvou způsobů: relativně (`EVENT.payment_due_days`, např. 14 dní od podání přihlášky), nebo absolutně (`EVENT.payment_due_date`, pevné datum pro celou akci). Vyplňuje se právě jedno z polí; výchozí hodnota přichází ze šablony akce, fallback je 14 dní. Termín přihlášky se pak počítá:
   - relativně → `MIN(REGISTRATION.created_at + payment_due_days, EVENT.starts_at)`,
   - absolutně → `payment_due_date` (u přihlášek podávaných po tomto datu platí splatnost ihned).
