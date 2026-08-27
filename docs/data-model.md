@@ -428,6 +428,9 @@ erDiagram
         int id PK
         int year UK "unikat: rok; sazbu spravuje ADM"
         decimal amount
+        int set_by_account_id FK
+        datetime set_at
+        datetime locked_at "prvni platba na tento rok; NULL = jeste lze menit"
     }
     DU_FEE_BATCH {
         int id PK

@@ -43,14 +43,16 @@ Ostatní pole (`nickname`, `insurance_company`, `address`) jsou povinná jen teh
 ## Unikátnosti
 
 | Entita               | Klíč                                        | Poznámka                                                                   |
-| -------------------- | ------------------------------------------- | -------------------------------------------------------------------------- | --- | ------------------- | ------------------------ | ----------------------------------------------- |
+| -------------------- | ------------------------------------------- | -------------------------------------------------------------------------- |
 | `ACCOUNT`            | `login_email`                               | přihlašovací e-mail; `PERSON.email` unikátní **není**                      |
 | `ACCOUNT`            | `person_id`                                 | jedna osoba má nejvýše jeden účet                                          |
 | `OAUTH_IDENTITY`     | `provider` + `provider_user_id`             | jedna externí identita patří jednomu účtu                                  |
 | `USER_ROLE`          | `account_id` + `unit_id` + `role`           | tatáž role se v oddílu nepřiděluje dvakrát                                 |
-| `DU_MEMBERSHIP`      | `person_id` + `year`                        | **`unit_id` do klíče nepatří** — jedno členství DU na osobu a rok globálně |     | `DU_FEE_RATE`       | `year`                   | jedna sazba příspěvku na rok                    |
+| `DU_MEMBERSHIP`      | `person_id` + `year`                        | **`unit_id` do klíče nepatří** — jedno členství DU na osobu a rok globálně |
+| `DU_FEE_RATE`        | `year`                                      | jedna sazba příspěvku na rok                                               |
 | `DU_FEE_BATCH`       | `vs`                                        | variabilní symbol musí dávku jednoznačně identifikovat                     |
-| `DU_FEE_BATCH_ITEM`  | `batch_id` + `person_id`                    | osoba je v jedné dávce nejvýše jednou                                      |     | `ATTENDANCE_RECORD` | `event_id` + `person_id` | nejvýše jeden docházkový záznam na osobu a akci |
+| `DU_FEE_BATCH_ITEM`  | `batch_id` + `person_id`                    | osoba je v jedné dávce nejvýše jednou                                      |
+| `ATTENDANCE_RECORD`  | `event_id` + `person_id`                    | nejvýše jeden docházkový záznam na osobu a akci                            |
 | `EVENT_ASSIGNMENT`   | `event_id` + `account_id` (otevřený záznam) | jedno **aktivní** přiřazení na účet a akci; uzavřených může být víc        |
 | `BANK_TRANSACTION`   | `bank_account_id` + `external_id`           | idempotentní zápis — opakované stažení ani nahrání výpisu platbu nezdvojí  |
 | `RACE_PATROL`        | `event_id` + `name`                         | název hlídky je unikátní v rámci akce                                      |
@@ -118,6 +120,8 @@ Ostatní pole (`nickname`, `insurance_company`, `address`) jsou povinná jen teh
 
 - Osobu lze zařadit do dávky jen tehdy, je-li **evidovaná v oddílu dávky** a **nemá pro `year` členství** ani položku v jiné dávce ve stavu `draft`/`locked`.
 - `total_amount = počet položek × DU_FEE_RATE.amount` pro `year`; hodnota **zamrzne při uzamčení**, pozdější změna sazby ji nemění.
+- **Sazbu pro daný rok nelze změnit, jakmile na něj dorazila první platba** — existuje-li k `year` alespoň jedna dávka ve stavu `paid` nebo s libovolnou alokací, je `DU_FEE_RATE.amount` uzamčená (`locked_at`). Jinak by dva oddíly platily za týž rok různě a částka na už rozeslaných QR by přestala sedět.
+- Do první platby smí ADM sazbu upravit; úprava přepočte `total_amount` všem dávkám roku ve stavu `draft` a dávky ve stavu `locked` **zruší** — jejich QR nese starou částku, oddíl musí založit novou.
 - Ve stavu `locked` a `paid` nelze měnit položky. Oprava = `canceled` + nová dávka.
 - **Příznak člena DU se nastaví jen při úplné úhradě** — částečná alokace nechává dávku v `locked` a nezaloží žádné `DU_MEMBERSHIP`.
 - Vznikne-li mezi uzamčením a platbou členství osoby jinou dávkou, položka dostane `skipped_at`, členství se nezaloží podruhé a rozdíl se řeší jako přeplatek dávky.

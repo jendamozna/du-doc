@@ -177,7 +177,7 @@ flowchart TD
 - **Platné členství DU se uznává ve všech oddílech, kde je osoba evidovaná** — cena pro členy DU i podmínky způsobilosti platí i na akcích jiného oddílu než toho evidenčního. Přesun osoby mezi oddíly v průběhu roku členství nezaniká ani nezakládá nové.
 - Osoba se může stát členem DU od ledna následujícího roku po zaplacení příspěvku do listopadu.
 - **Příspěvek se vybírá hromadně přes oddíl.** HVO vybere osoby ze své členské základny, systém spočítá částku (počet osob × sazba pro daný rok) a vygeneruje **jeden QR kód pro hromadnou platbu** na účet ústředí. HVO zaplatí jednou platbou za všechny vybrané.
-- **Sazbu příspěvku pro daný rok stanovuje ADM** a je společná pro celý systém.
+- **Sazbu příspěvku pro daný rok stanovuje ADM** a je společná pro celý systém. **Jakmile na daný rok dorazí první platba, sazba se uzamkne** — nelze ji změnit, aby dva oddíly nezaplatily za stejný rok jinou částku a aby už rozeslané QR kódy zůstaly platné.
 - **Členství vzniká spárováním platby, ne ručním zápisem.** Hromadnou platbu páruje **účetní ústředí** stejným mechanismem jako platby za akce (SS = příspěvek DU, VS = dávka); spárováním systém všem osobám dávky nastaví příznak člena DU — založí záznam o členství s evidenčním oddílem = oddíl, který dávku podal.
 - **Dávka je nedělitelná.** Po vygenerování QR se seznam osob uzamkne (jinak by částka nesouhlasila s QR); změna znamená dávku zrušit a založit novou. Částečná úhrada příznak nikomu nenastaví — dávka zůstane jako nedoplatek, dokud ji HVO nedoplatí.
 - Do dávky lze zařadit jen osobu, která pro daný rok **ještě členství nemá** a **není v jiné nevypořádané dávce**.
