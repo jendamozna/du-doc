@@ -121,7 +121,7 @@ Každá změna stavu se zapisuje s časem, původcem a událostí, která ji vyv
 | splatnost                      | 14 dní od podání          | nastavení akce (relativní nebo absolutní) |
 | vypršení nezaplacené přihlášky | vypnuto                   | nastavení oddílu                          |
 
-Vypršení nezaplacené přihlášky je **záměrně vypnuté ve výchozím stavu** — přihlášku ruší vedoucí vědomě, aby systém sám nerušil místa lidem, kteří platí pozdě.
+Vypršení nezaplacené přihlášky je **záměrně vypnuté ve výchozím stavu** — přihlášku ruší vedoucí vědomě, aby systém sám nerušil místa lidem, kteří platí pozdě. U akce navázané na **bankovní účet bez API** (`provider = 'manual'`) ho nelze zapnout vůbec — systém nezná stav úhrady v reálném čase a rušil by místa na základě neúplné informace. Ze stejného důvodu se u takové akce neposílají automatické připomínky nezaplacených plateb (viz [payment-matching.md](payment-matching.md) → **Oddíl bez bankovního API**).
 
 ## Otevřené otázky
 

@@ -63,6 +63,7 @@ Legenda v maticích: **RW** = čtení i zápis · **R** = jen čtení · **A** =
 | --------------------------------------- | --- | --- | ------- | --- | --- | ----------- |
 | Nastavit bankovní účet a token          | —   | RW  | —       | —   | R   | —           |
 | Číst bankovní transakce                 | —   | R   | —       | —   | R   | —           |
+| Nahrát výpis / ručně zapsat platbu      | —   | RW  | —       | —   | RW  | —           |
 | Párovat platby, ruční rozdělení         | —   | RW  | —       | —   | RW  | —           |
 | Řešit přeplatek (vratka / převod / dar) | —   | RW  | —       | —   | RW  | —           |
 | Odeslat výzvu k platbě                  | —   | RW  | —       | —   | RW  | —           |

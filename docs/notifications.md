@@ -26,9 +26,10 @@ Tabulka všech e-mailových událostí zmíněných napříč specifikací ([REA
 
 ## Platby a účetnictví
 
-| Kód                      | Událost (spouštěč)                          | Příjemce            | Načasování                  | Opakování / poznámka                                     | Zdroj                          |
-| ------------------------ | ------------------------------------------- | ------------------- | --------------------------- | -------------------------------------------------------- | ------------------------------ |
-| `EMAIL_FIO_SYNC_FAILURE` | opakované selhání importu transakcí z banky | Účetní oddílu a HVO | po opakovaném selhání (job) | dokud selhání trvá — přesná frekvence není specifikovaná | [fio-sync.md](fio-sync.md#L33) |
+| Kód                      | Událost (spouštěč)                          | Příjemce            | Načasování                  | Opakování / poznámka                                                                    | Zdroj                                      |
+| ------------------------ | ------------------------------------------- | ------------------- | --------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------ |
+| `EMAIL_PAYMENT_REMINDER` | nezaplacená přihláška po splatnosti (job)   | účastník / rodič    | podle nastavení oddílu      | **jen u účtu s bankovním API** (`provider = 'fio'`); u ruční evidence se neposílá vůbec | [payment-matching.md](payment-matching.md) |
+| `EMAIL_FIO_SYNC_FAILURE` | opakované selhání importu transakcí z banky | Účetní oddílu a HVO | po opakovaném selhání (job) | dokud selhání trvá — přesná frekvence není specifikovaná                                | [fio-sync.md](fio-sync.md#L33)             |
 
 ## Rodič ↔ dítě
 

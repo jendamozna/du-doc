@@ -64,3 +64,52 @@ Nejčastější reálný případ: rodič pošle jednou platbou za tři děti, V
 ## Potvrzení
 
 - Za každou napárovanou platbu (i částečnou) se odesílá potvrzení; odeslání se eviduje na alokaci (`confirmation_sent_at`), aby se e-mail neposlal dvakrát.
+
+## Oddíl bez bankovního API
+
+Modul má dvě nezávislé vrstvy: **evidence plateb** (vše v tomto dokumentu) běží vždy, **synchronizace z API** ([fio-sync.md](fio-sync.md)) jen při přítomnosti tokenu. Oddíl s jinou bankou než Fio si `BANK_TRANSACTION` plní sám (`BANK_ACCOUNT.provider = 'manual'`).
+
+Výpočet stavu úhrady, pořadí párovacích pravidel, přeplatky i vratky se tím **nemění vůbec** — `evaluate()` čte součet alokací, ne banku. Liší se jen zdroj transakcí.
+
+### Jak transakce vznikne
+
+| Způsob (`source`)  | Vstup                                                                 | Po uložení                                 |
+| ------------------ | --------------------------------------------------------------------- | ------------------------------------------ |
+| `import`           | Fio API                                                               | automatické párování                       |
+| `statement_import` | výpis z internetbankingu (CSV / ABO / MT940) nahraný účetní           | automatické párování, stejná sada pravidel |
+| `manual_entry`     | ruční zápis jedné platby (datum, částka, odesílatel, volitelně VS/SS) | automatické párování, stejná sada pravidel |
+
+- Import výpisu je pro oddíl bez API hlavní pracovní režim — nahrání jednou týdně nahradí stažení z API.
+- Zkratka **„označit jako zaplacené“** na seznamu přihlášek založí ruční transakci ve výši zbývající ceny a rovnou ji alokuje (`matched_by = 'manual'`).
+- **VS se u ručního zápisu nevyžaduje.** Bez něj se pravidla opřená o VS/SS přeskočí a párování spadne na shodu jména odesílatele, případně na ruční rozdělení. Vynucovat VS by nemělo smysl — v nahraném výpisu bude často chybět také.
+- K ručně zapsané transakci lze připojit poznámku a přílohu (sken výpisu).
+
+### Idempotence importu výpisu
+
+Výpis nenese ID pohybu, proto se `external_id` odvodí z otisku řádku:
+
+```
+fingerprint = hash(bank_account_id, date, amount, vs, ss, sender_account, message, pořadí_mezi_identickými_řádky)
+external_id = "stmt:" + fingerprint
+```
+
+- Pořadové číslo ve skupině shodných řádků kryje legální případ dvou stejných částek bez VS ve stejný den.
+- Opakované nahrání téhož nebo překrývajícího se výpisu narazí na stávající unikát `účet + external_id` a nic nezdvojí; před potvrzením se ukáže rozpad „nové / už známé“ řádky.
+- Ruční zápis dostane `manual:<uuid>`. `external_id` tím zůstává povinné a unikátní pro všechny zdroje — v kódu nevzniká větev „transakce bez identifikátoru“.
+
+### Oprava chybného zápisu
+
+- Transakci se `source != 'import'` lze **stornovat** (`voided_at`), ale jen když nemá žádnou alokaci — účetní nejdřív dealokuje, pak stornuje. Historie plateb u přihlášky se tím neztratí.
+- Špatná částka už rozdělená na přihlášky se řeší **zápornou alokací** stejně jako vratka výše, ne úpravou původní alokace.
+- Stornovaná transakce mizí z fronty k párování a zůstává v auditním logu.
+
+### Důsledky pro notifikace a lhůty
+
+- **Připomínky nezaplacených plateb se neposílají.** Bez API systém nezná stav úhrady v reálném čase a urgoval by i ty, kdo zaplatili před nahráním výpisu. Vedoucí může výzvu poslat ručně ze seznamu přihlášek po splatnosti.
+- **Automatické vypršení nezaplacené přihlášky** ([registration-lifecycle.md](registration-lifecycle.md)) nelze u ručního účtu zapnout — systém by rušil místa na základě neúplné informace.
+- Výzva k platbě při podání přihlášky, QR kód i potvrzení o platbě fungují beze změny — nezávisí na znalosti stavu úhrady.
+- Ruční zápis a import výpisu smí **ÚČE a HVO** ([authorization.md](authorization.md)) a logují se do auditního logu — v ručním režimu chybí bankovní protistrana, takže audit je jediné krytí.
+
+### Přechod na API
+
+Doplní-li oddíl později token, nic se nemigruje — ruční i stažené transakce koexistují na témž účtu a připomínky se zapnou. Při importu se hledá ruční transakce se shodným účtem, datem a částkou; shoda se nabídne ke sloučení místo tichého zdvojení.

@@ -384,6 +384,7 @@ erDiagram
         string name
         string account_number
         string bank_code
+        string provider "fio = synchronizace z API / manual = ruční evidence"
         string api_token_enc "read-only token, sifrovany; NULL = bez synchronizace"
         datetime last_sync_at "NULL = nesynchronizovano"
         string sync_state "ok / error"
@@ -391,7 +392,9 @@ erDiagram
     BANK_TRANSACTION {
         int id PK
         int bank_account_id FK,UK "unikat: ucet + external_id"
-        string external_id UK "id pohybu z banky (idempotentni import)"
+        string external_id UK "id pohybu z banky, jinak manual:<uuid> / stmt:<otisk radku>"
+        string source "import / statement_import / manual_entry"
+        int entered_by_user_id FK "kdo pohyb zapsal; NULL = automaticky import"
         string ss
         string vs
         decimal amount
@@ -401,8 +404,9 @@ erDiagram
         string message
         string transaction_type
         date date "datum transakce dle banky"
-        datetime imported_at "kdy ji stahl import"
+        datetime imported_at "kdy ji stahl import nebo kdy vznikl rucni zapis"
         datetime ignored_at "ucetni oznacila jako neprirazovanou; NULL = v rade k parovani"
+        datetime voided_at "stornovany rucni zapis; jen u source != import a bez alokaci"
     }
     DU_MEMBERSHIP {
         int id PK

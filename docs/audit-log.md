@@ -18,6 +18,17 @@ Změnové události napříč systémem se zapisují do jediné tabulky `AUDIT_L
 - Doporučené indexy: `(entity_type, entity_id)` pro historii jednoho záznamu a `(unit_id, created_at)` pro výpis a retenční job.
 - Polymorfní odkaz je vědomý kompromis — cenou za jednu tabulku je chybějící referenční integrita na cíl.
 
+## Ruční evidence plateb
+
+Zápis platby bez bankovního API (`BANK_TRANSACTION` se `source != 'import'`, viz [payment-matching.md](payment-matching.md)) se loguje vždy — chybí bankovní protistrana, takže auditní log je jediné krytí toho, kdo prohlásil přihlášku za zaplacenou.
+
+| `entity_type` / `action`      | Kdy                                     | `detail`                                   |
+| ----------------------------- | --------------------------------------- | ------------------------------------------ |
+| `BANK_TRANSACTION` / `create` | ruční zápis nebo řádek nahraného výpisu | `source`, částka, datum, VS/SS, odesílatel |
+| `BANK_TRANSACTION` / `cancel` | storno ručního zápisu (`voided_at`)     | důvod                                      |
+
+Tím se oddělí od `import`, který se neloguje — automatické stažení není lidské rozhodnutí a jeho stopu drží `last_sync_at` a `external_id`.
+
 ## Co se neloguje sem
 
 Tři evidence zůstávají oddělené, protože nejsou jen auditem:

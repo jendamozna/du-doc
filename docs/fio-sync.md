@@ -2,6 +2,8 @@
 
 Implementační detail k modulu párování plateb ([README.md](../README.md) → **Modul párování plateb**). Popisuje, jak se transakce dostanou z banky do `BANK_TRANSACTION`; samotné párování na přihlášky zůstává v README.
 
+Synchronizace je **volitelná vrstva**. Oddíl bez bankovního API plní `BANK_TRANSACTION` nahráním výpisu nebo ručním zápisem — viz [payment-matching.md](payment-matching.md) → **Oddíl bez bankovního API**.
+
 ## Rozsah
 
 - Synchronizuje se **samostatně za každý bankovní účet** (`BANK_ACCOUNT`) s uloženým tokenem v oddílu, který má modul aktivní. Token patří účtu, ne oddílu — oddíl s více účty se synchronizuje nezávisle.
@@ -37,12 +39,12 @@ Implementační detail k modulu párování plateb ([README.md](../README.md) �
 
 Nad rámec polí uvedených v [datovém modelu](data-model.md) si integrace drží:
 
-| Pole                    | Význam                          |
-| ----------------------- | ------------------------------- |
-| `provider`              | poskytovatel (zatím jen `fio`)  |
-| `sync_interval_minutes` | perioda stahování               |
-| `last_external_id`      | kurzor — poslední stažený pohyb |
-| `sync_error`            | text poslední chyby             |
+| Pole                    | Význam                                             |
+| ----------------------- | -------------------------------------------------- |
+| `provider`              | poskytovatel — `fio`, nebo `manual` u účtu bez API |
+| `sync_interval_minutes` | perioda stahování                                  |
+| `last_external_id`      | kurzor — poslední stažený pohyb                    |
+| `sync_error`            | text poslední chyby                                |
 
 ## Mapování polí Fio → `BANK_TRANSACTION`
 

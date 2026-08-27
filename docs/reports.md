@@ -192,7 +192,8 @@ Bucket podle data akce (`EVENT.starts_at`), varianta „cash-flow" podle `BANK_T
 - Přihláška podána později, než je splatnost akce (nebo méně než `payment_due_days` před začátkem), je splatná ihned a do „pozdě" spadne jen při úhradě po skončení dne podání.
 - U částečně zaplacených přihlášek rozhoduje **poslední** alokace, která dorovnala cenu; nedoplacená přihláška po splatnosti se počítá do pohledávek po splatnosti, ne do „pozdě zaplacených".
 - Odchozí transakce (`amount < 0`) se do inkasa nezapočítávají.
-- Vratky se evidují jako záporná alokace — do „inkasováno" vstupují se znaménkem, aby souhlasil zůstatek.
+- Vratky se evidují jako záporná alokace — do „inkasováno" vstupují se znaménkem, aby souhlasil zůstatek.- Report vrací rozpad podle `BANK_TRANSACTION.source`. U oddílu bez bankovního API zadává datum člověk a může být zpětné, takže metrika **zaplaceno včas/pozdě měří píli účetní, ne chování plátců** — pro `source != 'import'` se označí jako neurčitelná.
+- Stornované ruční zápisy (`voided_at`) se do reportu nepočítají.
 
 ---
 
