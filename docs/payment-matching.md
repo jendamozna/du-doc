@@ -21,7 +21,7 @@ Implementační detail k modulu párování plateb ([README.md](../README.md) �
 Pravidla tvoří **seřazený seznam**. Vyhodnocují se shora dolů a vyhrává první, které vrátí právě jednoho kandidáta:
 
 | Hodnota               | Shoda                                                                                 | Alokace     |
-| --------------------- | ------------------------------------------------------------------------------------- | ----------- | -------- | ---------------------------------------------- |
+| --------------------- | ------------------------------------------------------------------------------------- | ----------- |
 | `ss_vs_amount`        | SS, VS i částka                                                                       | automaticky |
 | `ss_vs_partial`       | SS, VS a částečná úhrada                                                              | automaticky |
 | `ss_vs_overpayment`   | SS, VS a přeplatek                                                                    | automaticky |
@@ -30,7 +30,8 @@ Pravidla tvoří **seřazený seznam**. Vyhodnocují se shora dolů a vyhrává 
 | `vs_exact`            | VS, částka                                                                            | automaticky |
 | `vs_partial_name`     | VS, částečná úhrada a shoda jména odesílatele / poznámky platby                       | návrh       |
 | `vs_overpayment_name` | VS, přeplatek a shoda jména odesílatele / poznámky platby                             | návrh       |
-| `manual`              | ruční rozdělení účetní                                                                |             | `refund` | vratka nebo převod přeplatku — záporná alokace |
+| `manual`              | ruční rozdělení účetní                                                                |             |
+| `refund`              | vratka nebo převod přeplatku — záporná alokace                                        |             |
 
 - SS identifikuje akci, VS přihlášku.
 - **Částky se porovnávají přesně, žádná tolerance se neuplatňuje.** Rozdíl o korunu není shoda — je to nedoplatek (`PartialPaid`), nebo přeplatek (`Overpayment`). Zaokrouhlovací pásmo by zavádělo tichou ztrátu penez a v účetnictví se hledá hůř než viditelný rozdíl.
