@@ -98,6 +98,7 @@ Obě osy se kreslí zvlášť právě proto, že jsou na sobě nezávislé — k
 ## Interakce s členstvím DU
 
 - `DU_MEMBERSHIP` je nezávislý záznam (README → **Člen DU**) a existuje nezávisle na aktuálním `record_state`/`member_status`.
+- Členství je **globální vůči osobě a roku** — `unit_id` na záznamu je jen evidenční oddíl, který členství založil. Ukončení vazby na tento oddíl (deaktivace, přesun jinam) členství **neruší** a nezakládá potřebu založit ho znovu v novém oddílu.
 - HVO smí založit `DU_MEMBERSHIP` osobě v `record_state = active` i `inactive` (založení/platba příspěvku je samo o sobě aktivitou, viz reaktivace výše).
 - Osobě v `record_state = archived` **nelze založit nové** `DU_MEMBERSHIP` — historické záznamy pro už proběhlé roky zůstávají zachované podle vlastní retenční lhůty (členská evidence + 10 let), i po anonymizaci osoby.
 

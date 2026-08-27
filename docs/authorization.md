@@ -71,15 +71,16 @@ Legenda v maticích: **RW** = čtení i zápis · **R** = jen čtení · **A** =
 
 ## Osoby, družiny a docházka
 
-| Operace                                    | ADM      | HVO                | VO                        | VD                        | RÁD                           | ÚČE | Osoba / rodič    |
-| ------------------------------------------ | -------- | ------------------ | ------------------------- | ------------------------- | ----------------------------- | --- | ---------------- |
-| Evidovat členy a hosty                     | —        | RW                 | R                         | R (svá družina)           | R (svá družina)               | —   | R (sebe / dětí)  |
-| Měnit stav osoby (host → člen, deaktivace) | —        | RW                 | —                         | —                         | —                             | —   | —                |
-| Upravit údaje osoby                        | —        | RW                 | —                         | —                         | —                             | —   | RW (sebe / dětí) |
-| Definovat družiny a jejich členy           | —        | RW                 | —                         | —                         | —                             | —   | —                |
-| Zapsat docházku                            | —        | RW                 | A `can_record_attendance` | A `can_record_attendance` | **A `can_record_attendance`** | —   | —                |
-| Založit `DU_MEMBERSHIP`                    | —        | RW                 | —                         | —                         | —                             | —   | —                |
-| Vytvořit účty rolí (pozvánka)              | RW (HVO) | RW (VO/VD/RÁD/ÚČE) | —                         | —                         | —                             | —   | —                |
+| Operace                                    | ADM      | HVO                     | VO                        | VD                        | RÁD                           | ÚČE | Osoba / rodič    |
+| ------------------------------------------ | -------- | ----------------------- | ------------------------- | ------------------------- | ----------------------------- | --- | ---------------- |
+| Evidovat členy a hosty                     | —        | RW                      | R                         | R (svá družina)           | R (svá družina)               | —   | R (sebe / dětí)  |
+| Měnit stav osoby (host → člen, deaktivace) | —        | RW                      | —                         | —                         | —                             | —   | —                |
+| Upravit údaje osoby                        | —        | RW                      | —                         | —                         | —                             | —   | RW (sebe / dětí) |
+| Definovat družiny a jejich členy           | —        | RW                      | —                         | —                         | —                             | —   | —                |
+| Zapsat docházku                            | —        | RW                      | A `can_record_attendance` | A `can_record_attendance` | **A `can_record_attendance`** | —   | —                |
+| Založit `DU_MEMBERSHIP`                    | —        | RW                      | —                         | —                         | —                             | —   | —                |
+| Převést evidenční oddíl členství           | RW       | RW (žádost + potvrzení) | —                         | —                         | —                             | —   | —                |
+| Vytvořit účty rolí (pozvánka)              | RW (HVO) | RW (VO/VD/RÁD/ÚČE)      | —                         | —                         | —                             | —   | —                |
 
 Zápis docházky je **samostatné oprávnění** — může ho mít i Rádce, který nemá přístup k přihláškám ani platbám (README → **Docházka**).
 

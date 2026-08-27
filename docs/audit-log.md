@@ -29,6 +29,16 @@ Zápis platby bez bankovního API (`BANK_TRANSACTION` se `source != 'import'`, v
 
 Tím se oddělí od `import`, který se neloguje — automatické stažení není lidské rozhodnutí a jeho stopu drží `last_sync_at` a `external_id`.
 
+## Evidenční oddíl členství DU
+
+`DU_MEMBERSHIP` sám historii nenese, ale evidenční oddíl rozhoduje o výkazu členské základny (README → **Člen DU**), takže se jeho převod musí dát dohledat.
+
+| `entity_type` / `action`   | Kdy                       | `detail`                                      |
+| -------------------------- | ------------------------- | --------------------------------------------- |
+| `DU_MEMBERSHIP` / `update` | převod evidenčního oddílu | původní a nový `unit_id`, kdo potvrdil, důvod |
+
+Záznam se zapisuje **oběma oddílům** (`unit_id` původní i nový) — jinak by po smazání logu jedné strany zmizela polovina stopy.
+
 ## Co se neloguje sem
 
 Tři evidence zůstávají oddělené, protože nejsou jen auditem:

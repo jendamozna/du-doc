@@ -57,16 +57,13 @@ flowchart TD
 3. Nezletilý Rádce
    Text jen konstatuje, že „Rádci nevidí citlivá data dětí, nejsou plnoletí" (README → **Rádce**), ale účet Rádce zakládá HVO pozvánkou stejně jako dospělým rolím, bez zmínky o zastoupení zákonným zástupcem. Chybí, zda pozvánku/založení role musí schválit rodič, jak se role promítá do existující vazby rodič ↔ dítě a kdo právně odpovídá za činy nezletilého Rádce v systému (zápis docházky, úprava chytrých sloupců).
 
-4. Členský příspěvek DU vs. více oddílů
-   `DU_MEMBERSHIP` má unikátní klíč jen osoba + rok ([data-model.md](docs/data-model.md#L406-L410)), `unit_id` do klíče nepatří, takže osoba může mít max. jedno členství DU za rok v celém systému, přestože může být evidovaná ve víc oddílech současně (README → **Osoba vs. uživatelský účet**). Není řečeno, který oddíl smí členství založit, když je osoba aktivní ve víc oddílech, zda cena DU platí i na akcích jiného oddílu než toho, co členství založil, a co se stane při přesunu osoby mezi oddíly v průběhu roku.
-
-5. Výběr a párování členského příspěvku DU
-   „systém platbu příspěvku neřeší" (README → **Člen DU**), ale příspěvek není akce, takže chybí, jak se vybírá a páruje, a kde se platí (účet organizace, nebo oddílu) — navazuje na bod 4. Návrh k vložení do sekce „Člen DU":
+4. Výběr a párování členského příspěvku DU
+   „systém platbu příspěvku neřeší" (README → **Člen DU**), ale příspěvek není akce, takže chybí, jak se vybírá a páruje, a kde se platí (účet organizace, nebo oddílu). Návrh k vložení do sekce „Člen DU":
    - Členský příspěvek DU se vybírá na úrovni organizace jako zvláštní platební položka s vlastním SS, párovaná stejným mechanismem jako akce (VS = osoba/přihláška příspěvku).
    - Příspěvek je jednou za osobu a kalendářní rok — zaplacení povýší osobu na „člena DU" globálně, bez ohledu na počet oddílů, kde je evidována.
    - Stav „člen DU" a evidenci plateb příspěvku spravuje a vidí organizace (ORG-A/ORG-Ú); oddíl vidí jen výsledný stav členství.
 
-6. Oddílová pokladna - párovani s hotovostními platbami?
+5. Oddílová pokladna - párovani s hotovostními platbami?
 
 ---
 
@@ -180,10 +177,14 @@ flowchart TD
 
 ### Člen DU
 
-- **Členství DU je samostatný záznam, ne stav osoby**: osoba je členem DU v oddílu _X_ pro rok _R_ právě tehdy, existuje-li záznam o členství s touto osobou, oddílem a rokem.
-- Osoba se může stát členem DU od ledna následujícího roku po zaplacení příspěvku do listopadu — **systém platbu příspěvku neřeší**; členství pro daný rok zakládá HVO
+- **Členství DU je samostatný záznam, ne stav osoby**: osoba je členem DU pro rok _R_ právě tehdy, existuje-li záznam o členství s touto osobou a rokem.
+- **Členství je globální vůči osobě a roku** — osoba má nejvýše jedno členství DU za kalendářní rok v celém systému, bez ohledu na to, v kolika oddílech je evidovaná.
+- Součástí záznamu je **evidenční oddíl**, který členství založil. Slouží k dohledatelnosti a k výkaznictví (report se ptá, který oddíl člena vykázá), **neomezuje ale platnost členství**.
+- **Platné členství DU se uznává ve všech oddílech, kde je osoba evidovaná** — cena pro členy DU i podmínky způsobilosti platí i na akcích jiného oddílu než toho evidenčního. Přesun osoby mezi oddíly v průběhu roku členství nezaniká ani nezakládá nové.
+- Osoba se může stát členem DU od ledna následujícího roku po zaplacení příspěvku do listopadu — **systém platbu příspěvku neřeší**; členství pro daný rok zakládá HVO některého z oddílů, kde je osoba evidovaná — ten se tím stane evidenčním oddílem.
+- **První založení vyhrává** — je-li osoba evidovaná ve víc oddílech, nerozhoduje se, kdo má přednost. Druhý HVO už členství založit nemůže a systém mu místo chyby ukáže, který oddíl ho pro daný rok založil.
+- **Evidenční oddíl lze přepsat:** HVO jiného oddílu, kde je osoba evidovaná, požádá o převedení a potvrdí ho HVO stávajícího evidenčního oddílu, nebo ADM. Změna se loguje a mění **jen výkaznictví**, ne platnost členství — to platí dál ve všech oddílech.
 - Členství DU trvá: leden–prosinec (kalendářní rok). **Vyprší tím, že pro nový rok záznam nevznikne** — není potřeba žádný přechod stavu ani úklidová úloha k 31. 12.
-- Osoba je členem DU vždy pod konkrétním oddílem
 - Kombinace osoba + rok je unikátní (jedno členství DU na osobu a rok)
 - Kde se členství vyhodnocuje (cena podle typu účastníka, podmínka způsobilosti u číselníku, reporty), rozhoduje se vždy **k roku dané akce**, ne podle aktuálního data
 

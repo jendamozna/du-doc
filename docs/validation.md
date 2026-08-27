@@ -42,21 +42,21 @@ Ostatní pole (`nickname`, `insurance_company`, `address`) jsou povinná jen teh
 
 ## Unikátnosti
 
-| Entita               | Klíč                                      | Poznámka                                                                  |
-| -------------------- | ----------------------------------------- | ------------------------------------------------------------------------- |
-| `ACCOUNT`            | `login_email`                             | přihlašovací e-mail; `PERSON.email` unikátní **není**                     |
-| `ACCOUNT`            | `person_id`                               | jedna osoba má nejvýše jeden účet                                         |
-| `OAUTH_IDENTITY`     | `provider` + `provider_user_id`           | jedna externí identita patří jednomu účtu                                 |
-| `USER_ROLE`          | `account_id` + `unit_id` + `role`         | tatáž role se v oddílu nepřiděluje dvakrát                                |
-| `DU_MEMBERSHIP`      | `person_id` + `year`                      | **`unit_id` do klíče nepatří** — jedno členství DU na osobu a rok         |
-| `ATTENDANCE_RECORD`  | `event_id` + `person_id`                  | nejvýše jeden docházkový záznam na osobu a akci                           |
-| `EVENT_ASSIGNMENT`   | `event_id` + `account_id`                 | jedno přiřazení na účet a akci                                            |
-| `BANK_TRANSACTION`   | `bank_account_id` + `external_id`         | idempotentní zápis — opakované stažení ani nahrání výpisu platbu nezdvojí |
-| `RACE_PATROL`        | `event_id` + `name`                       | název hlídky je unikátní v rámci akce                                     |
-| `RACE_PATROL_MEMBER` | `person_id` + `event_id` (přes hlídku)    | osoba je nejvýše v jedné hlídce téže akce                                 |
-| `EVENT`              | `share_slug`                              | sdílecí odkaz je globálně unikátní a nepředvídatelný                      |
-| `REGISTRATION`       | `vs`                                      | variabilní symbol musí párování jednoznačně identifikovat                 |
-| `PERSON_UNIT`        | `person_id` + `unit_id` (otevřený záznam) | osoba má v oddílu nejvýše jeden platný záznam                             |
+| Entita               | Klíč                                      | Poznámka                                                                   |
+| -------------------- | ----------------------------------------- | -------------------------------------------------------------------------- |
+| `ACCOUNT`            | `login_email`                             | přihlašovací e-mail; `PERSON.email` unikátní **není**                      |
+| `ACCOUNT`            | `person_id`                               | jedna osoba má nejvýše jeden účet                                          |
+| `OAUTH_IDENTITY`     | `provider` + `provider_user_id`           | jedna externí identita patří jednomu účtu                                  |
+| `USER_ROLE`          | `account_id` + `unit_id` + `role`         | tatáž role se v oddílu nepřiděluje dvakrát                                 |
+| `DU_MEMBERSHIP`      | `person_id` + `year`                      | **`unit_id` do klíče nepatří** — jedno členství DU na osobu a rok globálně |
+| `ATTENDANCE_RECORD`  | `event_id` + `person_id`                  | nejvýše jeden docházkový záznam na osobu a akci                            |
+| `EVENT_ASSIGNMENT`   | `event_id` + `account_id`                 | jedno přiřazení na účet a akci                                             |
+| `BANK_TRANSACTION`   | `bank_account_id` + `external_id`         | idempotentní zápis — opakované stažení ani nahrání výpisu platbu nezdvojí  |
+| `RACE_PATROL`        | `event_id` + `name`                       | název hlídky je unikátní v rámci akce                                      |
+| `RACE_PATROL_MEMBER` | `person_id` + `event_id` (přes hlídku)    | osoba je nejvýše v jedné hlídce téže akce                                  |
+| `EVENT`              | `share_slug`                              | sdílecí odkaz je globálně unikátní a nepředvídatelný                       |
+| `REGISTRATION`       | `vs`                                      | variabilní symbol musí párování jednoznačně identifikovat                  |
+| `PERSON_UNIT`        | `person_id` + `unit_id` (otevřený záznam) | osoba má v oddílu nejvýše jeden platný záznam                              |
 
 ## Invarianty po entitách
 
@@ -113,6 +113,9 @@ Ostatní pole (`nickname`, `insurance_company`, `address`) jsou povinná jen teh
 
 - Vazba rodič ↔ dítě: `parent_person_id ≠ child_person_id`; dítě musí být v okamžiku vzniku nezletilé ([parent-child-lifecycle.md](parent-child-lifecycle.md)).
 - `DU_MEMBERSHIP.year` — rozsah rozumných let (např. ⟨2000; aktuální + 1⟩), aby překlep nezaložil členství na rok 20250.
+- `DU_MEMBERSHIP.unit_id` je **evidenční oddíl** — musí to být oddíl, kde je osoba v okamžiku založení evidovaná (`PERSON_UNIT`). Do vyhodnocování ceny a způsobilosti **nevstupuje**; ověřuje se jen existence záznamu pro osobu a rok.
+- Kolize při založení členství **není chyba validace, ale stav k zobrazení** — porušení unikátu `person_id + year` se přeloží na hlášku „členství pro rok _R_ už založil oddíl _X_", ne na obecné „nelze uložit".
+- Přepsání `unit_id` (převod evidenčního oddílu) je přípustné jen na oddíl, kde je osoba evidovaná, a jen po potvrzení druhou stranou ([authorization.md](authorization.md)).
 - `ATTENDANCE_RECORD.volunteer_hours ≥ 0`; hodiny dávají smysl jen u dobrovolníka.
 - `PERSON_SENSITIVE_DATA` patří vždy konkrétnímu oddílu — citlivá data se nesdílejí mezi oddíly.
 

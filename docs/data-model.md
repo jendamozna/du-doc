@@ -37,7 +37,7 @@ erDiagram
     UNIT ||--o{ USER_ROLE : "scoped to"
     UNIT ||--o{ CUSTOM_FIELD : defines
     UNIT ||--o{ LOCATION : defines
-    UNIT ||--o{ DU_MEMBERSHIP : "du members"
+    UNIT ||--o{ DU_MEMBERSHIP : "registers (evidencni oddil)"
     UNIT }o--o| LOCATION : "based at"
     EVENT }o--o| LOCATION : "held at"
 
@@ -48,7 +48,7 @@ erDiagram
     PERSON ||--o{ PARENT_CHILD : "as child"
     PERSON ||--o{ UNIT_PATROL_MEMBER : is
     PERSON ||--o{ REGISTRATION : submits
-    PERSON ||--o{ DU_MEMBERSHIP : has
+    PERSON ||--o{ DU_MEMBERSHIP : "has (globalne, 1 za rok)"
     PERSON ||--o{ ATTENDANCE_RECORD : attends
     PERSON ||--o{ CUSTOM_FIELD_VALUE : has
     PERSON ||--o{ PERSON_COURSE : completes
@@ -410,8 +410,8 @@ erDiagram
     }
     DU_MEMBERSHIP {
         int id PK
-        int person_id FK,UK "unikat: osoba + rok"
-        int unit_id FK "oddil clenstvi"
+        int person_id FK,UK "unikat: osoba + rok, globalne pres cely system"
+        int unit_id FK "evidencni oddil - kdo clenstvi zalozil; neomezuje platnost"
         int year UK
     }
     ATTENDANCE_RECORD {

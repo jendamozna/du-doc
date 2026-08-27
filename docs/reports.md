@@ -33,7 +33,7 @@ Scope se vždy aplikuje jako filtr `unit_id` odvozený z `USER_ROLE`, ne z param
 
 - **Časová osa má prázdné koše.** Období bez dat se vrací s nulou (ne vynechané), aby graf nelhal o trendu.
 - **Časové pásmo:** bucketing podle `Europe/Prague`; datetime sloupce jsou v UTC, převod v dotazu, ne v aplikaci.
-- **Členství DU se vyhodnocuje k roku akce** — `DU_MEMBERSHIP(person_id, year = YEAR(EVENT.starts_at))`, nikdy podle aktuálního data.
+- **Členství DU se vyhodnocuje k roku akce** — `DU_MEMBERSHIP(person_id, year = YEAR(EVENT.starts_at))`, nikdy podle aktuálního data. Klíč je **jen osoba a rok** — členství platí globálně, takže se `unit_id` do této podmínky nepřidává ani u akcí jiného než evidenčního oddílu.
 - **Aktivní přihláška** = `REGISTRATION.state NOT IN ('Canceled', 'Expired')`. Storna se počítají jen v reportu Platby.
 - **Anonymizované osoby** (`PERSON.anonymized_at IS NOT NULL`) se do agregací počítají (počty musí sedět historicky), ale nikdy se nevypisují jmenovitě — detailní řádky je vynechávají.
 - **Region** je vždy snapshot z akce (`EVENT.region_id_snapshot`), nikdy aktuální zařazení oddílu.
@@ -82,7 +82,7 @@ Provozní přehled: jeden řádek na akci, s rozpadem účastníků podle typu.
 Vývoj velikosti oddílu. Metrika je **stav ke konci každého období**, ne přírůstek.
 
 - **Registrovaní členové:** počet `PERSON_UNIT` s `membership_state = 'registered_member'`, `record_state = 'active'` a intervalem `valid_from <= konec_období AND (valid_to IS NULL OR valid_to > konec_období)`.
-- **Členové DU:** počet `DU_MEMBERSHIP` s `year = rok(konec_období)` a `unit_id` v scope. U měsíčního bucketu je hodnota v rámci roku konstantní — to je správně, členství je roční.
+- **Členové DU:** počet `DU_MEMBERSHIP` s `year = rok(konec_období)` a **evidenčním oddílem** (`unit_id`) ve scope. U měsíčního bucketu je hodnota v rámci roku konstantní — to je správně, členství je roční. Je to **jediné místo, kde `unit_id` rozhoduje** — výkaz členské základny musí každého člena přiřadit právě jednomu oddílu, aby se součty nesčítaly dvakrát. Osoba evidovaná ve víc oddílech se proto objeví jen u toho, který členství založil, ačkoli je členem DU i pro ostatní. Evidenční oddíl lze převést (README → **Člen DU**) — převod se projeví **i ve zpětně spočtených obdobích téhož roku**, protože `DU_MEMBERSHIP` neverzuje historii; report proto vrací čísla platná k okamžiku spuštění.
 - **Hosté:** totéž co registrovaní členové, ale `membership_state = 'guest'`.
 - **Přírůstek / úbytek:** rozdíl proti předchozímu koši, dopočítaný na výstupu.
 
