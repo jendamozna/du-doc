@@ -46,21 +46,49 @@ flowchart TD
 
 ---
 
+##### K diskusi
+
+1. Hromadné přihlášení vedoucím (mimo portál)
+   Celá kapitola „Přihlašování na akce" popisuje jen samoobslužný tok přes veřejný portál (účastník nebo rodič si podává přihlášku sám). U docházky je explicitně řešeno, že vedoucí může akci založit zpětně a rovnou vybrat libovolné účastníky ze seznamu osob oddílu — obdobný hromadný zápis pro **přihlášky** ale specifikace nezmiňuje. Chybí odpověď na to, jestli HVO/Vedoucí smí za skupinu existujících členů (např. celou družinu) založit přihlášky najednou bez toho, aby si je každý podával sám, jaký stav taková přihláška dostane (rovnou čeká na platbu?) a jak se to promítne do kapacity a pořadí náhradníků.
+
+2. Pořadí podání přihlášky vs. založení `DU_MEMBERSHIP`
+   Cena a způsobilost se vyhodnocují k roku dané akce (README → **Člen DU**), ne podle aktuálního data, takže účastník přihlášený v prosinci na lednovou akci může platit cenu pro DU, pokud HVO členství pro nový rok už založil. Není ale řečeno, zda se cena přihlášky **zafixuje v okamžiku podání**, nebo se **přepočítává** až do splatnosti/platby — výsledek se liší podle toho, kdy HVO členství pro nový rok stihne založit vůči podání přihlášky.
+
+3. Nezletilý Rádce
+   Text jen konstatuje, že „Rádci nevidí citlivá data dětí, nejsou plnoletí" (README → **Rádce**), ale účet Rádce zakládá HVO pozvánkou stejně jako dospělým rolím, bez zmínky o zastoupení zákonným zástupcem. Chybí, zda pozvánku/založení role musí schválit rodič, jak se role promítá do existující vazby rodič ↔ dítě a kdo právně odpovídá za činy nezletilého Rádce v systému (zápis docházky, úprava chytrých sloupců).
+
+4. Členský příspěvek DU vs. více oddílů
+   `DU_MEMBERSHIP` má unikátní klíč jen osoba + rok ([data-model.md](docs/data-model.md#L406-L410)), `unit_id` do klíče nepatří, takže osoba může mít max. jedno členství DU za rok v celém systému, přestože může být evidovaná ve víc oddílech současně (README → **Osoba vs. uživatelský účet**). Není řečeno, který oddíl smí členství založit, když je osoba aktivní ve víc oddílech, zda cena DU platí i na akcích jiného oddílu než toho, co členství založil, a co se stane při přesunu osoby mezi oddíly v průběhu roku.
+
+5. Výběr a párování členského příspěvku DU
+   „systém platbu příspěvku neřeší" (README → **Člen DU**), ale příspěvek není akce, takže chybí, jak se vybírá a páruje, a kde se platí (účet organizace, nebo oddílu) — navazuje na bod 4. Návrh k vložení do sekce „Člen DU":
+   - Členský příspěvek DU se vybírá na úrovni organizace jako zvláštní platební položka s vlastním SS, párovaná stejným mechanismem jako akce (VS = osoba/přihláška příspěvku).
+   - Příspěvek je jednou za osobu a kalendářní rok — zaplacení povýší osobu na „člena DU" globálně, bez ohledu na počet oddílů, kde je evidována.
+   - Stav „člen DU" a evidenci plateb příspěvku spravuje a vidí organizace (ORG-A/ORG-Ú); oddíl vidí jen výsledný stav členství.
+
+---
+
 ### Role
 
 - Uživatel může být ve více rolích, např. Administrátor a zároveň jeden z vedoucích oddílu nebo dobrovolník a rodič
-- Role Hlavní vedoucí oddílu (HVO), Rádce (RÁD), Vedoucí oddílu (VO), Vedoucí družiny (VD), Administrátor (ADM), Účetní (ÚČE)
+- Role Hlavní vedoucí oddílu (HVO), Rádce (RÁD), Vedoucí oddílu (VO), Vedoucí družiny (VD), Administrátor (ADM), Účetní oddílu (ÚČE)
 - **Rodič není přidělovaná role** — postavení zákonného zástupce se **odvozuje z aktivní vazby rodič ↔ dítě**. Rozsah práv je vždy **per dítě**, ne globální; role se proto nepřiděluje ani neodebírá a nemůže se rozejít se skutečným stavem vazby (zrušení, přechod do režimu jen pro čtení po zletilosti dítěte).
 - VO/VD nemají pevná globální práva, oprávnění se přidělují u akce / v rámci družiny.
+- Úplnou matici oprávnění (akce × role × scope) viz [docs/authorization.md](docs/authorization.md).
 
-#### Účetní
+#### Účetní oddílu
 
-- Role, která má přístup jen k přihláškám (úpravy), akcím/cenám/stornům/bankovním účtům (čtení) a k párování/potvrzování plateb a výzvám.
+- **Oprávnění platí pro celý oddíl, ne per akci** — párování je operace nad bankovním účtem oddílu a jedna platba může pokrýt přihlášky z více akcí. Účetní se proto k akci nepřiřazuje.
+- **Čtení všech přihlášek** oddílu (nutné pro párování) — bez citlivých údajů.
+- **Úpravy jen platebních atributů** přihlášky; ostatní obsah přihlášky mění vedoucí.
+- Čtení akcí, cen, storen a bankovních účtů.
+- Párování a potvrzování plateb, řešení přeplatků a vratek, výzvy k platbě.
 
 #### Administrátor
 
 - Spravuje oddíly a přiřazuje jim jejich Hlavní vedoucí
 - Vytváří účty hlavním vedoucím — systém vygeneruje pozvánku e-mailem
+- Definuje a spravuje regiony, přiřazuje do nich oddíly (viz **Region**)
 
 #### Hlavní vedoucí oddílu
 
@@ -80,11 +108,14 @@ flowchart TD
 - Rodič může zastupovat jedno nebo více nezletilých dětí
 - Jedno dítě může být svázáno s více rodiči (oba zákonní zástupci)
 - Rodič může své zastupované děti přihlašovat na akce a spravovat jejich přihlášky (přihlášení na akci, storno, platby za dítě) a údaje v systému (adresy, pojišťovny, ...)
-- Vazba rodič ↔ dítě vzniká přihlášením dítěte na akci rodičem
+- **Vznik vazby rodič ↔ dítě přihlášením na akci:**
+  - Nemá-li dítě dosud žádného navázaného rodiče, vazba vznikne rovnou jako aktivní — rodič v přihlášce explicitně prohlásí, že je zákonným zástupcem (prohlášení se loguje).
+  - Má-li dítě už navázaného rodiče, nová vazba vznikne jako **čekající** a musí ji schválit stávající rodič, nebo HVO oddílu, kde je dítě evidováno — stejně jako u pozvánky druhému zákonnému zástupci níže.
 - Po dosažení zletilosti se zastoupení rodičem přepne do režimu jen pro čtení. Výjimkou je doplnění kontaktního e-mailu dítěte, pokud chybí — slouží k doručení výzvy k převzetí účtu. Zletilý člen může přístup rodiče kdykoli zcela zrušit.
 - Vazbu může zrušit sám rodič (vystoupení), případně HVO na žádost; zrušení se loguje. Zůstane-li nezletilé dítě bez navázaného rodiče, jeho údaje a přihlášky spravuje HVO, dokud se nepřipojí nový zákonný zástupce.
 - Oba rodiče mají plná práva, platí poslední zápis.
 - Druhého zákonného zástupce přidává stávající rodič nebo HVO pozvánkou (e-mailem). Vazba vznikne přijetím pozvánky druhým rodičem. Nemá-li dítě žádného navázaného rodiče, schvaluje připojení HVO, kde je dítě evidováno.
+- Přesná pravidla přechodů, guardy a práva podle stavu viz [docs/parent-child-lifecycle.md](docs/parent-child-lifecycle.md).
 
 ### Osoba vs. uživatelský účet
 
@@ -100,43 +131,9 @@ flowchart TD
 
 #### Stav osoby (lifecycle)
 
-- **Host** a **registrovaný člen** jsou dva stavy jedné osoby v rámci oddílu, nikoli samostatné entity:
-  - _host → registrovaný člen_ — migrace provedená HVO; registrovaný člen má povinné datum narození,
-  - _→ neaktivní_ — osoba opustila oddíl nebo je dlouhodobě bez aktivity; záznam zůstává kvůli historii, ale nezapočítává se do počtu členů a nedostává automatické výzvy,
-  - _neaktivní → registrovaný člen / host_ — reaktivace, pokud se osoba vrátí,
-  - _→ archivovaný_ — GDPR: po uplynutí retenční doby se osobní a citlivá data anonymizují, zachovají se jen agregované/nepřímo identifikující údaje nutné pro reporting.
+- Stav osoby v rámci oddílu tvoří **dvě nezávislé osy**: typ vztahu (**host** ↔ **registrovaný člen**) a životnost záznamu (**aktivní** → **neaktivní** → **archivovaný**, GDPR anonymizace).
 - **Členství DU není stav osoby** — odvozuje se z existence záznamu o členství pro daný rok (viz **Člen DU**).
-- **Neaktivní** a **archivovaný** jsou **kolmé** na členský stav výše — jedno vyjadřuje typ vztahu k oddílu, druhé životnost záznamu.
-- U každého je evidována historie — změny, přihlášky, pod jakým oddílem.
-
-##### TODO - dořešit
-
-1. Dvě osy, ale jen jedna sada přechodů
-   Text sám říká, že členský stav (host / registrovaný člen) a stav záznamu (neaktivní / archivovaný) jsou kolmé, jenže přechody vypisuje v jednom seznamu. Chybí matice povolených kombinací a přechody zvlášť pro každou osu. Stav aktivní (v modelu record_state = active) se v próze vůbec nejmenuje.
-
-2. Guardy a kdo přechod provádí
-   Jen u host → registrovaný člen je řečeno „HVO" a „povinné datum narození". U ostatních přechodů není, kdo je smí provést, ani co je blokuje — např. jestli lze deaktivovat osobu s otevřenou nezaplacenou přihláškou, nebo archivovat osobu s nedořešenou pohledávkou. Chybí i opačný přechod registrovaný člen → host (je vůbec povolený?).
-
-3. Definice „dlouhodobě bez aktivity"
-   Není určeno, co je aktivita (přihláška, docházka, login?), jaká je lhůta, jak často job běží a zda se deaktivaci předchází upozorněním. Retenční tabulka zná jen 12 měsíců u hosta a 24 měsíců u účtu — vztah těchto lhůt ke stavu osoby není popsaný.
-
-4. Rozpor scope: stav je per oddíl, anonymizace je globální
-   record_state visí na vazbě osoba–oddíl, ale anonymizace maže data osoby jako celku. Není popsáno, co znamená „archivovaný v oddílu A, aktivní v oddílu B" a kdo smí spustit výmaz, když je osoba aktivní jinde.
-
-5. Terminálnost archivace a návrat po ní
-   Není řečeno, že archivace je nevratná (data jsou pryč) a že návrat osoby po anonymizaci znamená novou osobu — tedy potenciální duplicitu, kterou pak řeší deduplikace a reportovací sloučení.
-
-6. Dopady stavu na ostatní vazby
-   Co se při deaktivaci stane s členstvím v družině, vazbou rodič–dítě, rolemi účtu, přiřazením k akcím a s tím, jestli si osoba může dál založit přihlášku.
-
-7. Vazba osoba ↔ účet
-   Deaktivace osoby vs. platnost loginu není nikde popsaná, přestože retenční tabulka mazání nečinného účtu řeší.
-
-8. Obsah historie
-   „U každého je evidována historie" je jediná věta, přestože na ní stojí report Retence — chybí, že se zapisuje výchozí a cílový stav obou os, kdo, kdy a proč, a že u systémových změn je původce prázdný.
-
-9. Interakce s členstvím DU
-   Není řečeno, zda může být neaktivní nebo archivovaná osoba členem DU pro daný rok a jak se to promítne do počtů.
+- Formální model (matice kombinací, guardy, přechody, dopady na ostatní vazby, historie) viz [docs/person-lifecycle.md](docs/person-lifecycle.md).
 
 ### Retence a GDPR
 
@@ -199,7 +196,7 @@ flowchart TD
   - **Sloučení (A + B → C)** – zdrojové regiony se označí jako _sloučené_ s odkazem na nástupnický region; všem oddílům z A i B se uzavře příslušnost a otevře nová na C.
   - **Rozdělení** – opačná operace ke sloučení.
 - Regiony se **nemažou**, jen označí stavem _sloučený / zrušený_ — kvůli zachování historie.
-- **Reporty (snapshot):** region oddílu/akce se zaznamenává jako **snapshot na akci v okamžiku jejího vzniku**. Pozdější přesun oddílu nebo sloučení regionu **nemění už existující reporty**; nové akce počítají podle aktuálního zařazení. _Modul reporty ústředí_ tím získá dimenzi „region".
+- **Reporty (snapshot):** region oddílu/akce se zaznamenává jako **snapshot na akci v okamžiku jejího vzniku**. Pozdější přesun oddílu nebo sloučení regionu **nemění už existující reporty**; nové akce počítají podle aktuálního zařazení. _Modul reporty ústředí_ tím získá dimenzi „region".- Stavy regionu, guardy operací a invarianty verzované příslušnosti viz [docs/region-lifecycle.md](docs/region-lifecycle.md).
 
 ### Oddíl
 
@@ -222,7 +219,7 @@ flowchart TD
 ### Konfigurace akce
 
 - Hlavní vedoucí vytváří akce
-- **Přiřazení vedoucích k akci:** HVO přiřadí k akci konkrétní lidi (Vedoucí, Rádce, Účetní) a každému nastaví rozsah oprávnění — úprava akce, úprava přihlášek, úprava cen a storen, zápis docházky. Samo přiřazení dává **čtení přihlášek** akce; bez přiřazení k akci vedoucí přístup nemá. Eviduje se, kdo a kdy přiřazení založil.
+- **Přiřazení vedoucích k akci:** HVO přiřadí k akci konkrétní lidi (Vedoucí, Rádce) a každému nastaví rozsah oprávnění — úprava akce, úprava přihlášek, úprava cen a storen, zápis docházky. Samo přiřazení dává **čtení přihlášek** akce; bez přiřazení k akci vedoucí přístup nemá. Eviduje se, kdo a kdy přiřazení založil. **Účetní oddílu se k akci nepřiřazuje** — má oprávnění pro celý oddíl (viz **Účetní oddílu**).
 - Každá akce může být svazána s maximálně jedním bankovním účtem
 - Každá akce může mít místo konání vybrané z lokací oddílu (GPS)
 - Název, SS, max kapacita, počet náhradníků, ceny pro členy DU i ostatní, začátek a konec akce, začátek a konec přihlašování, termíny pro storno podmínky
@@ -402,17 +399,20 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 
 Tento dokument popisuje **co** systém dělá a proč — je určený zadavatelům, hlavním vedoucím, účetním a právníkům. Technické **jak** je vyčleněné do samostatných dokumentů:
 
-| Dokument                                                         | Obsah                                                        |
-| ---------------------------------------------------------------- | ------------------------------------------------------------ |
-| [docs/data-model.md](docs/data-model.md)                         | ER diagram — entity, pole, číselníkové hodnoty, vazby        |
-| [docs/event-fields.md](docs/event-fields.md)                     | model výběrových číselníků akce                              |
-| [docs/registration-lifecycle.md](docs/registration-lifecycle.md) | stavový automat přihlášky — brány, události, lhůty           |
-| [docs/race-patrols.md](docs/race-patrols.md)                     | hlídky Stezky — výpočet věku, kontrola složení, stanoviště   |
-| [docs/payment-matching.md](docs/payment-matching.md)             | pravidla párování plateb a výpočet stavu úhrady              |
-| [docs/reports.md](docs/reports.md)                               | definice metrik reportů, parametry a rozsah dat              |
-| [docs/person-merge.md](docs/person-merge.md)                     | sloučení osob — schvalování, konflikty polí, revert          |
-| [docs/fio-sync.md](docs/fio-sync.md)                             | stahování bankovních transakcí z Fio                         |
-| [docs/audit-log.md](docs/audit-log.md)                           | struktura auditního logu                                     |
-| [docs/non-functional.md](docs/non-functional.md)                 | OAuth, úložiště souborů, šifrování, e-maily, plánované úlohy |
-| [AI_support.md](AI_support.md)                                   | AI funkce nad systémem                                       |
-| [TODO.md](TODO.md)                                               | hodnocení specifikace a co ještě dopsat                      |
+| Dokument                                                         | Obsah                                                          |
+| ---------------------------------------------------------------- | -------------------------------------------------------------- | --- | ---------------------------------------- | --------------------------------------------------- | --- | ---------------------------------------------------- | --------------------------------------------------------- |
+| [docs/data-model.md](docs/data-model.md)                         | ER diagram — entity, pole, číselníkové hodnoty, vazby          |     | [docs/validation.md](docs/validation.md) | validační pravidla, unikátnosti a byznys-invarianty |     | [docs/person-lifecycle.md](docs/person-lifecycle.md) | stavový automat osoby — dvě osy, matice kombinací, guardy |
+| [docs/parent-child-lifecycle.md](docs/parent-child-lifecycle.md) | vazba rodič ↔ dítě — vznik, schvalování, práva podle stavu     |
+| [docs/region-lifecycle.md](docs/region-lifecycle.md)             | regiony — stavy, slučování, verzovaná příslušnost oddílů       |
+| [docs/event-fields.md](docs/event-fields.md)                     | model výběrových číselníků akce                                |
+| [docs/registration-lifecycle.md](docs/registration-lifecycle.md) | stavový automat přihlášky — brány, události, lhůty             |
+| [docs/race-patrols.md](docs/race-patrols.md)                     | hlídky Stezky — výpočet věku, kontrola složení, stanoviště     |
+| [docs/payment-matching.md](docs/payment-matching.md)             | pravidla párování plateb a výpočet stavu úhrady                |
+| [docs/reports.md](docs/reports.md)                               | definice metrik reportů, parametry a rozsah dat                |
+| [docs/person-merge.md](docs/person-merge.md)                     | sloučení osob — schvalování, konflikty polí, revert            |
+| [docs/fio-sync.md](docs/fio-sync.md)                             | stahování bankovních transakcí z Fio                           |
+| [docs/audit-log.md](docs/audit-log.md)                           | struktura auditního logu                                       |
+| [docs/non-functional.md](docs/non-functional.md)                 | OAuth, úložiště souborů, šifrování, e-maily, plánované úlohy   |
+| [docs/notifications.md](docs/notifications.md)                   | katalog notifikací — událost → příjemce → šablona → načasování |
+| [AI_support.md](AI_support.md)                                   | AI funkce nad systémem                                         |
+| [TODO.md](TODO.md)                                               | hodnocení specifikace a co ještě dopsat                        |

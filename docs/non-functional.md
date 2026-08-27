@@ -24,12 +24,13 @@ Implementační detail k [README.md](../README.md) → **Požadavky**. Schéma v
 
 Systém ukládá tři druhy souborů: **dokumenty přihlášek** (potvrzení od lékaře, bezinfekčnost — citlivá data), **šablony potvrzení o platbě** a **loga / přílohy akcí**.
 
-- Objektové úložiště kompatibilní s S3. Do databáze se ukládá **klíč objektu, ne URL** (`REGISTRATION_DOCUMENT.file`) — URL se generuje až při stahování.
-- Klíč obsahuje náhodné UUID a **nikdy jméno osoby ani název akce**; z klíče nesmí jít nic odvodit.
-- Žádný soubor není veřejně dostupný. Stažení probíhá přes **krátce platnou podepsanou URL** (řádově minuty) vydanou až po ověření oprávnění na konkrétní přihlášku.
+- **Obsah souboru se ukládá přímo v databázi** (binární sloupec, `REGISTRATION_DOCUMENT.content`), ne v externím objektovém úložišti — při daném rozsahu (limit 10 MB/soubor, řádově stovky dokumentů na akci, viz **Rozsah a výkon**) to zjednodušuje zálohy, retenci i GDPR výmaz na jediné místo.
+- Obsah je šifrovaný stejným mechanismem jako pole s příponou `_enc` (libsodium secretbox, vlastní nonce na záznam) — viz **Šifrování a hesla**.
+- Žádný soubor není veřejně dostupný. Stažení jde výhradně přes aplikační endpoint, který ověří oprávnění na konkrétní přihlášku a obsah streamuje (`Content-Disposition`); trvalá ani sdílená URL na soubor neexistuje.
 - Limit velikosti **10 MB** na soubor, whitelist typů PDF/JPG/PNG/HEIC ověřený podle **skutečného obsahu souboru, ne podle přípony**.
-- Retenční a GDPR mazání maže i objekt v úložišti, nejen řádek v databázi. Ověření, že objekt zmizel, je součástí dokladu o výmazu.
-- Zálohy úložiště podléhají stejným retenčním lhůtám jako databáze.
+- Retenční a GDPR mazání smaže celý řádek (obsah i metadata) v jedné transakci — nehrozí osamocený soubor bez záznamu nebo záznam bez obsahu.
+- Zálohy databáze podléhají stejným retenčním lhůtám jako zbytek dat; žádné oddělené úložiště se zvláštním režimem zálohování není potřeba.
+- **Škálování:** při přechodu na víc aplikačních instancí nebo výrazně větší soubory lze později přejít na sdílený souborový systém nebo objektové úložiště (S3) beze změny API — DB sloupec s obsahem stačí nahradit klíčem na externí úložiště.
 
 ## Šifrování a hesla
 

@@ -14,7 +14,7 @@ Rozpis reportů popsaných v [../README.md](../README.md) do podoby, ze které l
 | Vedoucí družiny (VD) | jen osoby své družiny (`UNIT_PATROL_MEMBER`) |
 | Vedoucí oddílu (VO)  | svůj oddíl                                   |
 | Hlavní vedoucí (HVO) | svůj oddíl                                   |
-| Účetní (UCE)         | jen report Platby, svůj oddíl                |
+| Účetní oddílu (UCE)  | jen report Platby, svůj oddíl                |
 | Administrátor (ADM)  | vše (napříč oddíly, s dimenzí region)        |
 
 Scope se vždy aplikuje jako filtr `unit_id` odvozený z `USER_ROLE`, ne z parametru requestu — parametr `unit_id` se validuje proti povoleným oddílům volajícího.
