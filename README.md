@@ -52,6 +52,7 @@ flowchart TD
 
 1. Hromadné přihlášení vedoucím (mimo portál)
    Celá kapitola „Přihlašování na akce" popisuje jen samoobslužný tok přes veřejný portál (účastník nebo rodič si podává přihlášku sám). U docházky je explicitně řešeno, že vedoucí může akci založit zpětně a rovnou vybrat libovolné účastníky ze seznamu osob oddílu — obdobný hromadný zápis pro **přihlášky** ale specifikace nezmiňuje. Chybí odpověď na to, jestli HVO/Vedoucí smí za skupinu existujících členů (např. celou družinu) založit přihlášky najednou bez toho, aby si je každý podával sám, jaký stav taková přihláška dostane (rovnou čeká na platbu?) a jak se to promítne do kapacity a pořadí náhradníků.
+   **Hromadné přihlášení vedoucím** obejde bránu zástupce — je to jiný vstupní bod téhož agregátu, nebo vlastní use case s jinými guardy?
 
 2. Nezletilý Rádce
    Text jen konstatuje, že „Rádci nevidí citlivá data dětí, nejsou plnoletí" (README → **Rádce**), ale účet Rádce zakládá HVO pozvánkou stejně jako dospělým rolím, bez zmínky o zastoupení zákonným zástupcem. Chybí, zda pozvánku/založení role musí schválit rodič, jak se role promítá do existující vazby rodič ↔ dítě a kdo právně odpovídá za činy nezletilého Rádce v systému (zápis docházky, úprava chytrých sloupců).
@@ -293,7 +294,7 @@ Tím se stejným modelem pokryje **ubytování** (jednovýběrový číselník b
 
 #### Hlídky na závodních akcích (Stezka)
 
-Akce typu **Stezka** umožní z přihlášených osob sestavit **hlídky** (družstva) pro závod. V jedné přihlášce může být přihlášeno **více osob**; vlastník přihlášky skládá hlídky z osob své přihlášky a jejích potvrzených dílčích přihlášek. Hlídka se skládá z těchto osob a jedna z nich je jejím **kapitánem**.
+Akce typu **Stezka** umožní z přihlášených osob sestavit **hlídky** (družstva) pro závod. V rámci jedné přihlášky a jejích dílčích přihlášek může být přihlášeno **více osob** (každý účastník má vlastní přihlášku); vlastník přihlášky skládá hlídky z osob své přihlášky a jejích potvrzených dílčích přihlášek. Hlídka se skládá z těchto osob a jedna z nich je jejím **kapitánem**.
 
 - **Vlastnictví:** hlídku vlastní přihláška, která ji založila; upravovat a smazat ji smí jen vlastník. Název hlídky je v rámci akce unikátní.
 - **Členství:** každá osoba je nejvýše v jedné hlídce. V kategorii Stezka/Pěšinka je jeden kapitán.
@@ -406,20 +407,24 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 
 Tento dokument popisuje **co** systém dělá a proč — je určený zadavatelům, hlavním vedoucím, účetním a právníkům. Technické **jak** je vyčleněné do samostatných dokumentů:
 
-| Dokument                                                         | Obsah                                                          |
-| ---------------------------------------------------------------- | -------------------------------------------------------------- | --- | ---------------------------------------- | --------------------------------------------------- | --- | ---------------------------------------------------- | --------------------------------------------------------- |
-| [docs/data-model.md](docs/data-model.md)                         | ER diagram — entity, pole, číselníkové hodnoty, vazby          |     | [docs/validation.md](docs/validation.md) | validační pravidla, unikátnosti a byznys-invarianty |     | [docs/person-lifecycle.md](docs/person-lifecycle.md) | stavový automat osoby — dvě osy, matice kombinací, guardy |
-| [docs/parent-child-lifecycle.md](docs/parent-child-lifecycle.md) | vazba rodič ↔ dítě — vznik, schvalování, práva podle stavu     |
-| [docs/region-lifecycle.md](docs/region-lifecycle.md)             | regiony — stavy, slučování, verzovaná příslušnost oddílů       |
-| [docs/event-fields.md](docs/event-fields.md)                     | model výběrových číselníků akce                                |
-| [docs/registration-lifecycle.md](docs/registration-lifecycle.md) | stavový automat přihlášky — brány, události, lhůty             |
-| [docs/race-patrols.md](docs/race-patrols.md)                     | hlídky Stezky — výpočet věku, kontrola složení, stanoviště     |
-| [docs/payment-matching.md](docs/payment-matching.md)             | pravidla párování plateb a výpočet stavu úhrady                |
-| [docs/reports.md](docs/reports.md)                               | definice metrik reportů, parametry a rozsah dat                |
-| [docs/person-merge.md](docs/person-merge.md)                     | sloučení osob — schvalování, konflikty polí, revert            |
-| [docs/fio-sync.md](docs/fio-sync.md)                             | stahování bankovních transakcí z Fio                           |
-| [docs/audit-log.md](docs/audit-log.md)                           | struktura auditního logu                                       |
-| [docs/non-functional.md](docs/non-functional.md)                 | OAuth, úložiště souborů, šifrování, e-maily, plánované úlohy   |
-| [docs/notifications.md](docs/notifications.md)                   | katalog notifikací — událost → příjemce → šablona → načasování |
-| [AI_support.md](AI_support.md)                                   | AI funkce nad systémem                                         |
-| [TODO.md](TODO.md)                                               | hodnocení specifikace a co ještě dopsat                        |
+| Dokument                                                         | Obsah                                                           |
+| ---------------------------------------------------------------- | --------------------------------------------------------------- |
+| [docs/data-model.md](docs/data-model.md)                         | ER diagram — entity, pole, číselníkové hodnoty, vazby           |
+| [docs/validation.md](docs/validation.md)                         | validační pravidla, unikátnosti a byznys-invarianty             |
+| [docs/person-lifecycle.md](docs/person-lifecycle.md)             | stavový automat osoby — dvě osy, matice kombinací, guardy       |
+| [docs/parent-child-lifecycle.md](docs/parent-child-lifecycle.md) | vazba rodič ↔ dítě — vznik, schvalování, práva podle stavu      |
+| [docs/region-lifecycle.md](docs/region-lifecycle.md)             | regiony — stavy, slučování, verzovaná příslušnost oddílů        |
+| [docs/event-fields.md](docs/event-fields.md)                     | model výběrových číselníků akce                                 |
+| [docs/registration-lifecycle.md](docs/registration-lifecycle.md) | stavový automat přihlášky — brány, události, lhůty              |
+| [docs/race-patrols.md](docs/race-patrols.md)                     | hlídky Stezky — výpočet věku, kontrola složení, stanoviště      |
+| [docs/payment-matching.md](docs/payment-matching.md)             | pravidla párování plateb a výpočet stavu úhrady                 |
+| [docs/reports.md](docs/reports.md)                               | definice metrik reportů, parametry a rozsah dat                 |
+| [docs/person-merge.md](docs/person-merge.md)                     | sloučení osob — schvalování, konflikty polí, revert             |
+| [docs/fio-sync.md](docs/fio-sync.md)                             | stahování bankovních transakcí z Fio                            |
+| [docs/audit-log.md](docs/audit-log.md)                           | struktura auditního logu                                        |
+| [docs/authorization.md](docs/authorization.md)                   | matice oprávnění — akce × role × scope, citlivá data            |
+| [docs/modules.md](docs/modules.md)                               | hranice modulů, vlastnictví entit a katalog doménových událostí |
+| [docs/non-functional.md](docs/non-functional.md)                 | technologický stack, OAuth, úložiště, šifrování, e-maily, joby  |
+| [docs/notifications.md](docs/notifications.md)                   | katalog notifikací — událost → příjemce → šablona → načasování  |
+| [AI_support.md](AI_support.md)                                   | AI funkce nad systémem                                          |
+| [TODO.md](TODO.md)                                               | hodnocení specifikace a co ještě dopsat                         |

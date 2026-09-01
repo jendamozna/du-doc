@@ -6,6 +6,8 @@ Formální model stavů `REGISTRATION` ([README.md](../README.md) → **Přihla�
 
 Přihláška neprochází pevnou posloupností kroků. **Stav je čistá funkce podmínek** — po každé relevantní změně se přepočítá `evaluate(registration)` a výsledek se uloží. Tím nemůže vzniknout nekonzistence typu „zaplaceno, ale chybí dokument".
 
+Jednotkou kapacity je účastník; jedna přihláška nese právě jednoho účastníka, dílčí přihlášky se počítají samostatně.
+
 Výjimkou jsou dva **terminální stavy** (`Canceled`, `Expired`) a stav `New`; ty se nastavují explicitně a přepočet je nepřepíše.
 
 ```

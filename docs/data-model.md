@@ -226,8 +226,8 @@ erDiagram
         string ss "specific symbol"
         string type "club / one_off / weekend / course / certificate / recommendation / group / race / workshop"
         int course_id FK "udeluje kurz po absolvovani"
-        int capacity
-        int substitute_count
+        int capacity "max počet účastníků"
+        int substitute_count "max počet náhradníků"
         string visibility "public / internal / private"
         string share_slug "neverejny sdileci odkaz"
         datetime starts_at
@@ -363,7 +363,9 @@ erDiagram
     REGISTRATION {
         int id PK
         int event_id FK
-        int person_id FK
+        int person_id FK "ucastnik (prave jeden na prihlasku)"
+        int submitted_by_account_id FK "kdo prihlasku podal; NULL = podano tokenem bez uctu"
+        string contact_email "dorucovaci adresa prihlasky; povinna jen kdyz submitted_by_account_id IS NULL, jinak NULL a bere se z uctu"
         int parent_registration_id FK "nadrazena prihlaska (NULL = hlavni); definuje club scope"
         int price_id FK "EVENT_PRICE platna k okamziku podani; zafixovana"
         decimal base_price "snapshot zakladni ceny pri podani"

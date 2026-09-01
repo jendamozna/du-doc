@@ -7,6 +7,7 @@ Tabulka všech e-mailových událostí zmíněných napříč specifikací ([REA
 - **Jediný kanál je e-mail** — specifikace nikde nezmiňuje SMS ani push notifikace.
 - Každé odeslání se **eviduje** (událost, příjemce, čas), aby fronta při opakování neposlala stejnou zprávu dvakrát (README → **Modul párování plateb**, [non-functional.md](non-functional.md) → **Odchozí e-maily**).
 - **Aktér nemusí mít účet** — řada příjemců (zákonný zástupce, host, náhradník) dostává jen tokenový odkaz; e-mail je pro ně celé UI.
+- **Adresa u přihláškových e-mailů se odvozuje jako množina**, ne z jednoho pole: `REGISTRATION.contact_email` (u podání bez účtu) **nebo** `login_email` účtu z `submitted_by_account_id`, **plus** aktivní zákonní zástupci účastníka, jde-li o nezletilého, **plus** e-mail účastníka, je-li zletilý a má ho. Adresy se deduplikují — oba rodiče mají plná práva, takže oba dostávají též informace. Výjimkou je žádost zástupci, která jde výhradně na `guardian_email`.
 - Kód šablony (`EMAIL_*`) je pracovní identifikátor pro implementaci, ne text — přesné znění (předmět, kopie) specifikace nedefinuje a je otevřenou otázkou (viz **Otevřené otázky** níže).
 
 ## Přihlášky a zákonný zástupce

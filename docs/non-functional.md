@@ -2,6 +2,42 @@
 
 Implementační detail k [README.md](../README.md) → **Požadavky**. Schéma viz [data-model.md](data-model.md).
 
+## Architektura
+
+Systém je implementován jako modulární monolit.
+
+- jedna deployovatelná aplikace
+- jedna databáze
+- moduly sdílejí proces i databázi
+- moduly nejsou nasazovány samostatně
+- změny se oznamují událostmi, data se čtou přes rozhraní vlastníka
+
+## Technologický stack
+
+| Vrstva    | Volba                                               |
+| --------- | --------------------------------------------------- |
+| Frontend  | TypeScript, React, Vite, TailwindCSS                |
+| Backend   | PHP 8.4, Nette 4                                    |
+| Databáze  | MariaDB 10                                          |
+| API       | REST, JSON                                          |
+| Testování | PHPUnit (jednotkové a integrační), Playwright (E2E) |
+| Vývoj     | Docker                                              |
+| Nasazení  | GitHub, phinx                                       |
+
+Co z toho plyne pro zbytek specifikace:
+
+- **Oddělený frontend a backend.** Nette neservíruje HTML aplikace — vystavuje **REST JSON API**, React SPA je samostatný artefakt sestavený Vite. Šablony (Latte) zůstávají jen pro **odchozí e-maily** a PDF potvrzení. Autorizace API podle [authorization.md](authorization.md) tedy běží výhradně na serveru; skrytí prvku v UI není ochrana.
+- **Mobile-first jako build target** — viz **Rozhraní a zařízení**; Tailwind breakpointy se používají vzestupně (základ = telefon).
+- **MariaDB 10, `utf8mb4`** s českou kolací (`utf8mb4_czech_ci`) — třídění jmen musí respektovat české znaky a diakritiku.
+- **Částky jsou `DECIMAL(10,2)`**, nikdy `FLOAT` — součty alokací a stav úhrady se porovnávají na haléř ([payment-matching.md](payment-matching.md)).
+- **Časy jako `DATETIME` v UTC**, převod do `Europe/Prague` až při zobrazení (viz **Lokalizace a formáty**).
+- **Binární obsah souborů** je `LONGBLOB` (viz **Úložiště souborů**) — `max_allowed_packet` musí pokrýt limit 10 MB na soubor s rezervou na šifrovací režii.
+- **Plánované úlohy** (viz níže) běží jako Nette CLI příkazy spouštěné cronem, ne jako HTTP endpointy — jinak by šly vyvolat zvenku.
+- **Fronta e-mailů a transakční outbox** jsou tabulky v MySQL zpracovávané workerem; samostatný broker se pro daný rozsah nezavádí ([modules.md](modules.md) → **Pravidla pro doručování**).
+- **Tajemství** (šifrovací klíč, OAuth `client_secret`, přístup k DB) se předávají **proměnnými prostředí kontejneru**, nikdy v obrazu ani v repozitáři (viz **Šifrování a hesla**).
+- **Testy:** PHPUnit pokrývá stavové automaty a výpočty (`evaluate` přihlášky, pořadí párovacích pravidel, věková pravidla hlídek), Playwright flow priority P1 z UX průvodce včetně mobilního viewportu a tokenových odkazů bez přihlášení.
+- **CI/CD na GitHubu** — stejný Docker obraz pro CI i produkci; migrace DB (phinx) jsou součástí nasazení a musí být zpětně kompatibilní (nejdřív přidat sloupec, pak přepnout kód).
+
 ## Lokalizace a formáty
 
 - **Měna:** výhradně CZK. Všechny částky (ceny, storna, platby, alokace) jsou v korunách; zobrazují se s oddělovačem tisíců a symbolem, např. `1 250 Kč`, desetinná čárka.
@@ -52,7 +88,7 @@ Systém ukládá tři druhy souborů: **dokumenty přihlášek** (potvrzení od 
 - Oddíl si může nastavit **vlastní SMTP** (`smtp_email`, `smtp_password_enc`); není-li nastavené, použije se systémové odesílání.
 - E-maily se odesílají **z fronty**, ne synchronně v požadavku — selhání odeslání nesmí shodit registraci ani spárování platby.
 - Opakování při chybě s exponenciálním odstupem a konečným počtem pokusů; trvale neodeslaný e-mail se zobrazí vedoucímu, ne jen do logu.
-- Odražené a odmítnuté adresy se označují u osoby, aby se na neplatnou adresu nezkoušelo posílat donekonečna.
+- Odražené a odmítnuté adresy se označují u osoby, aby se na neplatnou adresu nezkoušelo posílat donekonečna. Adresa z `REGISTRATION.contact_email` k žádné osobě přiřadit nemusí — příznak proto musí umět sednout i na samotnou přihlášku.
 - Každé odeslání se eviduje (událost, příjemce, čas) — bez toho nejde doložit, že výzva k platbě nebo žádost zástupci opravdu odešla.
 
 ## Plánované úlohy

@@ -82,6 +82,7 @@ Obě osy se kreslí zvlášť právě proto, že jsou na sobě nezávislé — k
 
 - `record_state` a `member_status` jsou vazba **osoba ↔ oddíl** — stejná osoba může být `active` v oddíle A a `inactive` v oddíle B současně.
 - Retenční job smí spustit **anonymizaci (→ `archived`)** jen tehdy, je-li osoba `inactive` **ve všech** oddílech, kde je evidovaná — anonymizace maže osobní údaje globálně, proto nesmí zasáhnout osobu aktivní jinde.
+- Anonymizace musí vyprázdnit i **`REGISTRATION.contact_email` a `guardian_email`** — osobní údaj tam sedí i na přihláškách, kde osoba není `person_id` (rodič, který přihlásil dítě).
 - **Administrátor** smí spustit průřezový výmaz kdykoli i mimo tento guard (README → **Retence a GDPR**), musí ale uvést důvod a operace se loguje.
 
 ## Terminálnost archivace a návrat

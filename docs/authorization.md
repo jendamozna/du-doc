@@ -16,18 +16,18 @@ Oprávnění nevzniká z jednoho zdroje — skládá se ze tří nezávislých v
 
 ## Aktéři
 
-| Aktér                  | Zdroj oprávnění                            | Rozsah                                    |
-| ---------------------- | ------------------------------------------ | ----------------------------------------- |
-| **ADM** Administrátor  | `USER_ROLE`                                | napříč všemi oddíly                       |
-| **HVO** Hlavní vedoucí | `USER_ROLE` + `unit_id`                    | jeden oddíl, plná správa                  |
-| **VO** Vedoucí oddílu  | `USER_ROLE` + `EVENT_ASSIGNMENT`           | jen akce, ke kterým je přiřazený          |
-| **VD** Vedoucí družiny | `USER_ROLE` + družina + `EVENT_ASSIGNMENT` | svá družina + přiřazené akce              |
-| **RÁD** Rádce          | `USER_ROLE` + `EVENT_ASSIGNMENT`           | jen přiřazené akce, **bez citlivých dat** |
-| **ÚČE** Účetní oddílu  | `USER_ROLE` + `unit_id`                    | celý oddíl, jen platební agenda           |
-| **Rodič**              | aktivní `PARENT_CHILD`                     | **per dítě**, ne globálně                 |
-| **Vlastník přihlášky** | `REGISTRATION.person_id` nebo token        | jedna přihláška a její dílčí přihlášky    |
-| **Osoba (self)**       | `ACCOUNT.person_id`                        | vlastní údaje a přihlášky                 |
-| **Anonym**             | —                                          | veřejný výpis akcí, sdílecí odkaz         |
+| Aktér                  | Zdroj oprávnění                                       | Rozsah                                    |
+| ---------------------- | ----------------------------------------------------- | ----------------------------------------- |
+| **ADM** Administrátor  | `USER_ROLE`                                           | napříč všemi oddíly                       |
+| **HVO** Hlavní vedoucí | `USER_ROLE` + `unit_id`                               | jeden oddíl, plná správa                  |
+| **VO** Vedoucí oddílu  | `USER_ROLE` + `EVENT_ASSIGNMENT`                      | jen akce, ke kterým je přiřazený          |
+| **VD** Vedoucí družiny | `USER_ROLE` + družina + `EVENT_ASSIGNMENT`            | svá družina + přiřazené akce              |
+| **RÁD** Rádce          | `USER_ROLE` + `EVENT_ASSIGNMENT`                      | jen přiřazené akce, **bez citlivých dat** |
+| **ÚČE** Účetní oddílu  | `USER_ROLE` + `unit_id`                               | celý oddíl, jen platební agenda           |
+| **Rodič**              | aktivní `PARENT_CHILD`                                | **per dítě**, ne globálně                 |
+| **Vlastník přihlášky** | token, `submitted_by_account_id` nebo rodič účastníka | jedna přihláška a její dílčí přihlášky    |
+| **Osoba (self)**       | `ACCOUNT.person_id`                                   | vlastní údaje a přihlášky                 |
+| **Anonym**             | —                                                     | veřejný výpis akcí, sdílecí odkaz         |
 
 Legenda v maticích: **RW** = čtení i zápis · **R** = jen čtení · **A** = podle příznaku v `EVENT_ASSIGNMENT` · **—** = žádný přístup
 
@@ -138,8 +138,10 @@ Scope se aplikuje jako **filtr odvozený z `USER_ROLE`**, ne z parametru request
 
 ### Vlastník přihlášky a token
 
+- **Vlastník není `REGISTRATION.person_id`** — to je účastník. Vlastníkem je držitel tokenu, účet v `submitted_by_account_id`, nebo rodič účastníka podle aktivní `PARENT_CHILD`. U přihlášky, kterou si zletilý podal sám, jsou to tytéž osoby; u dítěte ne.
 - Token (`REGISTRATION.token`) opravňuje **jen k operacím nad danou přihláškou** — nikdy nezpřístupní seznam osob ani jiné akce ([non-functional.md](non-functional.md) → **Tokeny**).
 - Vlastník přihlášky smí spravovat i její **potvrzené dílčí přihlášky** (skládání hlídek, přidávání účastníků).
+- **Změna `contact_email` je bezpečnostní operace** — přesměruje tokenový odkaz, tedy přístup k přihlášce. Smí ji provést vlastník přihlášky nebo HVO oddílu a zapisuje se do auditního logu.
 - Schvalovací token zástupce opravňuje **výhradně ke schválení** jedné přihlášky, k ničemu jinému.
 
 ### Osoba sama

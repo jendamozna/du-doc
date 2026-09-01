@@ -37,7 +37,7 @@ Pravidla tvoří **seřazený seznam**. Vyhodnocují se shora dolů a vyhrává 
 - **Částky se porovnávají přesně, žádná tolerance se neuplatňuje.** Rozdíl o korunu není shoda — je to nedoplatek (`PartialPaid`), nebo přeplatek (`Overpayment`). Zaokrouhlovací pásmo by zavádělo tichou ztrátu penez a v účetnictví se hledá hůř než viditelný rozdíl.
 - Automatické párování běží hned po importu nových transakcí; ruční alokace lze kdykoli opravit.
 - **Automaticky** znamená, že alokace vznikne bez zásahu člověka; **návrh** znamená, že se transakce zobrazí účetní s předvyplněným rozdělením, které potvrdí nebo upraví. Hranice mezi oběma sloupci je konfigurace, ne konstanta v kódu.
-- Shoda jména je normalizovaná (bez diakritiky, malá písmena, pořadí jméno/příjmení nerozhoduje) a porovnává se proti vlastníkovi přihlášky i jeho zákonným zástupcům.
+- Shoda jména je normalizovaná (bez diakritiky, malá písmena, pořadí jméno/příjmení nerozhoduje) a porovnává se proti **vlastníkovi přihlášky, účastníkovi i jeho zákonným zástupcům** — rodič platí za dítě pod svým jménem, takže jméno účastníka na výpisu často vůbec není.
 - Žádné pravidlo nesmí alokovat víc, než kolik na transakci zbývá nerozděleného.
 - Pořadí je závazné kvůli testovatelnosti — sada vstupních transakcí má dávat předem daný `match_method`, jinak nelze chování regresně ověřit.
 - Párování se spouští nejen po importu transakcí, ale i při vzniku přihlášky — platba může dorazit dřív, než se člověk přihlásí.

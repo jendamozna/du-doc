@@ -99,6 +99,9 @@ Ostatní pole (`nickname`, `insurance_company`, `address`) jsou povinná jen teh
 ### Přihláška
 
 - `person_id` musí být platná osoba (`merged_into_person_id IS NULL`) — na tombstone po sloučení nelze zakládat.
+- `person_id` je **účastník**, právě jeden na přihlášku; kdo přihlášku podal, drží `submitted_by_account_id` (NULL u podání tokenem).
+- `contact_email` je **doručovací adresa přihlášky, ne kontakt osoby**. Povinný — a musí projít formátem e-mailu — právě tehdy, když `submitted_by_account_id IS NULL`; jinak zůstává prázdný a adresa se bere z účtu podavatele.
+- Dílčí přihláška dědí `contact_email` z nadřazené, dokud nemá vlastní hodnotu.
 - Dílčí přihláška (`parent_registration_id`) musí patřit **téže akci** jako nadřazená a nesmí mít vlastní dílčí přihlášky (zanoření jen jedna úroveň).
 - `guardian_email` má smysl jen u nezletilého bez aktivní vazby na rodiče; jinak zůstává prázdný.
 - Přihlášku nelze podat mimo přihlašovací okno ani nad kapacitu (kromě náhradnických míst).
