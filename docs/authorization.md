@@ -169,6 +169,11 @@ Zdravotní údaje, alergie, léky a stravovací omezení (`PERSON_SENSITIVE_DATA
 - **Sjednocení rolí** — uživatel s více rolemi dostane sjednocení práv; výjimkou je zákaz citlivých dat, který je absolutní.
 - **Scope se nikdy nebere z požadavku** — `unit_id` i `event_id` z parametrů se validují proti tomu, co aktérovi náleží.
 - **Přiřazení k akci je nutná podmínka** pro VO/VD/RÁD — bez něj k akci přístup nemají, ani kdyby patřila jejich oddílu.
+- Aplikace nesmí rozhodovat pouze podle role uživatele. Správná kontrola musí vždy zahrnovat i rozsah oprávnění. Každé oprávnění je vyhodnocováno nad:
+  - subject = uživatel
+  - role = HVO, VO, ROD, KOO...
+  - scope = organizace, oddíl, družina, akce
+  - resource = konkrétní člen, registrace, platba...
 - **Archivovaná osoba** (`record_state = archived`) nemá čitelné osobní údaje pro nikoho — anonymizace je nevratná ([person-lifecycle.md](person-lifecycle.md)).
 - Každá operace měnící data se zapisuje do auditního logu s aktérem ([audit-log.md](audit-log.md)); u přístupu přes token je aktérem e-mail, ne účet.
 
