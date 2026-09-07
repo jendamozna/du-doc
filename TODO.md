@@ -14,7 +14,7 @@ Hodnocení dokumentu z pohledu „může podle toho AI/tým naprogramovat aplika
 | Bankovní synchronizace (Fio)       | 🟢 Ready    | [docs/fio-sync.md](docs/fio-sync.md) — token, kurzor, idempotence, rate limit, chybové stavy.                                   |
 | Splatnost a stav úhrady            | 🟢 Ready    | Relativní nebo absolutní splatnost na akci; stav se počítá ze součtu alokací.                                                   |
 | Lifecycle osoby                    | 🟢 Ready    | [docs/person-lifecycle.md](docs/person-lifecycle.md) — dvě osy, matice kombinací, guardy, dopady na vazby.                      |
-| Vazba rodič ↔ dítě                 | 🟢 Ready    | [docs/parent-child-lifecycle.md](docs/parent-child-lifecycle.md) — vznik, schvalování, práva podle stavu.                       |
+| Vazba zákonný zástupce ↔ dítě                 | 🟢 Ready    | [docs/parent-child-lifecycle.md](docs/parent-child-lifecycle.md) — vznik, schvalování, práva podle stavu.                       |
 | Regiony                            | 🟢 Ready    | [docs/region-lifecycle.md](docs/region-lifecycle.md) — stavy, slučování, verzovaná příslušnost, snapshot.                       |
 | Přihlašování na akce               | 🟢 Ready    | [docs/registration-lifecycle.md](docs/registration-lifecycle.md) — brány, události, guardy, lhůty.                              |
 | Modul párování plateb              | 🟢 Ready    | [docs/payment-matching.md](docs/payment-matching.md) — pořadí pravidel, víc kandidátů, přeplatek a vratka, ruční režim bez API. |
@@ -49,7 +49,7 @@ V `du-doc-ux-pruvodce.md` je hotový inventář 35 flow (plochy A–D), šablona
 Průvodce popisuje flow a obrazovky, ale ne systém jako celek. Doplnit `docs/ux/navigace.md`:
 
 - **Sitemap per plocha** + URL/route schéma (veřejné, tokenové `/p/{token}`, admin `/oddil/{id}/...`).
-- Globální navigace, přepínač oddílu/role (uživatel může být HVO i rodič současně), breadcrumbs, chování po přihlášení.
+- Globální navigace, přepínač oddílu/role (uživatel může být HVO i zákonný zástupce současně), breadcrumbs, chování po přihlášení.
 - **Vstupní body z e-mailů a tokenů** jako první třída — pro zástupce a náhradníky je e-mail celé UI.
 - Mapa „obrazovka × role“ ověřená proti `authorization.md` — každá obrazovka musí mít doložené oprávnění a definované chování při jeho absenci (skrýt vs. read-only vs. 403).
 
@@ -76,7 +76,7 @@ Specifikace obrazovek jsou nejlepší dostupný zdroj pro **use-case seznam** �
 
 1. Fáze 0 + extrakce rozhodnutí (Fáze 1).
 2. Uzavřít D1, D3, D4, D5, D7, D9.
-3. P1 řez „rodič přihlásí dítě a zaplatí“: A1 → A2 → A3 → A5 → A6 → A7 a jejich admin protějšky B1, B2, B3, B4, B6 — dotáhnout do stavu „AI podle toho postaví obrazovku“ včetně navigace, textů a e-mailů.
+3. P1 řez „zákonný zástupce přihlásí dítě a zaplatí“: A1 → A2 → A3 → A5 → A6 → A7 a jejich admin protějšky B1, B2, B3, B4, B6 — dotáhnout do stavu „AI podle toho postaví obrazovku“ včetně navigace, textů a e-mailů.
 4. Teprve pak P2/P3 (A8–A14, B5–B11, D1–D4) a nakonec P4 (C5, C6, D3).
 
 ## Definice hotovo pro každou obrazovku

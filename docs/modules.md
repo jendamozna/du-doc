@@ -93,11 +93,11 @@ flowchart TD
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Vlastní entity**   | `ACCOUNT`, `OAUTH_IDENTITY`, `USER_ROLE`, pozvánky rolí, tokeny bez účtu (rozcestník přihlášky, souhlas zástupce, náhradník)                                                   |
 | **Vlastní pravidla** | přihlášení heslem/OAuth, unikátnost `login_email`, vyhodnocení oprávnění podle [authorization.md](authorization.md), platnost a jednorázovost tokenů, maskování citlivých polí |
-| **Čte odjinud**      | `PERSON` (zobrazení jména u účtu), aktivní vazby rodič ↔ dítě z People pro odvozená práva, scope oddílu z Org                                                                  |
+| **Čte odjinud**      | `PERSON` (zobrazení jména u účtu), aktivní vazby zákonný zástupce ↔ dítě z People pro odvozená práva, scope oddílu z Org                                                                  |
 | **Nevlastní**        | osobu — účet je jen identita navázaná 1:1 na `PERSON`                                                                                                                          |
 | **Rozhraní**         | `canDo(actor, action, scope)`, `resolveToken(token)`, `issueToken(purpose, subject)` — jediné místo, kde se rozhoduje o právech                                                |
 
-Odvozená práva (rodič, vlastník přihlášky, osoba sama) se **počítají**, neukládají — modul si je táhne z People a Registrations dotazem.
+Odvozená práva (zákonný zástupce, vlastník přihlášky, osoba sama) se **počítají**, neukládají — modul si je táhne z People a Registrations dotazem.
 
 ### 2 · Org (jádro)
 
@@ -277,7 +277,7 @@ Jmenná konvence `modul.agregát.událost` v minulém čase. Události, které u
 | -------------------------------------------------------- | ------------------------------------------ | -------------------------------------------------------------- |
 | `person.created`                                         | `person_id`, `unit_id`, `membership_state` | Reporting, Audit                                               |
 | `person.record_state_changed`                            | `from`, `to`, `scope`                      | Registrations, Attendance, People (družiny), Audit             |
-| `person.reached_adulthood`                               | `person_id`                                | People (rodič → jen pro čtení), Notifications                  |
+| `person.reached_adulthood`                               | `person_id`                                | People (zákonný zástupce → jen pro čtení), Notifications                  |
 | `person.anonymized` / `.purged`                          | `person_id`, `scope`                       | všichni vlastníci dat osoby, Files, Audit                      |
 | `person.merged`                                          | `source_person_id`, `target_person_id`     | **všechny** moduly s vazbou na osobu (přenos vazeb), Reporting |
 | `person.merge.reverted`                                  | `merge_id`                                 | tytéž moduly, Audit                                            |
@@ -317,7 +317,7 @@ Jmenná konvence `modul.agregát.událost` v minulém čase. Události, které u
 
 | Pokušení                               | Proč ne                                                                                            |
 | -------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Samostatný modul „Rodič"               | rodičovství není role, ale odvození z `PARENT_CHILD` — patří do People, práva do Identity          |
+| Samostatný modul „Zákonný zástupce"               | zákonné zastoupení není role, ale odvození z `PARENT_CHILD` — patří do People, práva do Identity          |
 | Samostatný modul „Portál" / „Admin"    | to jsou plochy UI ([du-doc-ux-pruvodce.md](du-doc-ux-pruvodce.md)), ne domény; sdílí stejné moduly |
 | Sloučit Banking + Payments             | ruční režim bez API mění jen zdroj transakcí, ne pravidla párování                                 |
 | Sloučit Events + Registrations         | katalog akce žije dál i bez přihlášek a mění se jiným tempem; kapacita by jinak měla dva vlastníky |

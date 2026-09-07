@@ -8,7 +8,7 @@ Oprávnění nevzniká z jednoho zdroje — skládá se ze tří nezávislých v
 
 1. **Role v oddílu** (`USER_ROLE`) — role je vždy vázaná na konkrétní oddíl (`unit_id`), nikdy globálně. Výjimkou je `ADM`, který působí napříč všemi oddíly.
 2. **Přiřazení k akci** (`EVENT_ASSIGNMENT`) — u VO/VD a Rádce nedává role sama žádná práva k akcím; ta se přidělují **per akci** čtyřmi příznaky. Samo přiřazení dává čtení přihlášek akce.
-3. **Odvozená oprávnění** — nevznikají přidělením, ale existencí vazby: rodič (aktivní `PARENT_CHILD`), vlastník přihlášky, osoba sama nad svými údaji, držitel tokenu.
+3. **Odvozená oprávnění** — nevznikají přidělením, ale existencí vazby: zákonný zástupce (aktivní `PARENT_CHILD`), vlastník přihlášky, osoba sama nad svými údaji, držitel tokenu.
 
 **Vyhodnocení:** výchozí stav je **zákaz**. Uživatel s více rolemi má sjednocení jejich práv (README → _Uživatel může být ve více rolích_). Zákaz čtení finančních údajů Rádcem je ale **absolutní** a sjednocením se nepřebíjí (viz **Finanční údaje**).
 
@@ -24,8 +24,8 @@ Oprávnění nevzniká z jednoho zdroje — skládá se ze tří nezávislých v
 | **VD** Vedoucí družiny | `USER_ROLE` + družina + `EVENT_ASSIGNMENT`            | svá družina + přiřazené akce                           |
 | **RÁD** Rádce          | `USER_ROLE` + `EVENT_ASSIGNMENT`                      | svá družina + přiřazené akce, **bez finančních údajů** |
 | **ÚČE** Účetní oddílu  | `USER_ROLE` + `unit_id`                               | celý oddíl, jen platební agenda                        |
-| **Rodič**              | aktivní `PARENT_CHILD`                                | **per dítě**, ne globálně                              |
-| **Vlastník přihlášky** | token, `submitted_by_account_id` nebo rodič účastníka | jedna přihláška a její dílčí přihlášky                 |
+| **Zákonný zástupce**              | aktivní `PARENT_CHILD`                                | **per dítě**, ne globálně                              |
+| **Vlastník přihlášky** | token, `submitted_by_account_id` nebo zákonný zástupce účastníka | jedna přihláška a její dílčí přihlášky                 |
 | **Osoba (self)**       | `ACCOUNT.person_id`                                   | vlastní údaje a přihlášky                              |
 | **Anonym**             | —                                                     | veřejný výpis akcí, sdílecí odkaz                      |
 
@@ -33,7 +33,7 @@ Legenda v maticích: **RW** = čtení i zápis · **R** = jen čtení · **A** =
 
 ## Akce a jejich konfigurace
 
-| Operace                                 | ADM            | HVO           | VO / VD             | RÁD                 | ÚČE | Rodič / účastník     |
+| Operace                                 | ADM            | HVO           | VO / VD             | RÁD                 | ÚČE | Zákonný zástupce / účastník     |
 | --------------------------------------- | -------------- | ------------- | ------------------- | ------------------- | --- | -------------------- |
 | Založit akci                            | RW             | RW            | —                   | —                   | —   | —                    |
 | Upravit akci                            | RW             | RW            | A `can_edit_event`  | A `can_edit_event`  | —   | —                    |
@@ -46,7 +46,7 @@ Legenda v maticích: **RW** = čtení i zápis · **R** = jen čtení · **A** =
 
 ## Přihlášky
 
-| Operace                                    | ADM | HVO | VO / VD                    | RÁD                                             | ÚČE                       | Rodič / vlastník          |
+| Operace                                    | ADM | HVO | VO / VD                    | RÁD                                             | ÚČE                       | Zákonný zástupce / vlastník          |
 | ------------------------------------------ | --- | --- | -------------------------- | ----------------------------------------------- | ------------------------- | ------------------------- |
 | Číst přihlášky akce                        | R   | R   | R (přiřazené akce)         | **R (přiřazené akce, bez platebních atributů)** | **R (celý oddíl)**        | R (vlastní / svých dětí)  |
 | Upravit přihlášku                          | RW  | RW  | A `can_edit_registrations` | A `can_edit_registrations`                      | **jen platební atributy** | RW (vlastní / svých dětí) |
@@ -80,7 +80,7 @@ Dávky příspěvků páruje **účetní ústředí** — `ÚČE` se `unit_id` �
 
 ## Osoby, družiny a docházka
 
-| Operace                                    | ADM      | HVO                     | VO                        | VD                        | RÁD                           | ÚČE | Osoba / rodič    |
+| Operace                                    | ADM      | HVO                     | VO                        | VD                        | RÁD                           | ÚČE | Osoba / zákonný zástupce    |
 | ------------------------------------------ | -------- | ----------------------- | ------------------------- | ------------------------- | ----------------------------- | --- | ---------------- |
 | Evidovat členy a hosty                     | —        | RW                      | R                         | R (svá družina)           | R (svá družina)               | —   | R (sebe / dětí)  |
 | Měnit stav osoby (host → člen, deaktivace) | —        | RW                      | —                         | —                         | —                             | —   | —                |
@@ -132,15 +132,15 @@ Scope se aplikuje jako **filtr odvozený z `USER_ROLE`**, ne z parametru request
 
 ## Odvozená oprávnění
 
-### Rodič
+### Zákonný zástupce
 
 - Práva jsou **per dítě**, ne globální, a plynou z existence `PARENT_CHILD` ve stavu `active`.
 - Rozsah podle stavu vazby (plná tabulka v [parent-child-lifecycle.md](parent-child-lifecycle.md)): `pending` nedává nic, `active` plná práva k dítěti, `readonly_after_adulthood` jen čtení + doplnění chybějícího kontaktního e-mailu.
-- Role rodiče se **nepřiděluje ani neodebírá** — nemůže se proto rozejít se skutečným stavem vazby.
+- Role zákonného zástupce se **nepřiděluje ani neodebírá** — nemůže se proto rozejít se skutečným stavem vazby.
 
 ### Vlastník přihlášky a token
 
-- **Vlastník není `REGISTRATION.person_id`** — to je účastník. Vlastníkem je držitel tokenu, účet v `submitted_by_account_id`, nebo rodič účastníka podle aktivní `PARENT_CHILD`. U přihlášky, kterou si zletilý podal sám, jsou to tytéž osoby; u dítěte ne.
+- **Vlastník není `REGISTRATION.person_id`** — to je účastník. Vlastníkem je držitel tokenu, účet v `submitted_by_account_id`, nebo zákonný zástupce účastníka podle aktivní `PARENT_CHILD`. U přihlášky, kterou si zletilý podal sám, jsou to tytéž osoby; u dítěte ne.
 - Token (`REGISTRATION.token`) opravňuje **jen k operacím nad danou přihláškou** — nikdy nezpřístupní seznam osob ani jiné akce ([non-functional.md](non-functional.md) → **Tokeny**).
 - Vlastník přihlášky smí spravovat i její **potvrzené dílčí přihlášky** (skládání hlídek, přidávání účastníků).
 - **Změna `contact_email` je bezpečnostní operace** — přesměruje tokenový odkaz, tedy přístup k přihlášce. Smí ji provést vlastník přihlášky nebo HVO oddílu a zapisuje se do auditního logu.

@@ -17,12 +17,12 @@ Dokument řeší tři věci, které business popis nechává otevřené: **kdo c
 | `kind`   | Strany (`MERGE_APPROVAL.party`)                                                             |
 | -------- | ------------------------------------------------------------------------------------------- |
 | `person` | `initiator`, `hvo` (druhého oddílu), `candidate` — má-li kandidát vlastní účet              |
-| `child`  | `parent` obou dětí; nemá-li dítě aktivního rodiče, nastupuje `hvo` oddílu, kde je evidováno |
+| `child`  | `parent` obou dětí; nemá-li dítě aktivního zákonného zástupce, nastupuje `hvo` oddílu, kde je evidováno |
 
 - Žádost je `pending`, dokud **všechny** strany nerozhodly. Souhlas všech → `ready`. Jediné zamítnutí → `rejected` (terminální).
 - Sloučení spouští **iniciátor** až ze stavu `ready` — mezi souhlasem a provedením se dělá volba konfliktních polí.
 - Nerozhodnutá žádost **propadá po 30 dnech** → `rejected` s důvodem „bez odezvy".
-- Sloučení dětí **nespojuje účty rodičů**, jen osobu dítěte.
+- Sloučení dětí **nespojuje účty zákonných zástupců**, jen osobu dítěte.
 - Schvalující HVO vidí náhled obou osob k porovnání, ale **nevidí citlivá data z cizího oddílu** — jen základní pole, která se slučují.
 
 ```mermaid
@@ -63,7 +63,7 @@ Vazby se **nevolí, přenášejí se všechny** na cílovou osobu — přihláš
 | `DU_MEMBERSHIP`       | stejná osoba + rok        | zůstává záznam cílové osoby; zdrojový se zahodí do snapshotu a HVO dostane poznámku, lišil-li se evidenční oddíl. Členství platí globálně, takže sloučením se žádné neztrácí — mění se jen to, který oddíl osobu vykáže |
 | `REGISTRATION`        | obě osoby na téže akci    | je-li jedna v terminálním stavu, zůstává druhá; **jsou-li obě aktivní, sloučení se zablokuje** a musí to nejdřív vyřešit vedoucí akce                                                                                   |
 | `ATTENDANCE_RECORD`   | stejná osoba + akce       | zůstává záznam s účastí (přítomnost vyhrává nad nepřítomností)                                                                                                                                                          |
-| `PARENT_CHILD`        | stejná dvojice rodič–dítě | zůstává jedna vazba, aktivní má přednost před zrušenou                                                                                                                                                                  |
+| `PARENT_CHILD`        | stejná dvojice zákonný zástupce–dítě | zůstává jedna vazba, aktivní má přednost před zrušenou                                                                                                                                                                  |
 | `USER_ROLE`           | stejná role + oddíl       | ponechá se jedna                                                                                                                                                                                                        |
 
 - **Citlivá data zůstávají per oddíl.** Sloučením osoby se nespojí zdravotní údaje ani dokumenty napříč oddíly — zůstávají navázané na oddíl a jen ukazují na sjednocenou osobu. HVO oddílu A tím nezískává přístup k datům z oddílu B.

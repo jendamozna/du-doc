@@ -33,7 +33,7 @@ Která pole `PERSON` musí být vyplněná, závisí na kontextu:
 | -------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------ |
 | Host v oddílu                    | jméno **a** příjmení, **nebo** přezdívka                       | [README.md](../README.md) → Hlavní vedoucí             |
 | Registrovaný člen                | jméno, příjmení, pohlaví, **datum narození**                   | [README.md](../README.md) → Hlavní vedoucí             |
-| Přihláška nezletilého bez rodiče | `birth_date` (jinak nelze vyhodnotit bránu) + `guardian_email` | [registration-lifecycle.md](registration-lifecycle.md) |
+| Přihláška nezletilého bez zákonného zástupce | `birth_date` (jinak nelze vyhodnotit bránu) + `guardian_email` | [registration-lifecycle.md](registration-lifecycle.md) |
 | Akce typu „S certifikátem"       | tituly před/za + adresa trvalého bydliště                      | [README.md](../README.md) → Typy a šablony             |
 | Člen hlídky na závodě            | `birth_date` (bez něj nelze ověřit složení hlídky)             | [race-patrols.md](race-patrols.md)                     |
 | Vlastník účtu                    | `ACCOUNT.login_email`                                          | [data-model.md](data-model.md)                         |
@@ -103,7 +103,7 @@ Ostatní pole (`nickname`, `insurance_company`, `address`) jsou povinná jen teh
 - `contact_email` je **doručovací adresa přihlášky, ne kontakt osoby**. Povinný — a musí projít formátem e-mailu — právě tehdy, když `submitted_by_account_id IS NULL`; jinak zůstává prázdný a adresa se bere z účtu podavatele.
 - Dílčí přihláška dědí `contact_email` z nadřazené, dokud nemá vlastní hodnotu.
 - Dílčí přihláška (`parent_registration_id`) musí patřit **téže akci** jako nadřazená a nesmí mít vlastní dílčí přihlášky (zanoření jen jedna úroveň).
-- `guardian_email` má smysl jen u nezletilého bez aktivní vazby na rodiče; jinak zůstává prázdný.
+- `guardian_email` má smysl jen u nezletilého bez aktivní vazby na zákonného zástupce; jinak zůstává prázdný.
 - Přihlášku nelze podat mimo přihlašovací okno ani nad kapacitu (kromě náhradnických míst).
 - Dokumenty a povinné číselníky **náhradníka** jsou uzamčené, dokud nepřijme nabídku.
 
@@ -132,7 +132,7 @@ Ostatní pole (`nickname`, `insurance_company`, `address`) jsou povinná jen teh
 
 ### Osoba a vazby
 
-- Vazba rodič ↔ dítě: `parent_person_id ≠ child_person_id`; dítě musí být v okamžiku vzniku nezletilé ([parent-child-lifecycle.md](parent-child-lifecycle.md)).
+- Vazba zákonný zástupce ↔ dítě: `parent_person_id ≠ child_person_id`; dítě musí být v okamžiku vzniku nezletilé ([parent-child-lifecycle.md](parent-child-lifecycle.md)).
 - `DU_MEMBERSHIP.year` — rozsah rozumných let (např. ⟨2000; aktuální + 1⟩), aby překlep nezaložil členství na rok 20250.
 - `DU_MEMBERSHIP.unit_id` je **evidenční oddíl** — musí to být oddíl, kde je osoba v okamžiku založení evidovaná (`PERSON_UNIT`). Do vyhodnocování ceny a způsobilosti **nevstupuje**; ověřuje se jen existence záznamu pro osobu a rok.
 - Kolize při založení členství **není chyba validace, ale stav k zobrazení** — porušení unikátu `person_id + year` se přeloží na hlášku „členství pro rok _R_ už založil oddíl _X_", ne na obecné „nelze uložit".
@@ -157,6 +157,6 @@ Pravidla složení (počty členů, věkové limity, právě jeden kapitán) jso
 ## Otevřené otázky
 
 - **Formát e-mailu, IČO a adresy** — specifikace je nedefinuje vůbec (návrhy výše jsou označené **[K rozhodnutí]**).
-- **Telefonní číslo** v datovém modelu neexistuje, přestože u dětských akcí bývá kontakt na rodiče provozně nutný.
+- **Telefonní číslo** v datovém modelu neexistuje, přestože u dětských akcí bývá kontakt na zákonného zástupce provozně nutný.
 - **Minimální délka a složitost hesla** není specifikovaná; [non-functional.md](non-functional.md) řeší jen hashování (Argon2id).
 - **Horní věková hranice** u `birth_date` (kontrola překlepu v roce) není nikde uvedená.

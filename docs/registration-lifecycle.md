@@ -45,7 +45,7 @@ Do kapacity akce se počítají jen přihlášky `category = 'participant'` v ne
 stateDiagram-v2
     [*] --> New : vytvoření přihlášky
 
-    New --> PendingGuardian : nezletilý bez rodiče
+    New --> PendingGuardian : nezletilý bez zákonného zástupce
     New --> PendingDocuments : akce vyžaduje dokumenty
     New --> PendingPayment : cena > 0
     New --> Paid : akce zdarma
@@ -88,9 +88,9 @@ stateDiagram-v2
 
 | Událost                             | Spouštěč                                                         | Guard                                                                  | Efekt                                                       |
 | ----------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------- |
-| `registration.created`              | účastník / rodič / vedoucí                                       | otevřené přihlašování, volná kapacita nebo místo náhradníka            | vznik přihlášky s `created_at`, přiřazení VS, `evaluate`    |
-| `guardian.requested`                | `evaluate` → `PendingGuardian`                                   | osoba je nezletilá a nemá aktivní vazbu na rodiče                      | e-mail zástupci s odkazem, nastavení lhůty                  |
-| `guardian.approved`                 | odkaz v e-mailu                                                  | token platný, lhůta neuplynula                                         | `guardian_approved_at`, vznik vazby rodič–dítě, `evaluate`  |
+| `registration.created`              | účastník / zákonný zástupce / vedoucí                                       | otevřené přihlašování, volná kapacita nebo místo náhradníka            | vznik přihlášky s `created_at`, přiřazení VS, `evaluate`    |
+| `guardian.requested`                | `evaluate` → `PendingGuardian`                                   | osoba je nezletilá a nemá aktivní vazbu na zákonného zástupce                      | e-mail zástupci s odkazem, nastavení lhůty                  |
+| `guardian.approved`                 | odkaz v e-mailu                                                  | token platný, lhůta neuplynula                                         | `guardian_approved_at`, vznik vazby zákonný zástupce–dítě, `evaluate`  |
 | `guardian.expired`                  | job                                                              | lhůta uplynula a stav je `PendingGuardian`                             | stav `Expired`, notifikace účastníkovi                      |
 | `document.uploaded`                 | účastník                                                         | přihláška není terminální; u náhradníka až po přijetí nabídky          | dokument ke schválení, `evaluate`                           |
 | `document.approved` / `rejected`    | vedoucí                                                          | oprávnění „úprava přihlášek" na akci                                   | záznam kdo/kdy/komentář, při zamítnutí e-mail, `evaluate`   |
@@ -98,7 +98,7 @@ stateDiagram-v2
 | `price.changed`                     | změna volby v číselníku nebo ruční úprava základní ceny vedoucím | akce ještě neskončila; úprava základní ceny vyžaduje `can_edit_prices` | `evaluate` (může vrátit `Paid` → `PartialPaid`)             |
 | `substitute.offer.accepted`         | náhradník                                                        | nabídka platná, kapacita stále volná                                   | `category` → `participant`, odemknutí dokumentů, `evaluate` |
 | `substitute.offer.expired`          | job                                                              | nabídka nepřijata ve lhůtě                                             | nabídka propadá, **přihláška zůstává náhradníkem v `New`**  |
-| `registration.canceled`             | účastník, rodič nebo vedoucí                                     | stav není terminální                                                   | stav `Canceled`, výpočet storno poplatku, uvolnění kapacity |
+| `registration.canceled`             | účastník, zákonný zástupce nebo vedoucí                                     | stav není terminální                                                   | stav `Canceled`, výpočet storno poplatku, uvolnění kapacity |
 | `registration.expired`              | job                                                              | zapnuté vypršení nezaplacených a lhůta uplynula                        | stav `Expired`, uvolnění kapacity                           |
 | `event.canceled`                    | vedoucí                                                          | —                                                                      | hromadné `Canceled` s nulovým storno poplatkem, vratky      |
 
