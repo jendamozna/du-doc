@@ -56,7 +56,9 @@ flowchart TD
 
 2. Oddílová pokladna - párovani s hotovostními platbami? Způsob platba za členství v oddíle, nebo DU?
 
-3. Role Rádce končí s opuštěním Družiny?
+3. Role Rádce - určuje vedoucí družiny a končí s odebráním role nebo opuštěním družiny? Co s Rádcem když dosáhne 18? Může být někdo Rádce a Vedoucí současně?
+
+4. Přihlášky na akce bez oddílu - jiné sbory, pocestní
 
 ---
 
@@ -94,32 +96,32 @@ flowchart TD
 #### Rádce
 
 - Rádci nejsou plnoletí — jsou to nezletilí pomocníci vedoucích
-- **Nezletilého Rádce registruje do systému (přihlašuje jako rádce do oddílu) zákonný zástupce** — pozvánku od HVO a založení role musí schválit zákonný zástupce. Bez schválení zákonným zástupcem role nevznikne a pozvánka zůstává v čekajícím stavu.
-- Nemá-li nezletilý Rádce navázaného aktivního zákonného zástupce, nelze roli založit — nejprve musí vzniknout vazba zákonný zástupce ↔ dítě (viz **Zákonný zástupce**).
+- **Nezletilého Rádce registruje do systému (přihlašuje jako rádce do oddílu) zákonný zástupce** — pozvánku od HVO a založení role musí schválit zákonný zástupce. Bez schválení zákonní zástupcim role nevznikne a pozvánka zůstává v čekajícím stavu.
+- Nemá-li nezletilý Rádce navázaného aktivního zákonní zástupci, nelze roli založit — nejprve musí vzniknout vazba zákonný zástupce ↔ dítě (viz **Zákonný zástupce (zákonný zástupce)**).
 - **Rádce právně odpovídá za své činy v systému.** Zákonný zástupce schvaluje vznik role, ale jednotlivé úkony Rádce (zápis docházky, úprava chytrých sloupců, čtení údajů dětí) nečte, neschvaluje ani za ně neodpovídá. V auditním logu je aktérem vždy Rádce, ne jeho zástupce.
 - **Na akce svého oddílu se přihlašuje sám** — na rozdíl od ostatních nezletilých účastníků nepotřebuje k podání vlastní přihlášky zákonného zástupce.
 - **Vidí údaje dětí, které k práci rádce potřebuje** — kontakty, informace o dítěti i **zdravotní údaje (alergie, diety, ADHD apod.)**, a to v rámci svého rozsahu: svá družina a akce, ke kterým je přiřazený.
 - **Nevidí finanční údaje** — kdo zaplatil či nezaplatil, částky, dary, přeplatky, vratky ani bankovní účty. Přihlášky vidí **bez platebních atributů**.
 - Zapisuje docházku a vyplňuje chytré sloupce (pomocnou evidenci) — v rozsahu, který je u sloupce nastavený (viz **Pomocná evidence**).
 
-#### Zákonný zástupce
+#### Zákonný zástupce (zákonný zástupce)
 
 - Zákonný zástupce může zastupovat jedno nebo více nezletilých dětí
 - Jedno dítě může být svázáno s více zákonnými zástupci (oba zákonní zástupci)
 - Zákonný zástupce může své zastupované děti přihlašovat na akce a spravovat jejich přihlášky (přihlášení na akci, storno, platby za dítě) a údaje v systému (adresy, pojišťovny, ...)
 - **Vznik vazby zákonný zástupce ↔ dítě přihlášením na akci:**
-  - Nemá-li dítě dosud žádného navázaného zákonného zástupce, vazba vznikne rovnou jako aktivní — zákonný zástupce v přihlášce explicitně prohlásí, že je zákonným zástupcem (prohlášení se loguje).
-  - Má-li dítě už navázaného zákonného zástupce, nová vazba vznikne jako **čekající** a musí ji schválit stávající zákonný zástupce, nebo HVO oddílu, kde je dítě evidováno — stejně jako u pozvánky druhému zákonnému zástupci níže.
-- Po dosažení zletilosti se zastoupení zákonným zástupcem přepne do režimu jen pro čtení. Výjimkou je doplnění kontaktního e-mailu dítěte, pokud chybí — slouží k doručení výzvy k převzetí účtu. Zletilý člen může přístup zákonného zástupce kdykoli zcela zrušit.
-- Vazbu může zrušit sám zákonný zástupce (vystoupení), případně HVO na žádost; zrušení se loguje. Zůstane-li nezletilé dítě bez navázaného zákonného zástupce, jeho údaje a přihlášky spravuje HVO, dokud se nepřipojí nový zákonný zástupce.
+  - Nemá-li dítě dosud žádného navázaného zákonní zástupci, vazba vznikne rovnou jako aktivní — zákonný zástupce v přihlášce explicitně prohlásí, že je zákonným zástupcem (prohlášení se loguje).
+  - Má-li dítě už navázaného zákonní zástupci, nová vazba vznikne jako **čekající** a musí ji schválit stávající zákonný zástupce, nebo HVO oddílu, kde je dítě evidováno — stejně jako u pozvánky druhému zákonnému zástupci níže.
+- Po dosažení zletilosti se zastoupení zákonní zástupcim přepne do režimu jen pro čtení. Výjimkou je doplnění kontaktního e-mailu dítěte, pokud chybí — slouží k doručení výzvy k převzetí účtu. Zletilý člen může přístup zákonní zástupci kdykoli zcela zrušit.
+- Vazbu může zrušit sám zákonný zástupce (vystoupení), případně HVO na žádost; zrušení se loguje. Zůstane-li nezletilé dítě bez navázaného zákonní zástupci, jeho údaje a přihlášky spravuje HVO, dokud se nepřipojí nový zákonný zástupce.
 - Oba zákonní zástupci mají plná práva, platí poslední zápis.
-- Druhého zákonného zástupce přidává stávající zákonný zástupce nebo HVO pozvánkou (e-mailem). Vazba vznikne přijetím pozvánky druhým zákonným zástupcem. Nemá-li dítě žádného navázaného zákonného zástupce, schvaluje připojení HVO, kde je dítě evidováno.
+- Druhého zákonného zástupce přidává stávající zákonný zástupce nebo HVO pozvánkou (e-mailem). Vazba vznikne přijetím pozvánky druhým zákonní zástupcim. Nemá-li dítě žádného navázaného zákonní zástupci, schvaluje připojení HVO, kde je dítě evidováno.
 - Přesná pravidla přechodů, guardy a práva podle stavu viz [docs/parent-child-lifecycle.md](docs/parent-child-lifecycle.md).
 
 ### Osoba vs. uživatelský účet
 
 - Oddělujeme dvě entity:
-  - **Osoba** = datový subjekt / účastník; může existovat bez přihlášení (host, nezletilé dítě spravované zákonným zástupcem)
+  - **Osoba** = datový subjekt / účastník; může existovat bez přihlášení (host, nezletilé dítě spravované zákonní zástupcim)
   - **Účet (uživatel)** = přihlašovací identita (heslo / OAuth), navázaná právě na jednu osobu
 - Jedna osoba má nejvýše jeden účet
 - **Údaje osoby**: jméno, příjmení, přezdívka, tituly před a za jménem, pohlaví, datum narození, kontaktní e-mail, adresa trvalého bydliště a zdravotní pojišťovna. Vyplňují se podle potřeby akce (např. tituly a adresa u akcí s certifikátem); cokoli nad tento rámec patří do **chytrých sloupců** oddílu.
@@ -170,7 +172,7 @@ flowchart TD
 
 - Systém ověřuje správnost českých **křestních jmen** podle seznamu (spravovaného administrátorem), nabízí možnost přidání výjimky HVO v rámci oddílu. Příjmení se proti seznamu neověřují.
 - Osobě s účtem se zobrazí možný kandidát na propojení (z jiného oddílu). Účet zadá Žádost o sloučení. Systém rozešle emailem žádost - iniciátorovi, HVO druhého oddílu a případně i účtu kandidáta na propojení. Po odsouhlasení všemi stranami (HVO se zobrazí pro porovnání náhled obou osob) může uživatel pokračovat se spojením: Záznamy obou osob se spojí do jedné osoby, konflikt základních polí se řeší volbou A/B, účet se naváže na sjednocenou osobu, pokud obě osoby mají účet, pak druhý účet se zruší (uživatel vybere), citlivá data zůstávají per oddíl, OAuth identity se přenesou pod ponechaný účet.
-- Podobně se zpracuje duplicitní dítě, které se zobrazí zákonným zástupcům s tím, že další strana je zákonný zástupce dítěte kandidáta a výsledek nespojí účty zákonných zástupců do jednoho, jen osobu dítěte. Nemá-li dítě žádného navázaného zákonného zástupce, schvaluje připojení HVO, kde je dítě evidováno.
+- Podobně se zpracuje duplicitní dítě, které se zobrazí zákonnými zástupci s tím, že další strana je zákonný zástupce dítěte kandidáta a výsledek nespojí účty zákonných zástupců do jednoho, jen osobu dítěte. Nemá-li dítě žádného navázaného zákonní zástupci, schvaluje připojení HVO, kde je dítě evidováno.
 - Systém loguje, kdo kdy které osoby spojil, je možné zrušit merge pro nápravu chybného spojení.
 - Konflikt se řeší **pole po poli** — je-li jedna strana prázdná, vyhrává vyplněná hodnota; liší-li se, musí člověk vybrat. Nabízí se jen výběr z obou hodnot, ne ruční přepsání, aby šlo sloučení věrně vrátit zpět.
 - **Zrušení sloučení vrátí jen to, co v okamžiku sloučení existovalo.** Záznamy vzniklé až potom (nová přihláška, platba, členství) zůstanou u sjednocené osoby; systém je vypíše před potvrzením, ne až po něm.
@@ -331,7 +333,7 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 #### Přihlašování na akce
 
 - Účastník, který nemá účet, získá přihláškou odkaz, kterým si může účet založit (po založení se účet propojí s existující osobou) a spravovat své přihlášky (storno, měnit nebo přidávat další účastníky)
-- **Nezletilý účastník (< 18 let):** přihlašuje-li se nezletilý sám (nemá navázaného zákonného zástupce, který přihlášku provádí), musí v přihlášce zadat **e-mail zákonného zástupce**. Systém pošle zástupci žádost o schválení; přihláška **čeká na schválení zástupcem** a nezapočítává se do kapacity, dokud zástupce neschválí (odkazem v e-mailu). Po schválení přihláška pokračuje standardním tokem (výzva k platbě apod.); neschválí-li zástupce do vypršení, přihláška expiruje. Schválením vzniká vazba zákonný zástupce ↔ dítě. Chybí-li datum narození, přihlášku nelze vyhodnotit a systém e-mail zástupce vyžádá.
+- **Nezletilý účastník (< 18 let):** přihlašuje-li se nezletilý sám (nemá navázaného zákonní zástupci, který přihlášku provádí), musí v přihlášce zadat **e-mail zákonného zástupce**. Systém pošle zástupci žádost o schválení; přihláška **čeká na schválení zástupcem** a nezapočítává se do kapacity, dokud zástupce neschválí (odkazem v e-mailu). Po schválení přihláška pokračuje standardním tokem (výzva k platbě apod.); neschválí-li zástupce do vypršení, přihláška expiruje. Schválením vzniká vazba zákonný zástupce ↔ dítě. Chybí-li datum narození, přihlášku nelze vyhodnotit a systém e-mail zástupce vyžádá.
 - **Povinné dokumenty:** akce může vyžadovat nahrání dokumentů (např. **potvrzení o lékařské způsobilosti**, souhlas zákonného zástupce, kopie kartičky pojišťovny). Účastník je může nahrávat **postupně nebo najednou**; dokud nejsou nahrané všechny povinné dokumenty, přihláška **čeká na dokumenty**. **Náhradník** dokumenty nahrává až **po schválení přihlášky** (po přijetí nabídky z náhradnického místa) — do té doby je nahrávání uzamčené.
 - **Schvalování dokumentů:** vedoucí u každého nahraného dokumentu vidí stav a dokument buď **schválí**, nebo **zamítne s komentářem** (např. nečitelný, prošlý, nesprávný dokument). Zamítnutí se zaznamená včetně toho, kdo a kdy posoudil, a **e-mailem vyzve účastníka k opětovnému nahrání**. Přihláška zůstává (příp. se vrátí) do stavu čekání na dokumenty, dokud nejsou všechny povinné dokumenty schválené. Nahrání lze vyžádat i připomínkou.
 - Systém posílá potvrzení přihlášky s výzvou k zaplacení (QR kód + platební údaje, pokud je stanovena cena akce). Výzva i QR nezávisí na bankovním API — posílají se i oddílům, které transakce evidují ručně.
@@ -413,24 +415,24 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 
 Tento dokument popisuje **co** systém dělá a proč — je určený zadavatelům, hlavním vedoucím, účetním a právníkům. Technické **jak** je vyčleněné do samostatných dokumentů:
 
-| Dokument                                                         | Obsah                                                           |
-| ---------------------------------------------------------------- | --------------------------------------------------------------- |
-| [docs/data-model.md](docs/data-model.md)                         | ER diagram — entity, pole, číselníkové hodnoty, vazby           |
-| [docs/validation.md](docs/validation.md)                         | validační pravidla, unikátnosti a byznys-invarianty             |
-| [docs/person-lifecycle.md](docs/person-lifecycle.md)             | stavový automat osoby — dvě osy, matice kombinací, guardy       |
-| [docs/parent-child-lifecycle.md](docs/parent-child-lifecycle.md) | vazba zákonný zástupce ↔ dítě — vznik, schvalování, práva podle stavu      |
-| [docs/region-lifecycle.md](docs/region-lifecycle.md)             | regiony — stavy, slučování, verzovaná příslušnost oddílů        |
-| [docs/event-fields.md](docs/event-fields.md)                     | model výběrových číselníků akce                                 |
-| [docs/registration-lifecycle.md](docs/registration-lifecycle.md) | stavový automat přihlášky — brány, události, lhůty              |
-| [docs/race-patrols.md](docs/race-patrols.md)                     | hlídky Stezky — výpočet věku, kontrola složení, stanoviště      |
-| [docs/payment-matching.md](docs/payment-matching.md)             | pravidla párování plateb a výpočet stavu úhrady                 |
-| [docs/reports.md](docs/reports.md)                               | definice metrik reportů, parametry a rozsah dat                 |
-| [docs/person-merge.md](docs/person-merge.md)                     | sloučení osob — schvalování, konflikty polí, revert             |
-| [docs/fio-sync.md](docs/fio-sync.md)                             | stahování bankovních transakcí z Fio                            |
-| [docs/audit-log.md](docs/audit-log.md)                           | struktura auditního logu                                        |
-| [docs/authorization.md](docs/authorization.md)                   | matice oprávnění — akce × role × scope, citlivá data            |
-| [docs/modules.md](docs/modules.md)                               | hranice modulů, vlastnictví entit a katalog doménových událostí |
-| [docs/non-functional.md](docs/non-functional.md)                 | technologický stack, OAuth, úložiště, šifrování, e-maily, joby  |
-| [docs/notifications.md](docs/notifications.md)                   | katalog notifikací — událost → příjemce → šablona → načasování  |
-| [AI_support.md](AI_support.md)                                   | AI funkce nad systémem                                          |
-| [TODO.md](TODO.md)                                               | hodnocení specifikace a co ještě dopsat                         |
+| Dokument                                                         | Obsah                                                                 |
+| ---------------------------------------------------------------- | --------------------------------------------------------------------- |
+| [docs/data-model.md](docs/data-model.md)                         | ER diagram — entity, pole, číselníkové hodnoty, vazby                 |
+| [docs/validation.md](docs/validation.md)                         | validační pravidla, unikátnosti a byznys-invarianty                   |
+| [docs/person-lifecycle.md](docs/person-lifecycle.md)             | stavový automat osoby — dvě osy, matice kombinací, guardy             |
+| [docs/parent-child-lifecycle.md](docs/parent-child-lifecycle.md) | vazba zákonný zástupce ↔ dítě — vznik, schvalování, práva podle stavu |
+| [docs/region-lifecycle.md](docs/region-lifecycle.md)             | regiony — stavy, slučování, verzovaná příslušnost oddílů              |
+| [docs/event-fields.md](docs/event-fields.md)                     | model výběrových číselníků akce                                       |
+| [docs/registration-lifecycle.md](docs/registration-lifecycle.md) | stavový automat přihlášky — brány, události, lhůty                    |
+| [docs/race-patrols.md](docs/race-patrols.md)                     | hlídky Stezky — výpočet věku, kontrola složení, stanoviště            |
+| [docs/payment-matching.md](docs/payment-matching.md)             | pravidla párování plateb a výpočet stavu úhrady                       |
+| [docs/reports.md](docs/reports.md)                               | definice metrik reportů, parametry a rozsah dat                       |
+| [docs/person-merge.md](docs/person-merge.md)                     | sloučení osob — schvalování, konflikty polí, revert                   |
+| [docs/fio-sync.md](docs/fio-sync.md)                             | stahování bankovních transakcí z Fio                                  |
+| [docs/audit-log.md](docs/audit-log.md)                           | struktura auditního logu                                              |
+| [docs/authorization.md](docs/authorization.md)                   | matice oprávnění — akce × role × scope, citlivá data                  |
+| [docs/modules.md](docs/modules.md)                               | hranice modulů, vlastnictví entit a katalog doménových událostí       |
+| [docs/non-functional.md](docs/non-functional.md)                 | technologický stack, OAuth, úložiště, šifrování, e-maily, joby        |
+| [docs/notifications.md](docs/notifications.md)                   | katalog notifikací — událost → příjemce → šablona → načasování        |
+| [AI_support.md](AI_support.md)                                   | AI funkce nad systémem                                                |
+| [TODO.md](TODO.md)                                               | hodnocení specifikace a co ještě dopsat                               |
