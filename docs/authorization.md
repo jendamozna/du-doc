@@ -10,24 +10,24 @@ Oprávnění nevzniká z jednoho zdroje — skládá se ze tří nezávislých v
 2. **Přiřazení k akci** (`EVENT_ASSIGNMENT`) — u VO/VD a Rádce nedává role sama žádná práva k akcím; ta se přidělují **per akci** čtyřmi příznaky. Samo přiřazení dává čtení přihlášek akce.
 3. **Odvozená oprávnění** — nevznikají přidělením, ale existencí vazby: rodič (aktivní `PARENT_CHILD`), vlastník přihlášky, osoba sama nad svými údaji, držitel tokenu.
 
-**Vyhodnocení:** výchozí stav je **zákaz**. Uživatel s více rolemi má sjednocení jejich práv (README → _Uživatel může být ve více rolích_). Zákaz čtení citlivých dat je ale **absolutní** a sjednocením se nepřebíjí (viz **Citlivá data**).
+**Vyhodnocení:** výchozí stav je **zákaz**. Uživatel s více rolemi má sjednocení jejich práv (README → _Uživatel může být ve více rolích_). Zákaz čtení finančních údajů Rádcem je ale **absolutní** a sjednocením se nepřebíjí (viz **Finanční údaje**).
 
 **Přiřazení k akci je verzované.** Odebrání přístupu stávající `EVENT_ASSIGNMENT` jen uzavře (`revoked_at`, `revoked_by_account_id`), nemaze ho; změna rozsahu příznaků uzavře starý záznam a založí nový. Kontrola oprávnění pracuje výhradně se záznamy `revoked_at IS NULL`; uzavřené slouží jen k zodpovězení otázky „kdo měl k akci přístup v dubnu 2027" z intervalu `assigned_at`–`revoked_at`. Retence této historie je 10 let od skončení akce (README → **Retence a GDPR**), ne 3 roky jako auditní log.
 
 ## Aktéři
 
-| Aktér                  | Zdroj oprávnění                                       | Rozsah                                    |
-| ---------------------- | ----------------------------------------------------- | ----------------------------------------- |
-| **ADM** Administrátor  | `USER_ROLE`                                           | napříč všemi oddíly                       |
-| **HVO** Hlavní vedoucí | `USER_ROLE` + `unit_id`                               | jeden oddíl, plná správa                  |
-| **VO** Vedoucí oddílu  | `USER_ROLE` + `EVENT_ASSIGNMENT`                      | jen akce, ke kterým je přiřazený          |
-| **VD** Vedoucí družiny | `USER_ROLE` + družina + `EVENT_ASSIGNMENT`            | svá družina + přiřazené akce              |
-| **RÁD** Rádce          | `USER_ROLE` + `EVENT_ASSIGNMENT`                      | jen přiřazené akce, **bez citlivých dat** |
-| **ÚČE** Účetní oddílu  | `USER_ROLE` + `unit_id`                               | celý oddíl, jen platební agenda           |
-| **Rodič**              | aktivní `PARENT_CHILD`                                | **per dítě**, ne globálně                 |
-| **Vlastník přihlášky** | token, `submitted_by_account_id` nebo rodič účastníka | jedna přihláška a její dílčí přihlášky    |
-| **Osoba (self)**       | `ACCOUNT.person_id`                                   | vlastní údaje a přihlášky                 |
-| **Anonym**             | —                                                     | veřejný výpis akcí, sdílecí odkaz         |
+| Aktér                  | Zdroj oprávnění                                       | Rozsah                                                 |
+| ---------------------- | ----------------------------------------------------- | ------------------------------------------------------ |
+| **ADM** Administrátor  | `USER_ROLE`                                           | napříč všemi oddíly                                    |
+| **HVO** Hlavní vedoucí | `USER_ROLE` + `unit_id`                               | jeden oddíl, plná správa                               |
+| **VO** Vedoucí oddílu  | `USER_ROLE` + `EVENT_ASSIGNMENT`                      | jen akce, ke kterým je přiřazený                       |
+| **VD** Vedoucí družiny | `USER_ROLE` + družina + `EVENT_ASSIGNMENT`            | svá družina + přiřazené akce                           |
+| **RÁD** Rádce          | `USER_ROLE` + `EVENT_ASSIGNMENT`                      | svá družina + přiřazené akce, **bez finančních údajů** |
+| **ÚČE** Účetní oddílu  | `USER_ROLE` + `unit_id`                               | celý oddíl, jen platební agenda                        |
+| **Rodič**              | aktivní `PARENT_CHILD`                                | **per dítě**, ne globálně                              |
+| **Vlastník přihlášky** | token, `submitted_by_account_id` nebo rodič účastníka | jedna přihláška a její dílčí přihlášky                 |
+| **Osoba (self)**       | `ACCOUNT.person_id`                                   | vlastní údaje a přihlášky                              |
+| **Anonym**             | —                                                     | veřejný výpis akcí, sdílecí odkaz                      |
 
 Legenda v maticích: **RW** = čtení i zápis · **R** = jen čtení · **A** = podle příznaku v `EVENT_ASSIGNMENT` · **—** = žádný přístup
 
@@ -46,18 +46,20 @@ Legenda v maticích: **RW** = čtení i zápis · **R** = jen čtení · **A** =
 
 ## Přihlášky
 
-| Operace                                    | ADM | HVO | VO / VD                    | RÁD                        | ÚČE                       | Rodič / vlastník          |
-| ------------------------------------------ | --- | --- | -------------------------- | -------------------------- | ------------------------- | ------------------------- |
-| Číst přihlášky akce                        | R   | R   | R (přiřazené akce)         | R (přiřazené akce)         | **R (celý oddíl)**        | R (vlastní / svých dětí)  |
-| Upravit přihlášku                          | RW  | RW  | A `can_edit_registrations` | A `can_edit_registrations` | **jen platební atributy** | RW (vlastní / svých dětí) |
-| Podat přihlášku                            | —   | RW  | A `can_edit_registrations` | —                          | —                         | RW                        |
-| Stornovat přihlášku                        | RW  | RW  | A `can_edit_registrations` | —                          | —                         | RW (vlastní / svých dětí) |
-| Posoudit dokument (schválit / zamítnout)   | RW  | RW  | A `can_edit_registrations` | —                          | —                         | —                         |
-| Číst obsah nahraného dokumentu             | R   | R   | R (přiřazené akce)         | **—**                      | —                         | R (vlastní)               |
-| Vybrat náhradníka                          | RW  | RW  | A `can_edit_registrations` | —                          | —                         | —                         |
-| Přiřadit číselník s `assigned_by = leader` | RW  | RW  | A `can_edit_registrations` | A `can_edit_registrations` | —                         | —                         |
+| Operace                                    | ADM | HVO | VO / VD                    | RÁD                                             | ÚČE                       | Rodič / vlastník          |
+| ------------------------------------------ | --- | --- | -------------------------- | ----------------------------------------------- | ------------------------- | ------------------------- |
+| Číst přihlášky akce                        | R   | R   | R (přiřazené akce)         | **R (přiřazené akce, bez platebních atributů)** | **R (celý oddíl)**        | R (vlastní / svých dětí)  |
+| Upravit přihlášku                          | RW  | RW  | A `can_edit_registrations` | A `can_edit_registrations`                      | **jen platební atributy** | RW (vlastní / svých dětí) |
+| Podat přihlášku                            | —   | RW  | A `can_edit_registrations` | **RW (jen sám za sebe)**                        | —                         | RW                        |
+| Stornovat přihlášku                        | RW  | RW  | A `can_edit_registrations` | —                                               | —                         | RW (vlastní / svých dětí) |
+| Posoudit dokument (schválit / zamítnout)   | RW  | RW  | A `can_edit_registrations` | —                                               | —                         | —                         |
+| Číst obsah nahraného dokumentu             | R   | R   | R (přiřazené akce)         | **—**                                           | —                         | R (vlastní)               |
+| Vybrat náhradníka                          | RW  | RW  | A `can_edit_registrations` | —                                               | —                         | —                         |
+| Přiřadit číselník s `assigned_by = leader` | RW  | RW  | A `can_edit_registrations` | A `can_edit_registrations`                      | —                         | —                         |
 
 Účetní má **širší čtení** (celý oddíl bez ohledu na přiřazení k akci), ale **užší zápis** než vedoucí — párování je operace nad bankovním účtem oddílu a jedna platba může pokrýt přihlášky z více akcí, proto se k akcím nepřiřazuje (README → **Účetní oddílu**).
+
+Rádce má přesně opačné omezení než Účetní: přihlášku vidí včetně údajů o dítěti a zdravotních údajů, ale **platební atributy se mu maskují** — stav platby, částky, slevy, storno poplatky, přeplatky ani dary nevidí (README → **Rádce**). Podání vlastní přihlášky na akci svého oddílu není právo role, ale odvozené právo osoby nad sebou samým — u Rádce se ale **nevyžaduje schválení zákonným zástupcem**, i když je nezletilý.
 
 ## Platby
 
@@ -89,7 +91,7 @@ Dávky příspěvků páruje **účetní ústředí** — `ÚČE` se `unit_id` �
 | Převést evidenční oddíl členství           | RW       | RW (žádost + potvrzení) | —                         | —                         | —                             | —   | —                |
 | Vytvořit účty rolí (pozvánka)              | RW (HVO) | RW (VO/VD/RÁD/ÚČE)      | —                         | —                         | —                             | —   | —                |
 
-Zápis docházky je **samostatné oprávnění** — může ho mít i Rádce, který nemá přístup k přihláškám ani platbám (README → **Docházka**).
+Zápis docházky je **samostatné oprávnění** — může ho mít i Rádce, který nemá přístup k platbám (README → **Docházka**).
 
 ## Chytré sloupce (pomocná evidence)
 
@@ -156,17 +158,25 @@ Scope se aplikuje jako **filtr odvozený z `USER_ROLE`**, ne z parametru request
 
 ## Citlivá data
 
-Zdravotní údaje, alergie, léky a stravovací omezení (`PERSON_SENSITIVE_DATA`) mají **vlastní, přísnější pravidlo**, které přebíjí matice výše:
+Zdravotní údaje, alergie, léky a stravovací omezení (`PERSON_SENSITIVE_DATA`) mají **vlastní pravidlo**, které přebíjí matice výše:
 
-- **Rádce je nevidí nikdy** — ani u akcí, ke kterým je přiřazený, ani se sjednocením jiných rolí. Důvodem je, že Rádci nejsou plnoletí (README → **Rádce**).
+- **Rádce je vidí** v rámci svého rozsahu — svá družina a akce, ke kterým je přiřazený. K práci rádce jsou nezbytné (README → **Rádce**). Mimo svůj rozsah je nevidí.
 - **Účetní je nevidí** — platební agenda je nepotřebuje.
 - Data jsou **izolovaná per oddíl** — oddíl A nevidí citlivá data téže osoby zapsaná v oddílu B.
 - **Žádný report nevrací citlivé údaje**, bez ohledu na roli volajícího ([reports.md](reports.md)).
 
+## Finanční údaje
+
+Stav a výše plateb, slevy, storno poplatky, přeplatky, vratky, dary a bankovní účty mají pro Rádce **absolutní zákaz čtení**:
+
+- **Rádce je nevidí nikdy** — ani u akcí, ke kterým je přiřazený, ani sjednocením s jinou rolí.
+- Platební atributy přihlášky se Rádci **maskují na serveru**, ne skrývají v UI — nesmí odejít v odpovědi API.
+- Výjimkou je **vlastní přihláška Rádce**, u které platební údaje vidí z odvozeného práva osoby nad sebou samou.
+
 ## Pravidla vyhodnocení
 
 - **Deny by default** — chybí-li explicitní pravidlo, přístup se odepře.
-- **Sjednocení rolí** — uživatel s více rolemi dostane sjednocení práv; výjimkou je zákaz citlivých dat, který je absolutní.
+- **Sjednocení rolí** — uživatel s více rolemi dostane sjednocení práv; výjimkou je zákaz finančních údajů pro Rádce, který je absolutní.
 - **Scope se nikdy nebere z požadavku** — `unit_id` i `event_id` z parametrů se validují proti tomu, co aktérovi náleží.
 - **Přiřazení k akci je nutná podmínka** pro VO/VD/RÁD — bez něj k akci přístup nemají, ani kdyby patřila jejich oddílu.
 - Aplikace nesmí rozhodovat pouze podle role uživatele. Správná kontrola musí vždy zahrnovat i rozsah oprávnění. Každé oprávnění je vyhodnocováno nad:
@@ -182,4 +192,4 @@ Zdravotní údaje, alergie, léky a stravovací omezení (`PERSON_SENSITIVE_DATA
 - **Může ADM číst přihlášky a osobní údaje konkrétního oddílu?** Matice výše mu dává čtení akcí a přihlášek kvůli podpoře, ale specifikace to nikde neříká — alternativou je přístup jen k agregovaným reportům. **[K rozhodnutí]**
 - **Delegace HVO** — není řečeno, zda HVO smí udělit část svých práv jinému účtu bez přiřazení k akci (např. zástup po dobu nepřítomnosti).
 - **Čtyřoční princip u plateb** — Účetní sama rozděluje platby, eviduje vratky a vidí bankovní účty; specifikace nepožaduje schválení druhou osobou. Krytí je jen auditním logem.
-- **Nezletilý Rádce** — kdo odpovídá za jeho úkony v systému, viz otevřený bod v README → **K diskusi**.
+- **Dokumenty přihlášek u Rádce** — Rádce vidí zdravotní údaje osoby, ale matice mu nedovoluje otevřít nahraný dokument (lékařské potvrzení, bezinfekčnost). Zda je to záměr, není ve spec řečeno. **[K rozhodnutí]**

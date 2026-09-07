@@ -45,13 +45,13 @@ Tabulka všech e-mailových událostí zmíněných napříč specifikací ([REA
 
 ## Role a účty
 
-| Kód                              | Událost (spouštěč)                                      | Příjemce                      | Načasování                   | Opakování / poznámka                            | Zdroj                                           |
-| -------------------------------- | ------------------------------------------------------- | ----------------------------- | ---------------------------- | ----------------------------------------------- | ----------------------------------------------- |
-| `EMAIL_HVO_INVITE`               | Administrátor vytvoří účet HVO                          | nový HVO                      | ihned                        | jednorázově                                     | [README.md](../README.md#L89)                   |
-| `EMAIL_ROLE_INVITE`              | HVO vytvoří účet účetní/vedoucí/rádci                   | nový uživatel role            | ihned                        | jednorázově                                     | [README.md](../README.md#L95)                   |
-| `EMAIL_ACCOUNT_LOCKED`           | throttling — série neúspěšných přihlášení               | vlastník účtu                 | ihned                        | jednorázově na zamknutí                         | [non-functional.md](non-functional.md#L45)      |
-| `EMAIL_ACCOUNT_INACTIVE_WARNING` | blížící se retenční smazání účtu (24 měsíců nečinnosti) | vlastník účtu (má-li kontakt) | před smazáním (job)          | jednorázově; přesný předstih není specifikovaný | [README.md](../README.md#L155) (Retence a GDPR) |
-| `EMAIL_PERSON_INACTIVE_WARNING`  | blížící se automatická deaktivace osoby (bez aktivity)  | osoba (má-li kontakt) a HVO   | 30 dní před deaktivací (job) | jednorázově                                     | [person-lifecycle.md](person-lifecycle.md#L44)  |
+| Kód                              | Událost (spouštěč)                                      | Příjemce                                                                               | Načasování                   | Opakování / poznámka                            | Zdroj                                           |
+| -------------------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------- | ----------------------------------------------- | ----------------------------------------------- |
+| `EMAIL_HVO_INVITE`               | Administrátor vytvoří účet HVO                          | nový HVO                                                                               | ihned                        | jednorázově                                     | [README.md](../README.md#L89)                   |
+| `EMAIL_ROLE_INVITE`              | HVO vytvoří účet účetní/vedoucí/rádci                   | nový uživatel role; **u nezletilého Rádce zákonný zástupce**, který pozvánku schvaluje | ihned                        | jednorázově                                     | [README.md](../README.md#L95)                   |
+| `EMAIL_ACCOUNT_LOCKED`           | throttling — série neúspěšných přihlášení               | vlastník účtu                                                                          | ihned                        | jednorázově na zamknutí                         | [non-functional.md](non-functional.md#L45)      |
+| `EMAIL_ACCOUNT_INACTIVE_WARNING` | blížící se retenční smazání účtu (24 měsíců nečinnosti) | vlastník účtu (má-li kontakt)                                                          | před smazáním (job)          | jednorázově; přesný předstih není specifikovaný | [README.md](../README.md#L155) (Retence a GDPR) |
+| `EMAIL_PERSON_INACTIVE_WARNING`  | blížící se automatická deaktivace osoby (bez aktivity)  | osoba (má-li kontakt) a HVO                                                            | 30 dní před deaktivací (job) | jednorázově                                     | [person-lifecycle.md](person-lifecycle.md#L44)  |
 
 ## Deduplikace a hlídky
 

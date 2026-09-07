@@ -54,10 +54,7 @@ flowchart TD
    Celá kapitola „Přihlašování na akce" popisuje jen samoobslužný tok přes veřejný portál (účastník nebo rodič si podává přihlášku sám). U docházky je explicitně řešeno, že vedoucí může akci založit zpětně a rovnou vybrat libovolné účastníky ze seznamu osob oddílu — obdobný hromadný zápis pro **přihlášky** ale specifikace nezmiňuje. Chybí odpověď na to, jestli HVO/Vedoucí smí za skupinu existujících členů (např. celou družinu) založit přihlášky najednou bez toho, aby si je každý podával sám, jaký stav taková přihláška dostane (rovnou čeká na platbu?) a jak se to promítne do kapacity a pořadí náhradníků.
    **Hromadné přihlášení vedoucím** obejde bránu zástupce — je to jiný vstupní bod téhož agregátu, nebo vlastní use case s jinými guardy?
 
-2. Nezletilý Rádce
-   Text jen konstatuje, že „Rádci nevidí citlivá data dětí, nejsou plnoletí" (README → **Rádce**), ale účet Rádce zakládá HVO pozvánkou stejně jako dospělým rolím, bez zmínky o zastoupení zákonným zástupcem. Chybí, zda pozvánku/založení role musí schválit rodič, jak se role promítá do existující vazby rodič ↔ dítě a kdo právně odpovídá za činy nezletilého Rádce v systému (zápis docházky, úprava chytrých sloupců).
-
-3. Oddílová pokladna - párovani s hotovostními platbami?
+2. Oddílová pokladna - párovani s hotovostními platbami?
 
 ---
 
@@ -94,7 +91,14 @@ flowchart TD
 
 #### Rádce
 
-- Rádci nevidí citlivá data dětí, nejsou plnoletí
+- Rádci nejsou plnoletí — jsou to nezletilí pomocníci vedoucích
+- **Nezletilého Rádce registruje do systému (přihlašuje jako rádce do oddílu) zákonný zástupce** — pozvánku od HVO a založení role musí schválit rodič. Bez schválení rodičem role nevznikne a pozvánka zůstává v čekajícím stavu.
+- Nemá-li nezletilý Rádce navázaného aktivního rodiče, nelze roli založit — nejprve musí vzniknout vazba rodič ↔ dítě (viz **Rodič (zákonný zástupce)**).
+- **Rádce právně odpovídá za své činy v systému.** Rodič schvaluje vznik role, ale jednotlivé úkony Rádce (zápis docházky, úprava chytrých sloupců, čtení údajů dětí) nečte, neschvaluje ani za ně neodpovídá. V auditním logu je aktérem vždy Rádce, ne jeho zástupce.
+- **Na akce svého oddílu se přihlašuje sám** — na rozdíl od ostatních nezletilých účastníků nepotřebuje k podání vlastní přihlášky zákonného zástupce.
+- **Vidí údaje dětí, které k práci rádce potřebuje** — kontakty, informace o dítěti i **zdravotní údaje (alergie, diety, ADHD apod.)**, a to v rámci svého rozsahu: svá družina a akce, ke kterým je přiřazený.
+- **Nevidí finanční údaje** — kdo zaplatil či nezaplatil, částky, dary, přeplatky, vratky ani bankovní účty. Přihlášky vidí **bez platebních atributů**.
+- Zapisuje docházku a vyplňuje chytré sloupce (pomocnou evidenci) — v rozsahu, který je u sloupce nastavený (viz **Pomocná evidence**).
 
 #### Rodič (zákonný zástupce)
 
@@ -343,7 +347,7 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 - Záznam rozlišuje **nepřítomnost** (zapsaný, nedorazil) od **nezapsaného** (žádný záznam).
 - Při evidenci dobrovolníků je možné zadat počet hodin — vždy na docházkovém záznamu téže akce
 - Systém rozděluje Krátkodobé dobrovolníky (pod 50 hod.) a dlouhodobé (nad 50 hod.)
-- Zápis docházky je **samostatné oprávnění na akci** — může ho mít i Rádce, který nemá přístup k přihláškám a platbám.
+- Zápis docházky je **samostatné oprávnění na akci** — může ho mít i Rádce, který nemá přístup k platbám.
 
 #### Reporty
 
