@@ -60,6 +60,8 @@ flowchart TD
 
 4. Přihlášky na akce bez oddílu - jiné sbory, pocestní
 
+5. Papírová přilháška a způsob platby za členství v oddíle/DU?
+
 ---
 
 ### Role
@@ -104,16 +106,17 @@ flowchart TD
 - **Nevidí finanční údaje** — kdo zaplatil či nezaplatil, částky, dary, přeplatky, vratky ani bankovní účty. Přihlášky vidí **bez platebních atributů**.
 - Zapisuje docházku a vyplňuje chytré sloupce (pomocnou evidenci) — v rozsahu, který je u sloupce nastavený (viz **Pomocná evidence**).
 
-#### Zákonný zástupce (zákonný zástupce)
+#### Zákonný zástupce
 
 - Zákonný zástupce může zastupovat jedno nebo více nezletilých dětí
-- Jedno dítě může být svázáno s více zákonnými zástupci (oba zákonní zástupci)
+- Jedno dítě může být svázáno s více zákonnými zástupci
 - Zákonný zástupce může své zastupované děti přihlašovat na akce a spravovat jejich přihlášky (přihlášení na akci, storno, platby za dítě) a údaje v systému (adresy, pojišťovny, ...)
+- Nemá-li zákonný zástupce účet, systém mu odešle e-mail s jednorázovým tokenem pro jeho založení. Uživatelským jménem účtu je e-mail příjemce; po dokončení registrace se účet spáruje s dítětem vazbou zákonný zástupce ↔ dítě a token se zneplatní.
 - **Vznik vazby zákonný zástupce ↔ dítě přihlášením na akci:**
-  - Nemá-li dítě dosud žádného navázaného zákonní zástupci, vazba vznikne rovnou jako aktivní — zákonný zástupce v přihlášce explicitně prohlásí, že je zákonným zástupcem (prohlášení se loguje).
-  - Má-li dítě už navázaného zákonní zástupci, nová vazba vznikne jako **čekající** a musí ji schválit stávající zákonný zástupce, nebo HVO oddílu, kde je dítě evidováno — stejně jako u pozvánky druhému zákonnému zástupci níže.
-- Po dosažení zletilosti se zastoupení zákonní zástupcim přepne do režimu jen pro čtení. Výjimkou je doplnění kontaktního e-mailu dítěte, pokud chybí — slouží k doručení výzvy k převzetí účtu. Zletilý člen může přístup zákonní zástupci kdykoli zcela zrušit.
-- Vazbu může zrušit sám zákonný zástupce (vystoupení), případně HVO na žádost; zrušení se loguje. Zůstane-li nezletilé dítě bez navázaného zákonní zástupci, jeho údaje a přihlášky spravuje HVO, dokud se nepřipojí nový zákonný zástupce.
+  - Nemá-li dítě dosud žádného navázaného zákonného zástupce, vazba vznikne rovnou jako aktivní — zákonný zástupce v přihlášce explicitně prohlásí, že je zákonným zástupcem (prohlášení se loguje).
+  - Má-li dítě už navázaného zákonného zástupce, nová vazba vznikne jako **čekající** a musí ji schválit stávající zákonný zástupce, nebo HVO oddílu, kde je dítě evidováno — stejně jako u pozvánky druhému zákonnému zástupci níže.
+- Po dosažení zletilosti se zastoupení zákonnými zástupci přepne do režimu jen pro čtení. Výjimkou je doplnění kontaktního e-mailu dítěte, pokud chybí — slouží k doručení výzvy k převzetí účtu. Zletilý člen může přístup zákonným zástupcům kdykoli zcela zrušit.
+- Vazbu může zrušit sám zákonný zástupce (vystoupení), případně HVO na žádost; zrušení se loguje. Zůstane-li nezletilé dítě bez navázaného zákonného zástupce, jeho údaje a přihlášky spravuje HVO, dokud se nepřipojí nový zákonný zástupce.
 - Oba zákonní zástupci mají plná práva, platí poslední zápis.
 - Druhého zákonného zástupce přidává stávající zákonný zástupce nebo HVO pozvánkou (e-mailem). Vazba vznikne přijetím pozvánky druhým zákonní zástupcim. Nemá-li dítě žádného navázaného zákonní zástupci, schvaluje připojení HVO, kde je dítě evidováno.
 - Přesná pravidla přechodů, guardy a práva podle stavu viz [docs/parent-child-lifecycle.md](docs/parent-child-lifecycle.md).

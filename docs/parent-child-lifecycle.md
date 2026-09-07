@@ -8,6 +8,12 @@ Zákonné zastoupení se **nepřiděluje jako role** — postavení zákonného 
 
 Vazba je **asymetrická dvojice osob** (`parent_person_id`, `child_person_id`), ne vazba mezi účty — dítě zpravidla účet nemá. Zákonný zástupce účet mít musí, protože jinak nemá jak práva vykonávat (výjimkou je schválení přihlášky odkazem z e-mailu, které účet nevyžaduje).
 
+## Založení účtu zákonného zástupce
+
+Pokud zákonný zástupce ještě nemá účet, systém mu odešle e-mail s jednorázovým tokenem. Otevřením odkazu a dokončením registrace si zákonný zástupce založí účet; jeho uživatelským jménem je e-mailová adresa, na kterou byla pozvánka odeslána. Po úspěšném založení účtu systém účet spáruje s dítětem vytvořením nebo aktivací vazby `PARENT_CHILD`. Token se po použití okamžitě zneplatní a nelze jej použít znovu.
+
+Tento token slouží k založení účtu a propojení s dítětem. Není totožný s tokenem pro jednorázové schválení přihlášky na akci.
+
 ## Stavy
 
 | Stav                       | Význam                                                      | Dává práva | Terminální |
