@@ -29,7 +29,7 @@ Oprávnění nevzniká z jednoho zdroje — skládá se ze tří nezávislých v
 | **Zákonný zástupce**            | aktivní `PARENT_CHILD`                                           | **per dítě**, ne globálně                                                                            |
 | **Vlastník přihlášky**          | token, `submitted_by_account_id` nebo zákonný zástupce účastníka | jedna přihláška a její dílčí přihlášky                                                               |
 | **Osoba (self)**                | `ACCOUNT.person_id`                                              | vlastní údaje a přihlášky                                                                            |
-| **Anonym**                      | —                                                                | veřejný výpis akcí, sdílecí odkaz                                                                    |
+| **Anonym**                      | —                                                                | veřejný výpis akcí, seznam názvů klubů na veřejné akci, sdílecí odkaz                                |
 
 Legenda v maticích: **RW** = čtení i zápis · **R** = jen čtení · **A** = podle příznaku v `EVENT_ASSIGNMENT` · **—** = žádný přístup
 
@@ -46,26 +46,32 @@ Legenda v maticích: **RW** = čtení i zápis · **R** = jen čtení · **A** =
 | Spravovat tým akce (jen VO/RÁD)             | RW             | RW            | —                   | —                   | —   | —                           |
 | Zrušit akci (hromadné storno)               | RW             | RW            | A `can_edit_event`  | —                   | —   | —                           |
 | Spravovat šablony akcí                      | RW (systémové) | RW (oddílové) | —                   | —                   | —   | —                           |
+| Založit klubovou přihlášku                  | —              | RW            | RW (vlastní oddíl)  | —                   | —   | —                           |
+| Spravovat / uzavřít klubovou přihlášku      | —              | RW            | RW (vlastní oddíl)  | —                   | —   | —                           |
+| Číst veřejný seznam klubů                   | R              | R             | R                   | R                   | R   | R                           |
 
 ## Přihlášky
 
-| Operace                                    | ADM | HVO | VO                                             | RÁD                                                   | ÚČE                       | Zákonný zástupce / vlastník |
-| ------------------------------------------ | --- | --- | ---------------------------------------------- | ----------------------------------------------------- | ------------------------- | --------------------------- |
-| Číst přihlášky akce                        | R   | R   | **R (vlastní oddíl, bez platebních atributů)** | **R (vlastní oddíl, bez platebních atributů)**        | **R (celý oddíl)**        | R (vlastní / svých dětí)    |
-| Číst stav a částky úhrady přihlášek akce   | R   | R   | R (`event_leader`)                             | **R (`event_leader`; předepsáno / uhrazeno / zbývá)** | R (celý oddíl)            | R (vlastní / svých dětí)    |
-| Upravit přihlášku                          | RW  | RW  | A `can_edit_registrations`                     | A `can_edit_registrations`                            | **jen platební atributy** | RW (vlastní / svých dětí)   |
-| Podat přihlášku                            | —   | RW  | A `can_edit_registrations`                     | **RW (jen sám za sebe)**                              | —                         | RW                          |
-| Stornovat přihlášku                        | RW  | RW  | A `can_edit_registrations`                     | —                                                     | —                         | RW (vlastní / svých dětí)   |
-| Posoudit dokument (schválit / zamítnout)   | RW  | RW  | A `can_edit_registrations`                     | —                                                     | —                         | —                           |
-| Číst obsah nahraného dokumentu             | R   | R   | R (přiřazené akce)                             | **R (přiřazené akce, v rozsahu Rádce)**               | —                         | R (vlastní)                 |
-| Vybrat náhradníka                          | RW  | RW  | A `can_edit_registrations`                     | —                                                     | —                         | —                           |
-| Přiřadit číselník s `assigned_by = leader` | RW  | RW  | A `can_edit_registrations`                     | A `can_edit_registrations`                            | —                         | —                           |
+| Operace                                    | ADM | HVO | VO                                             | RÁD                                                   | ÚČE                       | Zákonný zástupce / vlastník           |
+| ------------------------------------------ | --- | --- | ---------------------------------------------- | ----------------------------------------------------- | ------------------------- | ------------------------------------- |
+| Číst přihlášky akce                        | R   | R   | **R (vlastní oddíl, bez platebních atributů)** | **R (vlastní oddíl, bez platebních atributů)**        | **R (celý oddíl)**        | R (vlastní / svých dětí)              |
+| Číst stav a částky úhrady přihlášek akce   | R   | R   | R (`event_leader`)                             | **R (`event_leader`; předepsáno / uhrazeno / zbývá)** | R (celý oddíl)            | R (vlastní / svých dětí)              |
+| Upravit přihlášku                          | RW  | RW  | A `can_edit_registrations`                     | A `can_edit_registrations`                            | **jen platební atributy** | RW (vlastní / svých dětí)             |
+| Podat přihlášku                            | —   | RW  | A `can_edit_registrations`                     | **RW (jen sám za sebe, bez schválení zástupcem)**     | —                         | RW                                    |
+| Připojit dítě k vybranému klubu            | —   | RW  | RW (vlastní oddíl)                             | —                                                     | —                         | RW (vlastní / svých dětí)             |
+| Stornovat přihlášku                        | RW  | RW  | A `can_edit_registrations`                     | —                                                     | —                         | RW (vlastní / svých dětí)             |
+| Posoudit dokument (schválit / zamítnout)   | RW  | RW  | A `can_edit_registrations`                     | —                                                     | —                         | —                                     |
+| Číst obsah nahraného dokumentu             | R   | R   | R (přiřazené akce)                             | **R (přiřazené akce, v rozsahu Rádce)**               | —                         | R (vlastní)                           |
+| Spravovat trvalé dokumenty osoby           | RW  | RW  | —                                              | —                                                     | —                         | RW (vlastní / dítě při aktivní vazbě) |
+| Použít platný trvalý dokument v přihlášce  | RW  | RW  | A `can_edit_registrations`                     | —                                                     | —                         | RW (vlastní / dítě při aktivní vazbě) |
+| Vybrat náhradníka                          | RW  | RW  | A `can_edit_registrations`                     | —                                                     | —                         | —                                     |
+| Přiřadit číselník s `assigned_by = leader` | RW  | RW  | A `can_edit_registrations`                     | A `can_edit_registrations`                            | —                         | —                                     |
 
 Účetní má **širší čtení** (celý oddíl bez ohledu na přiřazení k akci), ale **užší zápis** než vedoucí — párování je operace nad bankovním účtem oddílu a jedna platba může pokrýt přihlášky z více akcí, proto se k akcím nepřiřazuje (README → **Účetní oddílu**).
 
 Platební operace může provést jedna ÚČE bez schválení druhou osobou. Odpovědnost a dohled zajišťuje auditní log, který zaznamenává aktéra, změnu a čas operace.
 
-Rádce má přesně opačné omezení než Účetní: přihlášku vidí včetně údajů o dítěti a zdravotních údajů, ale **platební atributy se mu maskují**. Je-li však Rádce Vedoucím akce, vidí pro přihlášky této akce předepsanou, uhrazenou a zbývající částku, aby mohl řídit účast; nevidí slevy, storno poplatky, přeplatky, dary, bankovní účet ani transakce (README → **Rádce**). Podání vlastní přihlášky na akci svého oddílu není právo role, ale odvozené právo osoby nad sebou samým — u Rádce se ale **nevyžaduje schválení zákonným zástupcem**, i když je nezletilý.
+Rádce má přesně opačné omezení než Účetní: přihlášku vidí včetně údajů o dítěti a zdravotních údajů, ale **platební atributy se mu maskují**. Je-li však Rádce Vedoucím akce, vidí pro přihlášky této akce předepsanou, uhrazenou a zbývající částku, aby mohl řídit účast; nevidí slevy, storno poplatky, přeplatky, dary, bankovní účet ani transakce (README → **Rádce**). Podání vlastní přihlášky RÁD na akci pořádajícího oddílu je odvozené právo osoby nad sebou samým; **brána schválení zákonným zástupcem se v tomto případě nepoužije**, i když je Rádce nezletilý. RÁD tím nezískává právo podávat přihlášky za jiné osoby.
 
 ## Platby
 
@@ -176,6 +182,12 @@ Scope se aplikuje jako **filtr odvozený z `USER_ROLE`**, ne z parametru request
 - Každé založení, změna, schválení nebo zamítnutí kvalifikace a požadavku se zapisuje do `AUDIT_LOG`; osobní doklady mají vlastní retenční pravidla.
 
 ## Odvozená oprávnění
+
+### Trvalé dokumenty osoby
+
+- `PERSON_DOCUMENT` patří osobě, nikoli konkrétní přihlášce. Osoba může spravovat své dokumenty; aktivní zákonný zástupce dědí právo dokument dítěte nahrát, obnovit, odvolat a použít v jeho přihlášce.
+- Po dosažení zletilosti přechází práva zákonného zástupce k dokumentu do režimu jen pro čtení stejně jako ostatní práva z `PARENT_CHILD`.
+- VO/RÁD bez příslušného oprávnění nevidí obsah trvalého dokumentu. Vedoucí smí obsah posoudit pouze v rozsahu oprávnění k dané přihlášce; základní čtení seznamu přihlášených obsah dokumentů nezpřístupňuje.
 
 ### Zákonný zástupce
 

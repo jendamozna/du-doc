@@ -42,6 +42,7 @@ erDiagram
     UNIT ||--o{ UNIT_MEMBER_FEE_RATE : sets
     UNIT ||--o{ UNIT_MEMBER_FEE : collects
     UNIT ||--o{ DU_FEE_BATCH : submits
+    UNIT ||--o{ CLUB_REGISTRATION : owns
     DU_FEE_BATCH ||--o{ DU_FEE_BATCH_ITEM : contains
     DU_FEE_BATCH ||--o{ DU_MEMBERSHIP : "creates on payment"
     DU_FEE_BATCH ||--o{ PAYMENT_ALLOCATION : "paid by"
@@ -65,6 +66,7 @@ erDiagram
     PERSON ||--o{ ATTENDANCE_RECORD : attends
     PERSON ||--o{ CUSTOM_FIELD_VALUE : has
     PERSON ||--o{ PERSON_COURSE : completes
+    PERSON ||--o{ PERSON_DOCUMENT : owns
 
     ACCOUNT ||--o{ OAUTH_IDENTITY : has
     ACCOUNT ||--o{ USER_ROLE : has
@@ -75,6 +77,7 @@ erDiagram
     ACTION_TEMPLATE ||--o{ EVENT : "instantiated as"
     EVENT ||--o{ EVENT_ASSIGNMENT : "has team members"
     EVENT ||--o{ EVENT_INVITATION : "invites"
+    EVENT ||--o{ CLUB_REGISTRATION : "accepts club registrations"
     ACCOUNT ||--o{ EVENT_ASSIGNMENT : "team member (versioned)"
     PERSON ||--o{ EVENT_INVITATION : "is invited to"
     REGISTRATION ||--o| EVENT_INVITATION : "accepts"
@@ -83,6 +86,7 @@ erDiagram
     EVENT ||--o{ CANCELLATION_RULE : has
     EVENT ||--o{ EVENT_FIELD : has
     EVENT ||--o{ REGISTRATION : contains
+    CLUB_REGISTRATION ||--o{ REGISTRATION : contains
     REGISTRATION ||--o{ REGISTRATION : "sub-registrations"
     EVENT ||--o{ EVENT_DOCUMENT : requires
     EVENT ||--o{ ATTENDANCE_RECORD : attendance
@@ -94,6 +98,7 @@ erDiagram
     REGISTRATION ||--o{ REGISTRATION_FIELD_VALUE : selects
     EVENT_DOCUMENT ||--o{ REGISTRATION_DOCUMENT : "fulfilled by"
     REGISTRATION ||--o{ REGISTRATION_DOCUMENT : uploads
+    PERSON_DOCUMENT ||--o{ REGISTRATION_DOCUMENT : "reused in"
 
     EVENT ||--o{ RACE_PATROL : "race patrols"
     REGISTRATION ||--o{ RACE_PATROL : owns
@@ -275,6 +280,18 @@ erDiagram
         datetime volunteer_registration_from
         datetime volunteer_registration_to
         bool age_at_year_end "vek pocitan ke konci roku (jinak k datu akce)"
+        bool club_registration_enabled "jen pro vybrane akce ustredi"
+    }
+    CLUB_REGISTRATION {
+        int id PK
+        int event_id FK
+        int unit_id FK "oddil, ktery klubovou prihlasku zalozil"
+        int created_by_account_id FK "HVO nebo VO oddilu"
+        string public_name "snapshot nazvu klubu pro verejny seznam"
+        string share_token "nahodne tajemstvi pro sdileny odkaz"
+        string state "open / closed"
+        datetime created_at
+        datetime closed_at "NULL = otevrena"
     }
     EVENT_PRICE {
         int id PK
@@ -345,18 +362,35 @@ erDiagram
         int id PK
         int event_id FK
         string name
+        string document_type "consent / insurance_card / medical_fitness / other"
+        bool accepts_person_document "lze splnit platnym dokumentem osoby"
         bool required
     }
     REGISTRATION_DOCUMENT {
         int id PK
         int registration_id FK
         int event_document_id FK "ktery pozadavek plni"
-        string file
+        int person_document_id FK "automaticky nebo rucne pouzity trvaly dokument osoby; NULL = nova kopie"
+        string file "volitelne; NULL pri pouziti person_document_id"
         string state "pending / uploaded / approved / rejected"
         string review_note "duvod zamitnuti"
         int reviewed_by_account_id FK "kdo posoudil"
         datetime uploaded_at
         datetime reviewed_at "NULL = neposouzeno"
+    }
+    PERSON_DOCUMENT {
+        int id PK
+        int person_id FK
+        string document_type "insurance_card / medical_fitness / other"
+        string file
+        string state "pending / valid / expired / rejected / revoked"
+        date valid_from
+        date valid_to "NULL = bez casoveho omezeni"
+        int uploaded_by_account_id FK "osoba nebo aktivni zakonny zastupce"
+        datetime uploaded_at
+        int reviewed_by_account_id FK "vedouci s opravnenim nebo ADM"
+        datetime reviewed_at
+        datetime revoked_at "NULL = neodvolano"
     }
     ACTION_TEMPLATE {
         int id PK
@@ -412,6 +446,7 @@ erDiagram
     REGISTRATION {
         int id PK
         int event_id FK
+        int club_registration_id FK "NULL = bez kluboveho kontejneru"
         int person_id FK "ucastnik (prave jeden na prihlasku)"
         int submitted_by_account_id FK "kdo prihlasku podal; NULL = podano tokenem bez uctu"
         string contact_email "dorucovaci adresa prihlasky; povinna jen kdyz submitted_by_account_id IS NULL, jinak NULL a bere se z uctu"
@@ -531,7 +566,8 @@ erDiagram
         int id PK
         int event_id FK,UK "unikat: akce + osoba"
         int person_id FK,UK
-        bool present "false = zapsan, nedorazil"
+        string status "on_time / late / absent / excused_in_advance"
+        string absence_reason "illness / family / other_activity / school / studying / forgot / grounded / unmotivated / other; jen pro absent"
         decimal volunteer_hours "odpracovane hodiny"
     }
     CUSTOM_FIELD {

@@ -58,8 +58,8 @@ Provozní přehled: jeden řádek na akci, s rozpadem účastníků podle typu.
 | -------------------- | --------------------------------------------------------------------------------------- |
 | akce                 | `EVENT.name`, `type`, `starts_at`, `ends_at`                                            |
 | přihlášeno           | počet aktivních `REGISTRATION` s `category = 'participant'`                             |
-| dorazilo             | počet `ATTENDANCE_RECORD` s `present = true`                                            |
-| nedorazilo           | počet `ATTENDANCE_RECORD` s `present = false`                                           |
+| dorazilo             | počet `ATTENDANCE_RECORD` se `status IN ('on_time', 'late')`                            |
+| nedorazilo           | počet `ATTENDANCE_RECORD` se `status IN ('absent', 'excused_in_advance')`               |
 | členové DU           | z těch, kdo dorazili, ti s `DU_MEMBERSHIP` pro rok akce                                 |
 | registrovaní členové | `PERSON_UNIT.membership_state = 'registered_member'` v oddílu akce, aktivní k datu akce |
 | hosté                | zbytek (osoba bez aktivní vazby na pořádající oddíl nebo `membership_state = 'guest'`)  |
@@ -117,12 +117,12 @@ Vývoj velikosti oddílu. Metrika je **stav ke konci každého období**, ne př
 
 Sezónnost pravidelných schůzek — jen akce `type = 'club'`, bucket podle `EVENT.starts_at`.
 
-| Metrika              | Výpočet                                                           |
-| -------------------- | ----------------------------------------------------------------- |
-| počet schůzek        | `COUNT(EVENT)`                                                    |
-| přítomných celkem    | `COUNT(ATTENDANCE_RECORD WHERE present = true)`                   |
-| průměrná návštěvnost | přítomní / počet schůzek, zaokrouhleno na 1 desetinné místo       |
-| docházka osoby       | volitelný rozpad: osoba × podíl přítomnosti (`present / schůzky`) |
+| Metrika              | Výpočet                                                                     |
+| -------------------- | --------------------------------------------------------------------------- |
+| počet schůzek        | `COUNT(EVENT)`                                                              |
+| přítomných celkem    | `COUNT(ATTENDANCE_RECORD WHERE status IN ('on_time', 'late'))`              |
+| průměrná návštěvnost | přítomní / počet schůzek, zaokrouhleno na 1 desetinné místo                 |
+| docházka osoby       | volitelný rozpad: osoba × podíl přítomnosti (`on_time nebo late / schůzky`) |
 
 **Hrany:**
 
@@ -148,8 +148,8 @@ Sezónnost pravidelných schůzek — jen akce `type = 'club'`, bucket podle `EV
 | Metrika     | Výpočet                                                                                                             |
 | ----------- | ------------------------------------------------------------------------------------------------------------------- |
 | očekávaní   | počet osob, pro které existuje relevantní proběhlá akce v daném koši a které byly na akci evidované nebo přihlášené |
-| přítomní    | počet `ATTENDANCE_RECORD` s `present = true`                                                                        |
-| nepřítomní  | počet záznamů s `present = false`                                                                                   |
+| přítomní    | počet `ATTENDANCE_RECORD` se `status IN ('on_time', 'late')`                                                        |
+| nepřítomní  | počet záznamů se `status IN ('absent', 'excused_in_advance')`                                                       |
 | bez záznamu | očekávaní − přítomní − nepřítomní                                                                                   |
 | míra účasti | přítomní / očekávaní; při nulovém jmenovateli `null`, ne 0                                                          |
 
@@ -157,7 +157,7 @@ Sezónnost pravidelných schůzek — jen akce `type = 'club'`, bucket podle `EV
 
 - Do časové řady vstupují jen proběhlé akce (`starts_at < now`) a bucketuje se podle `EVENT.starts_at` v `Europe/Prague`; prázdné koše se vracejí s nulovými hodnotami.
 - Základem je osoba evidovaná na akci: aktivní přihláška účastníka nebo osoba ručně vybraná pro docházku. Dobrovolníci a vedoucí se započítají jen tehdy, jsou-li součástí zvoleného typu pohledu; do výchozího pohledu účastníků se nezapočítají.
-- `present = false` je skutečná nepřítomnost. Chybějící `ATTENDANCE_RECORD` zůstává „bez záznamu“ a nesmí se vydávat za nepřítomnost.
+- `absent` a `excused_in_advance` jsou skutečná nepřítomnost. Chybějící `ATTENDANCE_RECORD` zůstává „bez záznamu“ a nesmí se vydávat za nepřítomnost.
 - Agregace družiny používá příslušnost `UNIT_PATROL_MEMBER` platnou k datu akce; změna družiny zpětně nepřepíše historickou docházku.
 - U více oddílů se osoba v rámci řádku oddílu počítá jednou; při pohledu ADM přes více oddílů se navíc vrací `unique_persons`, aby se stejná osoba nesčítala jako více osob.
 

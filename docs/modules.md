@@ -134,25 +134,25 @@ Tohle je nejcitlivější hranice: bez pravidla „přenos vazeb dělá vlastní
 
 ### 5 · Events — katalog akcí (doména)
 
-| Položka              | Obsah                                                                                                                                                                                                              |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Vlastní entity**   | `EVENT`, `ACTION_TEMPLATE`, `EVENT_PRICE`, `CANCELLATION_RULE`, `EVENT_ASSIGNMENT`, `EVENT_FIELD`, `EVENT_FIELD_OPTION`, `EVENT_DOCUMENT`, `EVENT_CUSTOM_FIELD`, `WORKSHOP`, `WORKSHOP_BLOCK`, `WORKSHOP_OFFERING` |
-| **Vlastní pravidla** | [event-fields.md](event-fields.md) (režimy, kapacita volby, fáze, ceny), storno matice, splatnost relativní/absolutní, snapshot regionu při založení akce                                                          |
-| **Čte odjinud**      | `UNIT`, `LOCATION`, `REGION` z Org; `BANK_ACCOUNT` z Banking (jen reference)                                                                                                                                       |
-| **Nevlastní**        | kapacitu **obsazenou** — tu počítá Registrations; Events drží jen limit                                                                                                                                            |
-| **Rozhraní**         | `event(id)`, `priceFor(eventId, participantType, options)`, `cancellationFee(eventId, date)`, `requiredDocuments(eventId)`, `dueDate(eventId, submittedAt)`                                                        |
+| Položka              | Obsah                                                                                                                                                                                                                                                       |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Vlastní entity**   | `EVENT`, `ACTION_TEMPLATE`, `EVENT_PRICE`, `CANCELLATION_RULE`, `EVENT_ASSIGNMENT`, `EVENT_INVITATION`, `CLUB_REGISTRATION`, `EVENT_FIELD`, `EVENT_FIELD_OPTION`, `EVENT_DOCUMENT`, `EVENT_CUSTOM_FIELD`, `WORKSHOP`, `WORKSHOP_BLOCK`, `WORKSHOP_OFFERING` |
+| **Vlastní pravidla** | [event-fields.md](event-fields.md) (režimy, kapacita volby, fáze, ceny), storno matice, splatnost relativní/absolutní, snapshot regionu při založení akce                                                                                                   |
+| **Čte odjinud**      | `UNIT`, `LOCATION`, `REGION` z Org; `BANK_ACCOUNT` z Banking (jen reference)                                                                                                                                                                                |
+| **Nevlastní**        | kapacitu **obsazenou** — tu počítá Registrations; Events drží jen limit                                                                                                                                                                                     |
+| **Rozhraní**         | `event(id)`, `priceFor(eventId, participantType, options)`, `cancellationFee(eventId, date)`, `requiredDocuments(eventId)`, `dueDate(eventId, submittedAt)`                                                                                                 |
 
 Cena je **funkce**, ne uložené číslo — Registrations si ji vyžádá a uloží si výslednou částku, aby pozdější změna ceníku nepřepsala historii.
 
 ### 6 · Registrations (doména)
 
-| Položka              | Obsah                                                                                                                                                                                 |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Vlastní entity**   | `REGISTRATION` (vč. dílčích), `REGISTRATION_FIELD_VALUE`, `REGISTRATION_DOCUMENT`, `SUBSTITUTE_OFFER`, `RECOMMENDATION`, `WORKSHOP_REGISTRATION`, `RACE_PATROL`, `RACE_PATROL_MEMBER` |
-| **Vlastní pravidla** | [registration-lifecycle.md](registration-lifecycle.md) — funkce `evaluate`, brány, guardy, kapacita a fronta náhradníků; skládání hlídek dle [race-patrols.md](race-patrols.md)       |
-| **Čte odjinom**      | Events (cena, dokumenty, kapacita, splatnost), People (věk, zástupci, evidence v oddíle), Org (lhůty), Payments (součet alokací)                                                      |
-| **Nevlastní**        | platby ani stav úhrady jako uložené pole — `evaluate` si součet alokací **vyžádá** a přepočte stav                                                                                    |
-| **Rozhraní**         | `registration(id)`, `openRegistrations(personId)`, `occupancy(eventId)` (v **účastnících**, ne přihláškách), `amountDue(registrationId)`                                              |
+| Položka              | Obsah                                                                                                                                                                                             |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Vlastní entity**   | `REGISTRATION` (vč. klubových a dílčích), `REGISTRATION_FIELD_VALUE`, `REGISTRATION_DOCUMENT`, `SUBSTITUTE_OFFER`, `RECOMMENDATION`, `WORKSHOP_REGISTRATION`, `RACE_PATROL`, `RACE_PATROL_MEMBER` |
+| **Vlastní pravidla** | [registration-lifecycle.md](registration-lifecycle.md) — funkce `evaluate`, brány, guardy, kapacita a fronta náhradníků; skládání hlídek dle [race-patrols.md](race-patrols.md)                   |
+| **Čte odjinom**      | Events (cena, dokumenty, kapacita, splatnost), People (věk, zástupci, evidence v oddíle), Org (lhůty), Payments (součet alokací)                                                                  |
+| **Nevlastní**        | platby ani stav úhrady jako uložené pole — `evaluate` si součet alokací **vyžádá** a přepočte stav                                                                                                |
+| **Rozhraní**         | `registration(id)`, `openRegistrations(personId)`, `occupancy(eventId)` (v **účastnících**, ne přihláškách), `amountDue(registrationId)`                                                          |
 
 Klíčová hrana: **Payments neposouvá stav přihlášky.** Publikuje `payment.allocated`, Registrations na ni zavolá vlastní `evaluate`.
 
@@ -242,6 +242,9 @@ Jmenná konvence `modul.agregát.událost` v minulém čase. Události, které u
 | `registration.canceled`                            | `fee_amount`, `refund_due`                       | Payments (vratka), Events (kapacita), Notifications |
 | `registration.expired`                             | `reason`                                         | Notifications, Audit                                |
 | `registration.capacity_released`                   | `event_id`, `freed_slots`                        | Registrations (výběr náhradníka), Reporting         |
+| `club_registration.created`                        | `club_registration_id`, `event_id`, `unit_id`    | Registrations, Audit                                |
+| `club_registration.closed`                         | `club_registration_id`, `event_id`, `unit_id`    | Registrations, Audit                                |
+| `club_registration.registration_added`             | `club_registration_id`, `registration_id`        | Notifications, Audit, Reporting                     |
 | `guardian.requested` / `.approved` / `.expired`    | `guardian_email`, `deadline`                     | Notifications, People (vznik vazby), Audit          |
 | `document.uploaded` / `.approved` / `.rejected`    | `document_id`, `comment`                         | Notifications, Files, Audit                         |
 | `substitute.offer.sent` / `.accepted` / `.expired` | `offer_id`, `valid_until`                        | Notifications, Audit                                |
