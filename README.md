@@ -58,8 +58,6 @@ flowchart TD
 
 3. Přihlášky na akce bez oddílu - jiné sbory, pocestní
 
-4. Papírová přilháška a způsob platby za členství v oddíle/DU?
-
 ---
 
 ### Role
@@ -92,7 +90,7 @@ flowchart TD
 - Nastavuje bankovní účty
 - Vytváří účty účetním, vedoucím, rádcům — systém vygeneruje pozvánku e-mailem
 - Vytváří účty dětem na základě písemné přihlášky — systém vygeneruje pozvánku e-mailem pro zákonného zástupce ke vstupu do portálu a potvrzení účtu dítěte
-- Může do systému nahrát pověření od staršovstva
+- Může do systému nahrát **pověření od staršovstva**. Pověření je oddílový dokument, který dokládá mandát oddílu a jeho platnost; samo o sobě nezakládá ani nemění roli `USER_ROLE` a nenahrazuje odbornou kvalifikaci.
 - Může definovat družiny, jejich vedoucí a členy
 - Eviduje registrované členy (jméno, příjmení, pohlaví, datum narození)
 - Eviduje hosty (min. jméno, příjmení nebo přezdívka)
@@ -427,6 +425,8 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 #### Modul vzdělávání
 
 - **Ústředí (ADM) spravuje centrální katalog kurzů a kvalifikační požadavky na role** — například povinný zdravotnický kurz nebo školení ŠHVT pro HVO; u každého kurzu se eviduje i doba platnosti.
+- **Pověření od staršovstva a vzdělávání jsou oddělené evidence:** pověření potvrzuje, že staršovstvo sboru osobu pověřilo výkonem funkce, zatímco kurz nebo certifikát potvrzuje její odbornou způsobilost. Pověření nenahrazuje povinný kurz a absolvování kurzu samo nevytváří pověření ani roli.
+- Splnění požadavku na roli lze vyhodnotit až tehdy, když existuje platné pověření, pokud je pro danou funkci vyžadováno oddílem, a současně platné povinné kurzy podle katalogu ústředí.
 - Modul vzdělávání zobrazuje ústředí splnění požadavků za jednotlivé HVO, VO a Rádce v oddílech, včetně chybějící nebo prošlé kvalifikace.
 - Vzdělávací akce ústředí může být provázána s kurzem; po absolvování vznikne každému účastníkovi vazba s odkazem na zdrojovou akci
 - Hlavní vedoucí, Vedoucí a Rádci můžou sobě přiřadit kurzy z nabídky a nahrát doklad; doklad podléhá schválení podle pravidel ústředí.

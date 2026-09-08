@@ -72,6 +72,9 @@ Ostatní pole (`nickname`, `insurance_company`, `address`) jsou povinná jen teh
 
 ### Vzdělávání a kvalifikace
 
+- `MANDATE` je oddílový dokument navázaný na `subject_account_id` a pověřenou `role`, nikoli osobní kvalifikace. Pověřený účet musí mít vazbu na stejný oddíl jako mandát. `valid_from <= valid_to`, pokud je `valid_to` vyplněno; odvolané pověření má `revoked_at` a nesmí se používat jako platný mandát. Nahrání nebo platnost pověření samo nezaloží ani nezmění `USER_ROLE`.
+- `PERSON_COURSE` je osobní kvalifikační záznam. Ověřený a časově platný kurz může splnit `COURSE_REQUIREMENT`, ale absolvování kurzu samo nezaloží `USER_ROLE` ani `MANDATE`.
+- Je-li pro výkon role nastaven požadavek na pověření i kvalifikaci, role je považována za způsobilou až po splnění obou nezávislých podmínek; chybějící nebo prošlé pověření nelze nahradit kurzem a naopak.
 - `COURSE` v centrálním katalogu zakládá a archivuje pouze ADM; archivovaný kurz nelze nově přiřadit, ale historické `PERSON_COURSE` záznamy zůstávají platné pro historii.
 - `COURSE_REQUIREMENT` může vyžadovat kurz pro roli `HVO`, `VO` nebo `RAD`. Požadavek je účinný jen v intervalu `valid_from`–`valid_to`; překrývající se aktivní požadavky stejného kurzu a role nejsou povolené.
 - Povinný kurz je splněný pouze tehdy, pokud osoba má `PERSON_COURSE` s `verification_state = 'verified'`, `completed_on <= aktuální datum` a `valid_to IS NULL OR valid_to >= aktuální datum`.

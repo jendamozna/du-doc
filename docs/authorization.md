@@ -167,6 +167,8 @@ Scope se aplikuje jako **filtr odvozený z `USER_ROLE`**, ne z parametru request
 
 ## Vzdělávání a kvalifikace
 
+- **Pověření od staršovstva** je oddílový mandát evidovaný v `MANDATE`.
+- **Vzdělávání** je osobní evidence `PERSON_COURSE`. Dokládá odbornou způsobilost a může splnit `COURSE_REQUIREMENT`, ale samo nezakládá pověření ani `USER_ROLE`.
 - **ADM** spravuje centrální katalog kurzů a požadavky na role; může určit, že kvalifikace je pro danou roli povinná a do kdy musí být platná.
 - **HVO** čte kvalifikace vedoucích a rádců svého oddílu a může kontrolovat splnění požadavků. **VO a RÁD** spravují vlastní kvalifikační záznamy v rozsahu povoleném katalogem.
 - ADM může napříč oddíly číst stav kvalifikace, datum platnosti, zdrojový kurz a stav ověření dokladu. Přístup k obsahu dokladu je omezen na podklady nutné k ověření kvalifikace; nezpřístupňuje jiné zdravotní údaje osoby.

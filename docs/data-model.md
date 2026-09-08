@@ -630,9 +630,17 @@ erDiagram
     MANDATE {
         int id PK
         int unit_id FK
+        int subject_account_id FK "povereny ucet v oddilu"
+        string role "HVO / VO / RAD / other"
         string file
+        string title "nazev nebo typ povereni"
+        string state "pending / valid / expired / revoked"
         date valid_from
         date valid_to
+        int uploaded_by_account_id FK "HVO nebo ADM"
+        datetime uploaded_at
+        int revoked_by_account_id FK "NULL = neodvolano"
+        datetime revoked_at "NULL = neodvolano"
     }
     UNIT_MODULE {
         int id PK
