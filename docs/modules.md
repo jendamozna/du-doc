@@ -93,7 +93,7 @@ flowchart TD
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Vlastní entity**   | `ACCOUNT`, `OAUTH_IDENTITY`, `USER_ROLE`, pozvánky rolí, tokeny bez účtu (rozcestník přihlášky, souhlas zástupce, náhradník)                                                   |
 | **Vlastní pravidla** | přihlášení heslem/OAuth, unikátnost `login_email`, vyhodnocení oprávnění podle [authorization.md](authorization.md), platnost a jednorázovost tokenů, maskování citlivých polí |
-| **Čte odjinud**      | `PERSON` (zobrazení jména u účtu), aktivní vazby zákonný zástupce ↔ dítě z People pro odvozená práva, scope oddílu z Org                                                                  |
+| **Čte odjinud**      | `PERSON` (zobrazení jména u účtu), aktivní vazby zákonný zástupce ↔ dítě z People pro odvozená práva, scope oddílu z Org                                                       |
 | **Nevlastní**        | osobu — účet je jen identita navázaná 1:1 na `PERSON`                                                                                                                          |
 | **Rozhraní**         | `canDo(actor, action, scope)`, `resolveToken(token)`, `issueToken(purpose, subject)` — jediné místo, kde se rozhoduje o právech                                                |
 
@@ -158,12 +158,12 @@ Klíčová hrana: **Payments neposouvá stav přihlášky.** Publikuje `payment.
 
 ### 7 · Payments (doména)
 
-| Položka              | Obsah                                                                                                                             |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| **Vlastní entity**   | `PAYMENT_ALLOCATION` (vč. záporných = vratky)                                                                                     |
-| **Vlastní pravidla** | [payment-matching.md](payment-matching.md) — pořadí pravidel párování, více kandidátů, přeplatek a vratka, potvrzení, ruční režim |
-| **Čte odjinud**      | Banking (transakce), Registrations (VS, dlužná částka, vlastník), Org (zapnutý `payment_matching`)                                |
-| **Rozhraní**         | `paidAmount(registrationId)`, `allocationsOf(transactionId)`                                                                      |
+| Položka              | Obsah                                                                                                                                                                                        |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Vlastní entity**   | `PAYMENT_ALLOCATION` (vč. záporných = vratky), `UNIT_MEMBER_FEE_RATE`, `UNIT_MEMBER_FEE`                                                                                                     |
+| **Vlastní pravidla** | [payment-matching.md](payment-matching.md) — pořadí pravidel párování, více kandidátů, přeplatek a vratka, potvrzení, ruční režim                                                            |
+| **Čte odjinud**      | Banking (transakce), Registrations (VS, dlužná částka, vlastník), People (členství v oddílu, zákonní zástupci), DU Membership (sazba a existence členství), Org (zapnutý `payment_matching`) |
+| **Rozhraní**         | `paidAmount(registrationId)`, `memberFeePaidAmount(memberFeeId)`, `allocationsOf(transactionId)`                                                                                             |
 
 ### 8 · Banking (doména)
 
@@ -178,11 +178,11 @@ Oddělení Banking/Payments je záměrné: `provider = 'manual'` mění jen Bank
 
 ### 9 · DU Membership (doména, agenda ústředí)
 
-| Položka              | Obsah                                                                                      |
-| -------------------- | ------------------------------------------------------------------------------------------ |
-| **Vlastní entity**   | `DU_MEMBERSHIP`, `DU_FEE_RATE`, `DU_FEE_BATCH`, `DU_FEE_BATCH_ITEM`                        |
-| **Vlastní pravidla** | evidenční oddíl, 1 členství na osobu a rok, uzamčení dávky, vznik členství až po zaplacení |
-| **Čte odjinud**      | People (osoby, členství v oddíle), Payments (alokace na dávku), Org (sazby ústředí)        |
+| Položka              | Obsah                                                                                                    |
+| -------------------- | -------------------------------------------------------------------------------------------------------- |
+| **Vlastní entity**   | `DU_MEMBERSHIP`, `DU_FEE_RATE`, `DU_FEE_BATCH`, `DU_FEE_BATCH_ITEM`                                      |
+| **Vlastní pravidla** | evidenční oddíl, 1 členství na osobu a rok, uzamčení dávky, vznik členství až po zaplacení               |
+| **Čte odjinud**      | People (osoby, členství v oddíle), Payments (uhrazená složka DU a alokace na dávku), Org (sazby ústředí) |
 
 ### 10 · Attendance (doména)
 
@@ -220,7 +220,7 @@ Vlastní pouze definice reportů a případné materializované pohledy ([report
 | `MERGE_REQUEST`, `MERGE_APPROVAL`, `MERGE_LOG`, `REPORT_MERGE`                                                                                                                                                     | PersonMerge   |
 | `EVENT`, `ACTION_TEMPLATE`, `EVENT_PRICE`, `CANCELLATION_RULE`, `EVENT_ASSIGNMENT`, `EVENT_FIELD`, `EVENT_FIELD_OPTION`, `EVENT_DOCUMENT`, `EVENT_CUSTOM_FIELD`, `WORKSHOP`, `WORKSHOP_BLOCK`, `WORKSHOP_OFFERING` | Events        |
 | `REGISTRATION`, `REGISTRATION_FIELD_VALUE`, `REGISTRATION_DOCUMENT`, `SUBSTITUTE_OFFER`, `RECOMMENDATION`, `WORKSHOP_REGISTRATION`, `RACE_PATROL`, `RACE_PATROL_MEMBER`                                            | Registrations |
-| `PAYMENT_ALLOCATION`                                                                                                                                                                                               | Payments      |
+| `PAYMENT_ALLOCATION`, `UNIT_MEMBER_FEE_RATE`, `UNIT_MEMBER_FEE`                                                                                                                                                    | Payments      |
 | `BANK_ACCOUNT`, `BANK_TRANSACTION`                                                                                                                                                                                 | Banking       |
 | `DU_MEMBERSHIP`, `DU_FEE_RATE`, `DU_FEE_BATCH`, `DU_FEE_BATCH_ITEM`                                                                                                                                                | DU Membership |
 | `ATTENDANCE_RECORD`                                                                                                                                                                                                | Attendance    |
@@ -277,7 +277,7 @@ Jmenná konvence `modul.agregát.událost` v minulém čase. Události, které u
 | -------------------------------------------------------- | ------------------------------------------ | -------------------------------------------------------------- |
 | `person.created`                                         | `person_id`, `unit_id`, `membership_state` | Reporting, Audit                                               |
 | `person.record_state_changed`                            | `from`, `to`, `scope`                      | Registrations, Attendance, People (družiny), Audit             |
-| `person.reached_adulthood`                               | `person_id`                                | People (zákonný zástupce → jen pro čtení), Notifications                  |
+| `person.reached_adulthood`                               | `person_id`                                | People (zákonný zástupce → jen pro čtení), Notifications       |
 | `person.anonymized` / `.purged`                          | `person_id`, `scope`                       | všichni vlastníci dat osoby, Files, Audit                      |
 | `person.merged`                                          | `source_person_id`, `target_person_id`     | **všechny** moduly s vazbou na osobu (přenos vazeb), Reporting |
 | `person.merge.reverted`                                  | `merge_id`                                 | tytéž moduly, Audit                                            |
@@ -317,7 +317,7 @@ Jmenná konvence `modul.agregát.událost` v minulém čase. Události, které u
 
 | Pokušení                               | Proč ne                                                                                            |
 | -------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Samostatný modul „Zákonný zástupce"               | zákonné zastoupení není role, ale odvození z `PARENT_CHILD` — patří do People, práva do Identity          |
+| Samostatný modul „Zákonný zástupce"    | zákonné zastoupení není role, ale odvození z `PARENT_CHILD` — patří do People, práva do Identity   |
 | Samostatný modul „Portál" / „Admin"    | to jsou plochy UI ([du-doc-ux-pruvodce.md](du-doc-ux-pruvodce.md)), ne domény; sdílí stejné moduly |
 | Sloučit Banking + Payments             | ruční režim bez API mění jen zdroj transakcí, ne pravidla párování                                 |
 | Sloučit Events + Registrations         | katalog akce žije dál i bez přihlášek a mění se jiným tempem; kapacita by jinak měla dva vlastníky |

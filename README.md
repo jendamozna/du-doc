@@ -21,7 +21,7 @@ flowchart TD
     end
 
     subgraph REGIONY["Regiony — verzované seskupení běžných oddílů"]
-        ODDILY["<b>Běžné oddíly</b><br/>členové · hosté · družiny · dobrovolníci<br/>akce · platby · bankovní účty · chytré sloupce<br/>role: HVO, VO, VD, RÁD, ÚČE"]
+        ODDILY["<b>Běžné oddíly</b><br/>členové · hosté · družiny · dobrovolníci<br/>akce · platby · bankovní účty · chytré sloupce<br/>role: HVO, VO, RÁD, ÚČE"]
     end
 
     PORTAL["<b>Veřejný registrační portál</b><br/>(procházet akce, přihlásit se na akci)"]
@@ -54,22 +54,21 @@ flowchart TD
    Celá kapitola „Přihlašování na akce" popisuje jen samoobslužný tok přes veřejný portál (účastník nebo zákonný zástupce si podává přihlášku sám). U docházky je explicitně řešeno, že vedoucí může akci založit zpětně a rovnou vybrat libovolné účastníky ze seznamu osob oddílu — obdobný hromadný zápis pro **přihlášky** ale specifikace nezmiňuje. Chybí odpověď na to, jestli HVO/Vedoucí smí za skupinu existujících členů (např. celou družinu) založit přihlášky najednou bez toho, aby si je každý podával sám, jaký stav taková přihláška dostane (rovnou čeká na platbu?) a jak se to promítne do kapacity a pořadí náhradníků.
    **Hromadné přihlášení vedoucím** obejde bránu zástupce — je to jiný vstupní bod téhož agregátu, nebo vlastní use case s jinými guardy?
 
-2. Oddílová pokladna - párovani s hotovostními platbami? Způsob platba za členství v oddíle, nebo DU?
+2. Role Rádce (vedoucí družiny) - určuje HVO a končí s odebráním role nebo opuštěním družiny? Co s Rádcem, když dosáhne 18? Může být někdo Rádce a Vedoucí současně?
 
-3. Role Rádce - určuje vedoucí družiny a končí s odebráním role nebo opuštěním družiny? Co s Rádcem když dosáhne 18? Může být někdo Rádce a Vedoucí současně?
+3. Přihlášky na akce bez oddílu - jiné sbory, pocestní
 
-4. Přihlášky na akce bez oddílu - jiné sbory, pocestní
-
-5. Papírová přilháška a způsob platby za členství v oddíle/DU?
+4. Papírová přilháška a způsob platby za členství v oddíle/DU?
 
 ---
 
 ### Role
 
 - Uživatel může být ve více rolích, např. Administrátor a zároveň jeden z vedoucích oddílu nebo dobrovolník a zákonný zástupce
-- Role Hlavní vedoucí oddílu (HVO), Rádce (RÁD), Vedoucí oddílu (VO), Vedoucí družiny (VD), Administrátor (ADM), Účetní oddílu (ÚČE)
+- Role Hlavní vedoucí oddílu (HVO), Vedoucí oddílu (VO), Rádce (vedoucí družiny, RÁD), Administrátor (ADM), Účetní oddílu (ÚČE)
 - **Zákonný zástupce není přidělovaná role** — postavení zákonného zástupce se **odvozuje z aktivní vazby zákonný zástupce ↔ dítě**. Rozsah práv je vždy **per dítě**, ne globální; role se proto nepřiděluje ani neodebírá a nemůže se rozejít se skutečným stavem vazby (zrušení, přechod do režimu jen pro čtení po zletilosti dítěte).
-- VO/VD nemají pevná globální práva, oprávnění se přidělují u akce / v rámci družiny.
+- VO a Rádce (vedoucí družiny) nemají pevná globální práva, oprávnění se přidělují u akce / v rámci družiny.
+- **Vedoucí akce** je role v týmu konkrétní akce, nikoli další globální role oddílu. HVO jí může pověřit člena týmu s rolí VO nebo RÁD; vedoucí akce pak u přihlášek své akce vidí konkrétní předepsanou, uhrazenou a zbývající částku. Nevidí bankovní transakce ani platební údaje mimo svou akci.
 - Úplnou matici oprávnění (akce × role × scope) viz [docs/authorization.md](docs/authorization.md).
 
 #### Účetní oddílu
@@ -85,25 +84,29 @@ flowchart TD
 - Spravuje oddíly a přiřazuje jim jejich Hlavní vedoucí
 - Vytváří účty hlavním vedoucím — systém vygeneruje pozvánku e-mailem
 - Definuje a spravuje regiony, přiřazuje do nich oddíly (viz **Region**)
+- Čte osobní údaje a přihlášky napříč oddíly; toto oprávnění je pouze čtecí
+- Může dočasně delegovat konkrétní část svých oprávnění jinému účtu v rámci svého oddílu
 
 #### Hlavní vedoucí oddílu
 
 - Nastavuje bankovní účty
 - Vytváří účty účetním, vedoucím, rádcům — systém vygeneruje pozvánku e-mailem
+- Vytváří účty dětem na základě písemné přihlášky — systém vygeneruje pozvánku e-mailem pro zákonného zástupce ke vstupu do portálu a potvrzení účtu dítěte
 - Může do systému nahrát pověření od staršovstva
 - Může definovat družiny, jejich vedoucí a členy
 - Eviduje registrované členy (jméno, příjmení, pohlaví, datum narození)
 - Eviduje hosty (min. jméno, příjmení nebo přezdívka)
 
-#### Rádce
+#### Rádce (vedoucí družiny)
 
 - Rádci nejsou plnoletí — jsou to nezletilí pomocníci vedoucích
 - **Nezletilého Rádce registruje do systému (přihlašuje jako rádce do oddílu) zákonný zástupce** — pozvánku od HVO a založení role musí schválit zákonný zástupce. Bez schválení zákonní zástupcim role nevznikne a pozvánka zůstává v čekajícím stavu.
 - Nemá-li nezletilý Rádce navázaného aktivního zákonní zástupci, nelze roli založit — nejprve musí vzniknout vazba zákonný zástupce ↔ dítě (viz **Zákonný zástupce (zákonný zástupce)**).
 - **Rádce právně odpovídá za své činy v systému.** Zákonný zástupce schvaluje vznik role, ale jednotlivé úkony Rádce (zápis docházky, úprava chytrých sloupců, čtení údajů dětí) nečte, neschvaluje ani za ně neodpovídá. V auditním logu je aktérem vždy Rádce, ne jeho zástupce.
 - **Na akce svého oddílu se přihlašuje sám** — na rozdíl od ostatních nezletilých účastníků nepotřebuje k podání vlastní přihlášky zákonného zástupce.
-- **Vidí údaje dětí, které k práci rádce potřebuje** — kontakty, informace o dítěti i **zdravotní údaje (alergie, diety, ADHD apod.)**, a to v rámci svého rozsahu: svá družina a akce, ke kterým je přiřazený.
+- **Vidí údaje dětí, které k práci rádce potřebuje** — kontakty, informace o dítěti i **zdravotní údaje (alergie, diety, ADHD apod.)**, a to v rámci svého rozsahu: svá družina a zdravotní údaje účastníků akcí, ke kterým je přiřazený. Základní detail akcí svého oddílu a seznam přihlášených vidí i bez přiřazení k akci; toto základní čtení samo o sobě nezpřístupňuje zdravotní údaje, dokumenty ani platební atributy.
 - **Nevidí finanční údaje** — kdo zaplatil či nezaplatil, částky, dary, přeplatky, vratky ani bankovní účty. Přihlášky vidí **bez platebních atributů**.
+- Může otevřít obsah nahraných dokumentů k přihláškám v rozsahu svých přiřazených akcí a družiny.
 - Zapisuje docházku a vyplňuje chytré sloupce (pomocnou evidenci) — v rozsahu, který je u sloupce nastavený (viz **Pomocná evidence**).
 
 #### Zákonný zástupce
@@ -188,11 +191,13 @@ flowchart TD
 - Součástí záznamu je **evidenční oddíl**, který členství založil. Slouží k dohledatelnosti a k výkaznictví (report se ptá, který oddíl člena vykázá), **neomezuje ale platnost členství**.
 - **Platné členství DU se uznává ve všech oddílech, kde je osoba evidovaná** — cena pro členy DU i podmínky způsobilosti platí i na akcích jiného oddílu než toho evidenčního. Přesun osoby mezi oddíly v průběhu roku členství nezaniká ani nezakládá nové.
 - Osoba se může stát členem DU od ledna následujícího roku po zaplacení příspěvku do listopadu.
-- **Příspěvek se vybírá hromadně přes oddíl.** HVO vybere osoby ze své členské základny, systém spočítá částku (počet osob × sazba pro daný rok) a vygeneruje **jeden QR kód pro hromadnou platbu** na účet ústředí. HVO zaplatí jednou platbou za všechny vybrané.
+- **Oddíl může vybírat členský příspěvek přes registrační systém** přímo od svých registrovaných členů nebo jejich zákonných zástupců. HVO pro rok nastaví lokální složku příspěvku; systém členovi vystaví jeden předpis a platební QR kód na účet oddílu.
+- **Předpis oddílového členského příspěvku se skládá ze dvou složek:** příspěvek DU podle celostátní sazby a lokální příspěvek na provoz oddílu. Částky se ukládají jako neměnný snapshot, aby pozdější změna sazby nepřepsala již vystavené nebo uhrazené předpisy. Má-li osoba už pro daný rok platné členství DU z jiného oddílu, předpis obsahuje jen lokální složku.
+- **Úhrada od člena nejprve kryje složku DU, potom lokální složku.** HVO může do dávky pro ústředí zařadit pouze osobu, pro niž oddíl vybral celou složku DU; lokální část zůstává oddílu. Systém pak z těchto osob spočítá částku a vygeneruje **jeden QR kód pro hromadnou platbu** na účet ústředí.
 - **Sazbu příspěvku pro daný rok stanovuje ADM** a je společná pro celý systém. **Jakmile na daný rok dorazí první platba, sazba se uzamkne** — nelze ji změnit, aby dva oddíly nezaplatily za stejný rok jinou částku a aby už rozeslané QR kódy zůstaly platné.
 - **Členství vzniká spárováním platby, ne ručním zápisem.** Hromadnou platbu páruje **účetní ústředí** stejným mechanismem jako platby za akce (SS = příspěvek DU, VS = dávka); spárováním systém všem osobám dávky nastaví příznak člena DU — založí záznam o členství s evidenčním oddílem = oddíl, který dávku podal.
 - **Dávka je nedělitelná.** Po vygenerování QR se seznam osob uzamkne (jinak by částka nesouhlasila s QR); změna znamená dávku zrušit a založit novou. Částečná úhrada příznak nikomu nenastaví — dávka zůstane jako nedoplatek, dokud ji HVO nedoplatí.
-- Do dávky lze zařadit jen osobu, která pro daný rok **ještě členství nemá** a **není v jiné nevypořádané dávce**.
+- Do dávky lze zařadit jen osobu, která pro daný rok **ještě členství nemá**, **není v jiné nevypořádané dávce** a má uhrazenou složku DU svého oddílového předpisu.
 - **První zaplacená dávka vyhrává** — je-li osoba evidovaná ve víc oddílech, nerozhoduje se, kdo má přednost. Podají-li dávku dva oddíly, uspěje ta, jejíž platba dorazila první; druhá položka se přeskočí a rozdíl řeší účetní ústředí jako přeplatek dávky.
 - **Evidenční oddíl lze přepsat:** HVO jiného oddílu, kde je osoba evidovaná, požádá o převedení a potvrdí ho HVO stávajícího evidenčního oddílu, nebo ADM. Změna se loguje a mění **jen výkaznictví**, ne platnost členství — to platí dál ve všech oddílech.
 - Členství DU trvá: leden–prosinec (kalendářní rok). **Vyprší tím, že pro nový rok záznam nevznikne** — není potřeba žádný přechod stavu ani úklidová úloha k 31. 12.
@@ -233,7 +238,23 @@ flowchart TD
 ### Konfigurace akce
 
 - Hlavní vedoucí vytváří akce
-- **Přiřazení vedoucích k akci:** HVO přiřadí k akci konkrétní lidi (Vedoucí, Rádce) a každému nastaví rozsah oprávnění — úprava akce, úprava přihlášek, úprava cen a storen, zápis docházky. Samo přiřazení dává **čtení přihlášek** akce; bez přiřazení k akci vedoucí přístup nemá. Eviduje se, kdo a kdy přiřazení založil. **Účetní oddílu se k akci nepřiřazuje** — má oprávnění pro celý oddíl (viz **Účetní oddílu**).
+- **Při založení akce nebo při její úpravě s oprávněním `can_edit_event` Vedoucí akce vyplňuje:**
+  - stav akce: **veřejný**, **koncept**, **neviditelný** nebo **zrušený**,
+  - název a typ akce,
+  - varianty ceny podle typu účastníka nebo jiné cenové varianty,
+  - sraz: místo, datum a čas,
+  - místo konání nebo cíl akce (kam se jde či jede),
+  - návrat: místo, datum a čas,
+  - popis akce, program a poznámku,
+  - co s sebou; položky lze převzít ze šablony a upravit pro konkrétní akci,
+  - nutné dokumenty podle seznamu dokumentů,
+  - kontakt na Vedoucího akce a další členy týmu; kontakty se zobrazují podle aktivních přiřazení VO/RÁD k akci,
+  - datum a čas uzavření přihlášek.
+- **Šablony akcí:** HVO může vytvořit šablonu s výchozím typem, programem, seznamem „co s sebou“, dokumenty, cenami a další konfigurací. Z ní lze opakovaně zakládat například jednodenní výpravy; vytvořená akce je samostatná a pozdější změna šablony ji nemění.
+- **Stav a viditelnost:** koncept není určen k publikaci ani přihlašování, veřejný stav akci publikuje, neviditelný stav ji skryje z běžných výpisů a zrušený stav ukončí její další provoz podle pravidel storna. Samostatné nastavení viditelnosti dále určuje, zda je zveřejněná akce veřejná, vnitřní nebo dostupná jen přes sdílecí odkaz.
+- **Pozvánky na akci:** HVO nebo Vedoucí s oprávněním upravit akci může pozvat vybrané členy svého oddílu. Výběr může tvořit celý oddíl, konkrétní družiny, věková skupina, pohlaví, oddílová rada (členové vedení) nebo jednotlivě zvolené osoby; při naplánování se uloží konkrétní seznam pozvaných. Pro každou pozvánku nastaví datum a čas odeslání a volitelně jeden termín automatické připomínky. Pozvánka obsahuje volby **Přihlásit** a **Omluvit**; připomínka se odešle jen osobě, která se dosud ani nepřihlásila, ani neomluvila.
+- **Základní čtení akce:** každý aktivní **Vedoucí (VO)** a **Rádce (RÁD)** vidí v rámci svého oddílu detail akce a seznam přihlášených, i když k akci není přiřazený a nezúčastní se její organizace. Základní čtení neobsahuje platební atributy, zdravotní údaje ani obsah nahraných dokumentů.
+- **Tým akce:** tvoří jej jen konkrétní **Vedoucí (VO)** a **Rádci (RÁD)** přiřazení k akci. HVO může jednomu či více členům týmu určit roli **Vedoucí akce**. Každému členu týmu nastaví rozsah oprávnění — úprava akce, úprava přihlášek, úprava cen a storen, zápis docházky. Vedoucí akce navíc vidí předepsanou, uhrazenou a zbývající částku u přihlášek své akce. Eviduje se, kdo a kdy přiřazení založil. **Účetní oddílu se do týmu akce nezařazuje** — má oprávnění pro celý oddíl (viz **Účetní oddílu**).
 - **Přiřazení je verzované a nemaže se** — odebrání přístupu záznam jen uzavře (kdo a kdy odebral), změna rozsahu oprávnění uzavře starý a založí nový. I po letech tak lze zjistit, **kdo měl k akci a jejím přihláškám přístup a v jakém období**. Retenci určuje vlastní řádek v tabulce **Retence a GDPR** (10 let), ne 3letá lhůta auditního logu.
 - Každá akce může být svazána s maximálně jedním bankovním účtem
 - Každá akce může mít místo konání vybrané z lokací oddílu (GPS)
@@ -361,7 +382,7 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 - Seznam akcí/schůzek, docházka členů/nečlenů/vedoucích/rádců/dobrovolníků
 - Počty členů v čase — vývoj registrovaných členů / členů DU / hostů po měsících nebo letech (růst/úbytek oddílu).
 - Účast na akcích — kolik lidí chodí na akce v jednotlivých obdobích, naplněnost kapacit, podíl náhradníků.
-- Docházka — průměrná návštěvnost pravidelných schůzek v průběhu roku (sezónní výkyvy).
+- Docházka — průměrná návštěvnost pravidelných schůzek v průběhu roku, sezónní výkyvy, časová řada docházky jednotlivců, družin a celého oddílu; Rádce vidí jen svou družinu, VO/HVO svůj oddíl a ADM rozsah podle oprávnění.
 - Dobrovolnické hodiny — vývoj odpracovaných hodin, poměr krátkodobých/dlouhodobých dobrovolníků.
 - Retence / odchody — kolik osob přechází do neaktivní, míra reaktivací.
 - Platby — vývoj inkasa, podíl včas/pozdě zaplacených, storna.
@@ -375,8 +396,8 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 #### Pomocná evidence
 
 - Vedoucí může pro svůj oddíl nebo družinu definovat nové sloupce (do tabulky hostů/členů)
-- Sloupcům lze nastavit viditelnost — zda je vlastník účtu může vidět nebo upravovat
-- Sloupcům lze nastavit oprávnění — zda Rádci můžou vidět nebo upravovat
+- Sloupce lze zařadit do přihlášky na akci a vyplněná hodnota se ukládá k osobě
+- Typy polí, povinnost a pravidla přístupu vlastníka, zákonného zástupce a Rádce viz [docs/validation.md](docs/validation.md) a [docs/authorization.md](docs/authorization.md)
 
 #### Modul párování plateb
 
@@ -405,12 +426,13 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 
 #### Modul vzdělávání
 
-- Administrátor definuje jaké kurzy ústředí lze použít pro vzdělání vedoucích - eviduje se i doba platnosti
+- **Ústředí (ADM) spravuje centrální katalog kurzů a kvalifikační požadavky na role** — například povinný zdravotnický kurz nebo školení ŠHVT pro HVO; u každého kurzu se eviduje i doba platnosti.
+- Modul vzdělávání zobrazuje ústředí splnění požadavků za jednotlivé HVO, VO a Rádce v oddílech, včetně chybějící nebo prošlé kvalifikace.
 - Vzdělávací akce ústředí může být provázána s kurzem; po absolvování vznikne každému účastníkovi vazba s odkazem na zdrojovou akci
-- Hlavní vedoucí, Vedoucí a Rádci můžou sobě přiřadit kurzy z nabídky
+- Hlavní vedoucí, Vedoucí a Rádci můžou sobě přiřadit kurzy z nabídky a nahrát doklad; doklad podléhá schválení podle pravidel ústředí.
 - Systém automaticky přiřadí kurz ústředí všem účastníkům po jeho absolvování
 - Všichni Vedoucí a Rádci mají možnost vložit do systému svoje certifikáty, potvrzení od doktora a jiné absolvované kurzy
-- Modul vzdělání zobrazuje Administrátorovi, jaké kurzy absolvovali jednotliví vedoucí v oddílech
+- HVO vidí kvalifikace vedoucích a rádců svého oddílu; ADM vidí kvalifikace napříč oddíly a může ověřovat splnění centrálních požadavků.
 
 ---
 

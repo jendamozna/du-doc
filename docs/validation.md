@@ -29,39 +29,84 @@ Doplněk k [data-model.md](data-model.md), který popisuje **co je platná hodno
 
 Která pole `PERSON` musí být vyplněná, závisí na kontextu:
 
-| Kontext                          | Povinná pole                                                   | Zdroj                                                  |
-| -------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------ |
-| Host v oddílu                    | jméno **a** příjmení, **nebo** přezdívka                       | [README.md](../README.md) → Hlavní vedoucí             |
-| Registrovaný člen                | jméno, příjmení, pohlaví, **datum narození**                   | [README.md](../README.md) → Hlavní vedoucí             |
+| Kontext                                      | Povinná pole                                                   | Zdroj                                                  |
+| -------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------ |
+| Host v oddílu                                | jméno **a** příjmení, **nebo** přezdívka                       | [README.md](../README.md) → Hlavní vedoucí             |
+| Registrovaný člen                            | jméno, příjmení, pohlaví, **datum narození**                   | [README.md](../README.md) → Hlavní vedoucí             |
 | Přihláška nezletilého bez zákonného zástupce | `birth_date` (jinak nelze vyhodnotit bránu) + `guardian_email` | [registration-lifecycle.md](registration-lifecycle.md) |
-| Akce typu „S certifikátem"       | tituly před/za + adresa trvalého bydliště                      | [README.md](../README.md) → Typy a šablony             |
-| Člen hlídky na závodě            | `birth_date` (bez něj nelze ověřit složení hlídky)             | [race-patrols.md](race-patrols.md)                     |
-| Vlastník účtu                    | `ACCOUNT.login_email`                                          | [data-model.md](data-model.md)                         |
+| Akce typu „S certifikátem"                   | tituly před/za + adresa trvalého bydliště                      | [README.md](../README.md) → Typy a šablony             |
+| Člen hlídky na závodě                        | `birth_date` (bez něj nelze ověřit složení hlídky)             | [race-patrols.md](race-patrols.md)                     |
+| Vlastník účtu                                | `ACCOUNT.login_email`                                          | [data-model.md](data-model.md)                         |
 
 Ostatní pole (`nickname`, `insurance_company`, `address`) jsou povinná jen tehdy, označí-li je tak šablona akce nebo `EVENT_CUSTOM_FIELD.required`.
 
 ## Unikátnosti
 
-| Entita               | Klíč                                        | Poznámka                                                                   |
-| -------------------- | ------------------------------------------- | -------------------------------------------------------------------------- |
-| `ACCOUNT`            | `login_email`                               | přihlašovací e-mail; `PERSON.email` unikátní **není**                      |
-| `ACCOUNT`            | `person_id`                                 | jedna osoba má nejvýše jeden účet                                          |
-| `OAUTH_IDENTITY`     | `provider` + `provider_user_id`             | jedna externí identita patří jednomu účtu                                  |
-| `USER_ROLE`          | `account_id` + `unit_id` + `role`           | tatáž role se v oddílu nepřiděluje dvakrát                                 |
-| `DU_MEMBERSHIP`      | `person_id` + `year`                        | **`unit_id` do klíče nepatří** — jedno členství DU na osobu a rok globálně |
-| `DU_FEE_RATE`        | `year`                                      | jedna sazba příspěvku na rok                                               |
-| `DU_FEE_BATCH`       | `vs`                                        | variabilní symbol musí dávku jednoznačně identifikovat                     |
-| `DU_FEE_BATCH_ITEM`  | `batch_id` + `person_id`                    | osoba je v jedné dávce nejvýše jednou                                      |
-| `ATTENDANCE_RECORD`  | `event_id` + `person_id`                    | nejvýše jeden docházkový záznam na osobu a akci                            |
-| `EVENT_ASSIGNMENT`   | `event_id` + `account_id` (otevřený záznam) | jedno **aktivní** přiřazení na účet a akci; uzavřených může být víc        |
-| `BANK_TRANSACTION`   | `bank_account_id` + `external_id`           | idempotentní zápis — opakované stažení ani nahrání výpisu platbu nezdvojí  |
-| `RACE_PATROL`        | `event_id` + `name`                         | název hlídky je unikátní v rámci akce                                      |
-| `RACE_PATROL_MEMBER` | `person_id` + `event_id` (přes hlídku)      | osoba je nejvýše v jedné hlídce téže akce                                  |
-| `EVENT`              | `share_slug`                                | sdílecí odkaz je globálně unikátní a nepředvídatelný                       |
-| `REGISTRATION`       | `vs`                                        | variabilní symbol musí párování jednoznačně identifikovat                  |
-| `PERSON_UNIT`        | `person_id` + `unit_id` (otevřený záznam)   | osoba má v oddílu nejvýše jeden platný záznam                              |
+| Entita                 | Klíč                                        | Poznámka                                                                   |
+| ---------------------- | ------------------------------------------- | -------------------------------------------------------------------------- |
+| `ACCOUNT`              | `login_email`                               | přihlašovací e-mail; `PERSON.email` unikátní **není**                      |
+| `ACCOUNT`              | `person_id`                                 | jedna osoba má nejvýše jeden účet                                          |
+| `OAUTH_IDENTITY`       | `provider` + `provider_user_id`             | jedna externí identita patří jednomu účtu                                  |
+| `USER_ROLE`            | `account_id` + `unit_id` + `role`           | tatáž role se v oddílu nepřiděluje dvakrát                                 |
+| `DU_MEMBERSHIP`        | `person_id` + `year`                        | **`unit_id` do klíče nepatří** — jedno členství DU na osobu a rok globálně |
+| `DU_FEE_RATE`          | `year`                                      | jedna sazba příspěvku na rok                                               |
+| `UNIT_MEMBER_FEE_RATE` | `unit_id` + `year`                          | oddíl má pro rok jednu aktivní lokální sazbu                               |
+| `UNIT_MEMBER_FEE`      | `unit_id` + `person_id` + `year`            | jedna osoba má v oddílu jeden roční členský předpis                        |
+| `DU_FEE_BATCH`         | `vs`                                        | variabilní symbol musí dávku jednoznačně identifikovat                     |
+| `DU_FEE_BATCH_ITEM`    | `batch_id` + `person_id`                    | osoba je v jedné dávce nejvýše jednou                                      |
+| `ATTENDANCE_RECORD`    | `event_id` + `person_id`                    | nejvýše jeden docházkový záznam na osobu a akci                            |
+| `EVENT_ASSIGNMENT`     | `event_id` + `account_id` (otevřený záznam) | jedno **aktivní** přiřazení na účet a akci; uzavřených může být víc        |
+| `EVENT_INVITATION`     | `event_id` + `person_id`                    | osoba dostane na danou akci nejvýše jednu pozvánku                         |
+| `BANK_TRANSACTION`     | `bank_account_id` + `external_id`           | idempotentní zápis — opakované stažení ani nahrání výpisu platbu nezdvojí  |
+| `RACE_PATROL`          | `event_id` + `name`                         | název hlídky je unikátní v rámci akce                                      |
+| `RACE_PATROL_MEMBER`   | `person_id` + `event_id` (přes hlídku)      | osoba je nejvýše v jedné hlídce téže akce                                  |
+| `EVENT`                | `share_slug`                                | sdílecí odkaz je globálně unikátní a nepředvídatelný                       |
+| `REGISTRATION`         | `vs`                                        | variabilní symbol musí párování jednoznačně identifikovat                  |
+| `PERSON_UNIT`          | `person_id` + `unit_id` (otevřený záznam)   | osoba má v oddílu nejvýše jeden platný záznam                              |
+
+| `CUSTOM_FIELD` | `unit_id` + `unit_patrol_id` + `name` | název je unikátní v daném rozsahu |
+| `CUSTOM_FIELD_VALUE` | `custom_field_id` + `person_id` | osoba má pro sloupec nejvýše jednu hodnotu |
+| `CUSTOM_FIELD_OPTION` | `custom_field_id` + `value` | hodnota volby je v rámci sloupce unikátní |
+| `PERMISSION_DELEGATION` | `unit_id` + `delegate_account_id` + `permission` + otevřený interval | jedna aktivní delegace stejného oprávnění v témže rozsahu |
+| `COURSE_REQUIREMENT` | `course_id` + `role` + otevřený interval | pro kurz a roli existuje nejvýše jeden aktivní požadavek |
+
+### Vzdělávání a kvalifikace
+
+- `COURSE` v centrálním katalogu zakládá a archivuje pouze ADM; archivovaný kurz nelze nově přiřadit, ale historické `PERSON_COURSE` záznamy zůstávají platné pro historii.
+- `COURSE_REQUIREMENT` může vyžadovat kurz pro roli `HVO`, `VO` nebo `RAD`. Požadavek je účinný jen v intervalu `valid_from`–`valid_to`; překrývající se aktivní požadavky stejného kurzu a role nejsou povolené.
+- Povinný kurz je splněný pouze tehdy, pokud osoba má `PERSON_COURSE` s `verification_state = 'verified'`, `completed_on <= aktuální datum` a `valid_to IS NULL OR valid_to >= aktuální datum`.
+- Kurz udělený absolvováním vzdělávací akce ústředí může systém ověřit automaticky; ručně nahraný zdravotnický kurz, ŠHVT nebo jiný doklad zůstává ve stavu `pending`, dokud jej neschválí ADM nebo pověřený HVO.
+- Zamítnutý doklad (`verification_state = 'rejected'`) nesplňuje požadavek. Změna kurzu, dokladu, platnosti nebo stavu ověření se zapisuje do `AUDIT_LOG`.
+- Obsah `certificate_file` je kvalifikační podklad, nikoli obecná zdravotní dokumentace. Přístup k němu se řídí autorizačními pravidly modulu vzdělávání a po skončení retenční lhůty se odstraní nebo anonymizuje; stav kvalifikace může zůstat v agregovaném reportu.
+
+### Oddílové členské příspěvky
+
+- `UNIT_MEMBER_FEE` lze založit jen pro osobu s aktivním `PERSON_UNIT` ve stavu `registered_member` v témže oddílu. Historický předpis zůstává zachován i po změně stavu osoby.
+- `total_amount = du_amount + local_amount`; všechny tři hodnoty jsou nezáporné a jsou snapshotem při vystavení předpisu. Změna `UNIT_MEMBER_FEE_RATE` nebo `DU_FEE_RATE` existující předpis nesmí přepsat.
+- `du_amount` odpovídá sazbě DU pro daný rok, nebo je 0, pokud již existuje `DU_MEMBERSHIP(person_id, year)`. Předpis s nulovou složkou DU nelze zařadit do `DU_FEE_BATCH`.
+- `PAYMENT_ALLOCATION` cílí právě na jednu z entit `REGISTRATION`, `DU_FEE_BATCH` nebo `UNIT_MEMBER_FEE`; bankovní účet transakce musí patřit témuž oddílu jako cíl předpisu.
+- Položka `DU_FEE_BATCH_ITEM` musí odkazovat na předpis téhož oddílu a osoby, jehož součet alokací kryje alespoň `du_amount`. Jedna složka DU smí být nejvýše v jedné neuzavřené dávce.
+- Vratka nebo oprava nesmí snížit krytí složky DU pod `du_amount`, pokud je předpis v uzamčené nebo zaplacené dávce; nejdřív se provede oprava odpovídající dávky u ústředí.
 
 ## Invarianty po entitách
+
+### Pomocná evidence
+
+- `field_type` je jedna z hodnot `text`, `number`, `date`, `boolean`, `choice`; uložená hodnota musí odpovídat typu.
+- `owner_access` a `advisor_access` jsou každá samostatně jedna z hodnot `none`, `view`, `edit`; výchozí hodnota při založení je `none`.
+- `unit_patrol_id` musí patřit stejnému `unit_id` jako sloupec. Sloupec oddílu bez družiny je dostupný v celém oddílu; družinový sloupec jen osobám v dané družině.
+- Hodnotu lze uložit jen osobě, která má v oddílu platný záznam `PERSON_UNIT`; archivovaná osoba ji nemůže číst ani měnit.
+- `required` se vyhodnocuje při použití sloupce v `EVENT_CUSTOM_FIELD`, ne jako absolutní povinnost pro každou osobu v oddílu.
+- `choice` vyžaduje definovaný seznam povolených hodnot; tento seznam se při změně nesmí změnit tak, aby zneplatnil existující hodnoty bez migrace.
+- `CUSTOM_FIELD` nesmí sloužit jako náhrada `PERSON_SENSITIVE_DATA` ani zpřístupnit zdravotní údaje přes méně přísné oprávnění.
+- Změna definice sloupce a změna nebo smazání jeho hodnoty se zapisuje do `AUDIT_LOG`; při změně oprávnění se zachovává předchozí hodnota a aktér změny.
+
+### Delegace oprávnění
+
+- `delegator_account_id` musí mít v daném oddílu roli HVO; delegovat nelze oprávnění ADM ani oprávnění, které HVO sám nemá.
+- `delegate_account_id` musí být účet s vazbou na stejný oddíl; účet nesmí delegaci dále řetězit.
+- `valid_from < valid_to`, pokud je `valid_to` vyplněno; aktivní delegace stejného oprávnění a rozsahu se nesmí překrývat.
+- Odvolaná nebo časově neplatná delegace se při vyhodnocení oprávnění ignoruje.
 
 ### Oddíl a region
 
@@ -71,15 +116,24 @@ Ostatní pole (`nickname`, `insurance_company`, `address`) jsou povinná jen teh
 
 ### Akce
 
+- `EVENT.status` je jedna z hodnot `draft`, `published`, `hidden` nebo `cancelled`; nový záznam vzniká ve stavu `draft`. Stav `draft` není určen k přihlašování, `cancelled` nepřijímá nové přihlášky a jeho existující přihlášky se řeší podle storno pravidel.
+- Stav `published` odpovídá uživatelskému stavu „veřejný“ a `hidden` stavu „neviditelný“. Rozsah publikace v `EVENT.visibility` (`public` / `internal` / `private`) je samostatné nastavení a nesmí se zaměňovat se stavem workflow.
 - **Splatnost je výlučná** — vyplněno buď `payment_due_days`, nebo `payment_due_date`, nikdy obojí ani nic.
+- `meeting_at` a `return_at` jsou-li vyplněné, musí ležet v pořadí `meeting_at <= starts_at < ends_at <= return_at`; místo srazu a návratu musí patřit témuž oddílu jako akce. `destination` může být prázdný u akcí bez přesunu.
 - `registration_from < registration_to`, `starts_at < ends_at`; přihlašovací okno smí přesahovat začátek akce.
 - `visibility` má tři **vzájemně výlučné** hodnoty; `share_slug` má **každá** akce bez ohledu na viditelnost.
 - `capacity ≥ 0`, `substitute_count ≥ 0`. Kapacitu nelze snížit pod počet přihlášek, které se do ní už počítají.
 - Dobrovolnická pole (`volunteer_registration_*`) dávají smysl jen při `volunteers_enabled = true`.
 - Akce bez přihlášek (typ `club`, `one_off`) nesmí mít ceny, storno pravidla ani otevřenou registraci.
 - `bank_account_id` musí patřit **témuž oddílu** jako akce.
+- `EVENT_ASSIGNMENT.account_id` musí mít v pořádajícím oddílu akce aktivní roli `VO` nebo `RAD`; aktivní přiřazení těchto účtů tvoří tým akce a řídí jejich zvýšená/týmová oprávnění. Základní čtení detailu akce a seznamu přihlášených pro VO/RÁD plyne z aktivní role v témže oddílu a na přiřazení není vázané. Účet s rolí HVO, ÚČE, ADM nebo bez role se do týmu akce nezařazuje.
+- `EVENT_ASSIGNMENT.team_role` je `member` nebo `event_leader`; roli `event_leader` lze přiřadit jen aktivnímu členu týmu. Jeden tým může mít více vedoucích akce.
 - `EVENT_ASSIGNMENT` se **nemaže** — odebrání přístupu vyplní `revoked_at` a `revoked_by_account_id`; `revoked_at >= assigned_at` a uzavřený záznam už nelze měnit. Změna rozsahu příznaků uzavře starý záznam a založí nový.
 - Kontrola oprávnění pracuje výhradně se záznamy `revoked_at IS NULL`; uzavřené jsou doklad o minulém přístupu ([authorization.md](authorization.md)).
+- `EVENT_INVITATION.person_id` musí mít při založení aktivní `PERSON_UNIT` v pořádajícím oddílu. Výběr celé skupiny se při naplánování materializuje do jednotlivých pozvánek; pozdější změna družiny, věku, pohlaví nebo role osoby seznam pozvaných nemění.
+- Na osobu a akci existuje nejvýše jedna pozvánka. `scheduled_at` nesmí ležet po `registration_to`; volitelný `reminder_scheduled_at` musí být po `scheduled_at` a nejpozději v `registration_to`.
+- `response` je `pending`, `accepted` nebo `declined`. Volba **Přihlásit** založí standardní `REGISTRATION` a nastaví `accepted`; volba **Omluvit** nastaví `declined` a přihlášku nezaloží. `registration_id` smí být vyplněné jen při `accepted` a musí odkazovat na přihlášku téže osoby a akce.
+- Job odešle pozvánku právě jednou po dosažení `scheduled_at`. Připomínku odešle právě jednou po dosažení `reminder_scheduled_at` jen tehdy, když pozvánka už byla odeslána, `response = 'pending'` a neexistuje přihláška této osoby na akci; pro koncept, neviditelnou nebo zrušenou akci se pozvánky ani připomínky neposílají.
 
 ### Ceny a storna
 
@@ -112,12 +166,12 @@ Ostatní pole (`nickname`, `insurance_company`, `address`) jsou povinná jen teh
 - `PAYMENT_ALLOCATION`: součet alokací jedné transakce **nesmí překročit** její částku (v absolutní hodnotě).
 - Do párování vstupují **jen příchozí** platby.
 - Záporná alokace (`refund`) nesmí stáhnout součet u přihlášky pod nulu.
-- Alokace musí odkazovat na přihlášku akce **téhož oddílu**, jako je bankovní účet transakce (u dávky příspěvků na účet ústředí).
+- Alokace musí odkazovat na přihlášku akce nebo oddílový členský předpis **téhož oddílu**, jako je bankovní účet transakce (u dávky příspěvků na účet ústředí).
 - `external_id` je povinné u **všech** zdrojů — u ručního zápisu se generuje (`manual:<uuid>`), u importu výpisu odvodí z otisku řádku (`stmt:<hash>`).
 - **VS ani SS nejsou u transakce povinné** — v nahraném výpisu i u ručního zápisu často chybí; příslušná párovací pravidla se pak jen přeskočí.
 - `voided_at` lze nastavit **jen** u transakce se `source != 'import'` a **jen** když nemá žádnou alokaci.
 - `api_token_enc` smí být vyplněný jen při `provider = 'fio'`; `provider = 'manual'` vylučuje synchronizační pole (`last_sync_at`, `sync_state`, `last_external_id`).
-- `PAYMENT_ALLOCATION` má vyplněné **právě jedno** z `registration_id` / `fee_batch_id` — alokace míří buď na přihlášku, nebo na dávku příspěvků.
+- `PAYMENT_ALLOCATION` má vyplněné **právě jedno** z `registration_id` / `fee_batch_id` / `unit_member_fee_id` — alokace míří na přihlášku, dávku příspěvků DU nebo oddílový členský předpis.
 
 ### Příspěvek DU
 

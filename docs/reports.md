@@ -8,14 +8,13 @@ Rozpis reportů popsaných v [../README.md](../README.md) do podoby, ze které l
 
 ### Rozsah dat (scope)
 
-| Role                 | Vidí                                         |
-| -------------------- | -------------------------------------------- |
-| Rádce (RAD)          | nic (reporty nemá)                           |
-| Vedoucí družiny (VD) | jen osoby své družiny (`UNIT_PATROL_MEMBER`) |
-| Vedoucí oddílu (VO)  | svůj oddíl                                   |
-| Hlavní vedoucí (HVO) | svůj oddíl                                   |
-| Účetní oddílu (UCE)  | jen report Platby, svůj oddíl                |
-| Administrátor (ADM)  | vše (napříč oddíly, s dimenzí region)        |
+| Role                         | Vidí                                         |
+| ---------------------------- | -------------------------------------------- |
+| Rádce (vedoucí družiny, RAD) | jen osoby své družiny (`UNIT_PATROL_MEMBER`) |
+| Vedoucí oddílu (VO)          | svůj oddíl                                   |
+| Hlavní vedoucí (HVO)         | svůj oddíl                                   |
+| Účetní oddílu (UCE)          | jen report Platby, svůj oddíl                |
+| Administrátor (ADM)          | vše (napříč oddíly, s dimenzí region)        |
 
 Scope se vždy aplikuje jako filtr `unit_id` odvozený z `USER_ROLE`, ne z parametru requestu — parametr `unit_id` se validuje proti povoleným oddílům volajícího.
 
@@ -37,7 +36,7 @@ Scope se vždy aplikuje jako filtr `unit_id` odvozený z `USER_ROLE`, ne z param
 - **Aktivní přihláška** = `REGISTRATION.state NOT IN ('Canceled', 'Expired')`. Storna se počítají jen v reportu Platby.
 - **Anonymizované osoby** (`PERSON.anonymized_at IS NOT NULL`) se do agregací počítají (počty musí sedět historicky), ale nikdy se nevypisují jmenovitě — detailní řádky je vynechávají.
 - **Region** je vždy snapshot z akce (`EVENT.region_id_snapshot`), nikdy aktuální zařazení oddílu.
-- **Duplicity osob:** agregace „počet unikátních osob" respektuje `REPORT_MERGE` (viz R9); ostatní reporty počítají osoby podle `PERSON.id`.
+- **Duplicity osob:** agregace „počet unikátních osob" respektuje `REPORT_MERGE` (viz R10); ostatní reporty počítají osoby podle `PERSON.id`.
 
 ### Výstup a API
 
@@ -64,7 +63,7 @@ Provozní přehled: jeden řádek na akci, s rozpadem účastníků podle typu.
 | členové DU           | z těch, kdo dorazili, ti s `DU_MEMBERSHIP` pro rok akce                                 |
 | registrovaní členové | `PERSON_UNIT.membership_state = 'registered_member'` v oddílu akce, aktivní k datu akce |
 | hosté                | zbytek (osoba bez aktivní vazby na pořádající oddíl nebo `membership_state = 'guest'`)  |
-| vedoucí / rádci      | osoby s `USER_ROLE` VO/HVO/VD resp. RAD v oddílu akce                                   |
+| vedoucí / rádci      | osoby s `USER_ROLE` VO/HVO/RAD v oddílu akce                                            |
 | dobrovolníci         | přihlášky s `category = 'volunteer'`, které mají docházku                               |
 | odpracované hodiny   | `SUM(ATTENDANCE_RECORD.volunteer_hours)`                                                |
 
@@ -89,7 +88,7 @@ Vývoj velikosti oddílu. Metrika je **stav ke konci každého období**, ne př
 **Hrany:**
 
 - Osoba ve více oddílech se počítá v každém oddílu zvlášť; při agregaci přes více oddílů (ADM) se nabízí navíc řádek „unikátní osoby" (`COUNT(DISTINCT person_id)`).
-- Historii je nutné číst z intervalů `PERSON_UNIT.valid_from/valid_to`, ne z `PERSON_UNIT_HISTORY` — historie slouží k přechodům (R6), ne ke stavu.
+- Historii je nutné číst z intervalů `PERSON_UNIT.valid_from/valid_to`, ne z `PERSON_UNIT_HISTORY` — historie slouží k přechodům (R7), ne ke stavu.
 
 ---
 
@@ -114,7 +113,7 @@ Vývoj velikosti oddílu. Metrika je **stav ke konci každého období**, ne př
 
 ## R4 — Docházka pravidelných schůzek
 
-**Kód:** `clubs` · **Kdo:** VD, VO, HVO, ADM
+**Kód:** `clubs` · **Kdo:** RÁD, VO, HVO, ADM
 
 Sezónnost pravidelných schůzek — jen akce `type = 'club'`, bucket podle `EVENT.starts_at`.
 
@@ -128,11 +127,45 @@ Sezónnost pravidelných schůzek — jen akce `type = 'club'`, bucket podle `EV
 **Hrany:**
 
 - Schůzka **bez jediného docházkového záznamu** se do průměru počítá jako nula pouze tehdy, pokud proběhla (`starts_at < now`); budoucí schůzky se vylučují.
-- Filtr `unit_patrol_id` (družina) se aplikuje přes `UNIT_PATROL_MEMBER` osoby — VD ho má vynucený.
+- Filtr `unit_patrol_id` (družina) se aplikuje přes `UNIT_PATROL_MEMBER` osoby — RAD ho má vynucený.
 
 ---
 
-## R5 — Dobrovolnické hodiny
+## R5 — Vývoj docházky v čase
+
+**Kód:** `attendance-trend` · **Kdo:** RÁD, VO, HVO, ADM
+
+Časová řada skutečné účasti na proběhlých akcích. Report podporuje tři úrovně pohledu, které používají stejnou definici docházky:
+
+| Úroveň      | Výstup                                                             | Rozsah                                                                          |
+| ----------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| jednotlivec | osoba × časový koš: přítomen, nepřítomen, bez záznamu, míra účasti | RÁD jen osoby své družiny; VO/HVO osoby svého oddílu; ADM podle zvoleného scope |
+| družina     | družina × časový koš: unikátní přítomní, očekávaní, míra účasti    | družiny ve scope volajícího                                                     |
+| oddíl       | oddíl × časový koš: unikátní přítomní, očekávaní, míra účasti      | oddíly ve scope volajícího                                                      |
+
+**Parametr `level`:** `person` | `patrol` | `unit`; výchozí je `unit`. Detail jednotlivce je jmenný jen pro neanonymizované osoby. Agregované řádky mohou zahrnout anonymizované osoby, aby historické součty zůstaly správné.
+
+| Metrika     | Výpočet                                                                                                             |
+| ----------- | ------------------------------------------------------------------------------------------------------------------- |
+| očekávaní   | počet osob, pro které existuje relevantní proběhlá akce v daném koši a které byly na akci evidované nebo přihlášené |
+| přítomní    | počet `ATTENDANCE_RECORD` s `present = true`                                                                        |
+| nepřítomní  | počet záznamů s `present = false`                                                                                   |
+| bez záznamu | očekávaní − přítomní − nepřítomní                                                                                   |
+| míra účasti | přítomní / očekávaní; při nulovém jmenovateli `null`, ne 0                                                          |
+
+**Pravidla:**
+
+- Do časové řady vstupují jen proběhlé akce (`starts_at < now`) a bucketuje se podle `EVENT.starts_at` v `Europe/Prague`; prázdné koše se vracejí s nulovými hodnotami.
+- Základem je osoba evidovaná na akci: aktivní přihláška účastníka nebo osoba ručně vybraná pro docházku. Dobrovolníci a vedoucí se započítají jen tehdy, jsou-li součástí zvoleného typu pohledu; do výchozího pohledu účastníků se nezapočítají.
+- `present = false` je skutečná nepřítomnost. Chybějící `ATTENDANCE_RECORD` zůstává „bez záznamu“ a nesmí se vydávat za nepřítomnost.
+- Agregace družiny používá příslušnost `UNIT_PATROL_MEMBER` platnou k datu akce; změna družiny zpětně nepřepíše historickou docházku.
+- U více oddílů se osoba v rámci řádku oddílu počítá jednou; při pohledu ADM přes více oddílů se navíc vrací `unique_persons`, aby se stejná osoba nesčítala jako více osob.
+
+**Hrany:** Akce bez jediného evidovaného účastníka se do vývoje nezapočítá. Pokud je akce evidovaná, ale docházka není uzavřená, `meta.attendance_incomplete = true` a report zachová rozdíl mezi nulovou účastí a chybějícími záznamy.
+
+---
+
+## R6 — Dobrovolnické hodiny
 
 **Kód:** `volunteers` · **Kdo:** VO, HVO, ADM
 
@@ -147,7 +180,7 @@ Sezónnost pravidelných schůzek — jen akce `type = 'club'`, bucket podle `EV
 
 ---
 
-## R6 — Retence a odchody
+## R7 — Retence a odchody
 
 **Kód:** `retention` · **Kdo:** HVO, ADM
 
@@ -168,7 +201,7 @@ Zdrojem jsou přechody v `PERSON_UNIT_HISTORY` (proto se tato historie nesmí sl
 
 ---
 
-## R7 — Platby
+## R8 — Platby
 
 **Kód:** `payments` · **Kdo:** UCE, HVO, ADM
 
@@ -197,20 +230,20 @@ Bucket podle data akce (`EVENT.starts_at`), varianta „cash-flow" podle `BANK_T
 
 ---
 
-## R8 — Vzdělávání
+## R9 — Vzdělávání
 
 **Kód:** `education` · **Kdo:** HVO, ADM
 
 - **Platné kurzy k datu:** `PERSON_COURSE` s `completed_on <= datum AND (valid_to IS NULL OR valid_to >= datum)`; na časové ose stav ke konci každého koše.
 - **Blížící se expirace:** `valid_to` v intervalu `<now, now + N dní>`, default `N = 90`, parametr `expiring_in_days`.
-- **Pokrytí:** podíl osob s rolí VO/HVO/VD/RAD v oddílu, které mají platný daný kurz — jmenovatel jsou aktivní vedoucí, ne všechny osoby.
+- **Pokrytí:** podíl osob s rolí VO/HVO/RAD v oddílu, které mají platný daný kurz — jmenovatel jsou aktivní vedoucí, ne všechny osoby.
 - **Rozpad:** kurz × počet platných × počet expirujících × počet propadlých.
 
 **Hrany:** kurz s `validity_months = NULL` je trvalý — nikdy neexpiruje a do „expirujících" nepatří.
 
 ---
 
-## R9 — Unikátní děti (modul reporty ústředí)
+## R10 — Unikátní děti (modul reporty ústředí)
 
 **Kód:** `unique-children` · **Kdo:** ADM
 
@@ -236,9 +269,9 @@ Reporty výše lze postavit nad stávajícím modelem s těmito výjimkami:
 
 | Chybí                                     | Potřebuje report   | Návrh                                                                      |
 | ----------------------------------------- | ------------------ | -------------------------------------------------------------------------- |
-| čas vzniku přihlášky                      | R7 (splatnost)     | `REGISTRATION.created_at` (datetime) — výchozí bod relativní splatnosti    |
-| čas přechodu stavu přihlášky              | R7 (storna v čase) | `REGISTRATION.state_changed_at` nebo čtení z `AUDIT_LOG` (action `cancel`) |
-| hranice krátkodobý/dlouhodobý dobrovolník | R5                 | klíč v nastavení oddílu, default 50 hodin                                  |
+| čas vzniku přihlášky                      | R8 (splatnost)     | `REGISTRATION.created_at` (datetime) — výchozí bod relativní splatnosti    |
+| čas přechodu stavu přihlášky              | R8 (storna v čase) | `REGISTRATION.state_changed_at` nebo čtení z `AUDIT_LOG` (action `cancel`) |
+| hranice krátkodobý/dlouhodobý dobrovolník | R6                 | klíč v nastavení oddílu, default 50 hodin                                  |
 
 Bez těchto polí se příslušné metriky nevrací (ne odhadují) a UI je skryje.
 

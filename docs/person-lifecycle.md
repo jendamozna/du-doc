@@ -70,13 +70,13 @@ Obě osy se kreslí zvlášť právě proto, že jsou na sobě nezávislé — k
 
 ## Dopady na ostatní vazby při `active → inactive`
 
-| Vazba                     | Dopad                                                                                          |
-| ------------------------- | ---------------------------------------------------------------------------------------------- |
-| Členství v družině        | osoba se odebere ze **aktivních** družin; historické členství zůstává v historii               |
-| Vazba zákonný zástupce ↔ dítě        | nemění se — vazba žije nezávisle na `record_state` dítěte i zákonného zástupce                             |
-| Role účtu (VO/VD/RÁD/ÚČE) | role se **needuje automaticky** — HVO ji musí odebrat explicitně, pokud chce                   |
-| Budoucí přiřazení k akci  | nové přiřazení vyžaduje `active`; existující přiřazení k už proběhlým akcím zůstává v historii |
-| Založení nové přihlášky   | dovoleno — samotné podání přihlášku reaktivuje (viz výše)                                      |
+| Vazba                         | Dopad                                                                                          |
+| ----------------------------- | ---------------------------------------------------------------------------------------------- |
+| Členství v družině            | osoba se odebere ze **aktivních** družin; historické členství zůstává v historii               |
+| Vazba zákonný zástupce ↔ dítě | nemění se — vazba žije nezávisle na `record_state` dítěte i zákonného zástupce                 |
+| Role účtu (VO/RÁD/ÚČE)        | role se **needuje automaticky** — HVO ji musí odebrat explicitně, pokud chce                   |
+| Budoucí přiřazení k akci      | nové přiřazení vyžaduje `active`; existující přiřazení k už proběhlým akcím zůstává v historii |
+| Založení nové přihlášky       | dovoleno — samotné podání přihlášku reaktivuje (viz výše)                                      |
 
 ## Rozsah a scope: per oddíl vs. globální anonymizace
 

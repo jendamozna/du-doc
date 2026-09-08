@@ -4,7 +4,7 @@ Implementační detail k modulu párování plateb ([README.md](../README.md) �
 
 ## Alokace
 
-- Vazba transakce ↔ přihláška je **M:N** a nese částku (`PAYMENT_ALLOCATION.amount`) — jedna platba se dá rozdělit mezi více přihlášek a jedna přihláška posbírat z více plateb.
+- Vazba transakce ↔ platební cíl je **M:N** a nese částku (`PAYMENT_ALLOCATION.amount`) — cílem je přihláška, oddílový členský předpis nebo dávka příspěvků DU. Jedna platba se tak dá rozdělit mezi více cílů a jeden cíl posbírat z více plateb.
 - Stav úhrady přihlášky se **počítá ze součtu alokací** vůči ceně, neukládá se jako samostatné číslo:
   - součet < cena → `PartialPaid`,
   - součet = cena → `Paid`,
@@ -15,6 +15,22 @@ Implementační detail k modulu párování plateb ([README.md](../README.md) �
   - absolutně → `payment_due_date` (u přihlášek podávaných po tomto datu platí splatnost ihned).
     Stejný výpočet používají výzvy k platbě, připomínky i report Platby ([reports.md](reports.md)).
 - U každé alokace se eviduje `matched_by` (`auto` / `manual`), `match_method`, čas spárování a čas odeslání potvrzení.
+
+## Oddílové členské příspěvky
+
+Oddíl může od registrovaných členů a jejich zákonných zástupců vybírat roční členské příspěvky na svůj účet. Každý předpis (`UNIT_MEMBER_FEE`) je vázaný na osobu, oddíl a rok a obsahuje neměnný rozpad:
+
+- **složka DU** = aktuální sazba `DU_FEE_RATE` pro rok; je nulová, pokud osoba již má platné `DU_MEMBERSHIP` pro stejný rok,
+- **lokální složka** = částka nastavená HVO pro provoz oddílu v `UNIT_MEMBER_FEE_RATE`,
+- **celkem** = součet obou složek, s vlastním VS a QR kódem na bankovní účet oddílu.
+
+Předpis se vytváří jen pro aktivního registrovaného člena oddílu. Zaplatit jej může člen, případně jeho aktivní zákonný zástupce; příjemce výzvy a potvrzení se určí stejným způsobem jako u přihlášky.
+
+- Alokace platby na předpis používá stejný mechanismus jako přihláška, ale cílí na `UNIT_MEMBER_FEE`.
+- Součet alokací nejdříve kryje složku DU a až potom lokální složku. `du_collected = MIN(SUM(alokací), du_amount)` je výpočetní hodnota, ne samostatně uložený stav.
+- Po uhrazení celé složky DU může HVO osobu zařadit do `DU_FEE_BATCH`; lokální složka se do dávky nikdy nezařazuje a zůstává příjmem oddílu.
+- Členství DU nevzniká individuální platbou na účet oddílu. Vznikne až po spárování celé hromadné dávky s platbou na účet ústředí.
+- Změna lokální sazby nemění existující předpisy. Oprava již uhrazeného předpisu se provádí novým opravným zápisem nebo vratkou, nikdy tichým přepsáním snapshotu.
 
 ## Způsoby spárování (`match_method`)
 
