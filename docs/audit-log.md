@@ -46,4 +46,4 @@ Záznam se zapisuje **oběma oddílům** (`unit_id` původní i nový) — jinak
 - `MERGE_LOG` — nese `snapshot` pro revert sloučení osob,
 - `PERSON_UNIT_HISTORY` — typované přechody stavů, které čtou reporty,
 - `EVENT_ASSIGNMENT` s `revoked_at` — historie přístupu vedoucích k akci; je to primární evidence s vlastní retencí 10 let od skončení akce, kterou by 3letý auditní log neunesl,
-- `GDPR_AUDIT` — doklad o výmazu s vlastní retencí a okruhem čtenářů.
+- `GDPR_AUDIT` — doklad o lokálním výmazu citlivých dat nebo globální anonymizaci osoby, s vlastní retencí a okruhem čtenářů.

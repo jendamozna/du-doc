@@ -22,18 +22,18 @@ Obě osy se mění nezávisle a v libovolném čase nese osoba dvojici `(member_
 
 ## Přechody osy `member_status`
 
-| Přechod                    | Spouštěč | Guard                | Efekt                                                                                                                                                |
-| -------------------------- | -------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `host → registered_member` | HVO      | povinné `birth_date` | osoba začíná splňovat podmínky pro registrovaného člena, může jí HVO později založit `DU_MEMBERSHIP`                                                 |
-| `registered_member → host` | zakázáno | —                    | degradace vztahu jde jen přes `inactive`, ne zpět na hosta — zabraňuje ztrátě `birth_date` a dalších polí, která registrovaný člen musí mít vyplněná |
+| Přechod                    | Spouštěč | Guard                | Efekt                                                                                                                                                        |
+| -------------------------- | -------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `host → registered_member` | HVO      | povinné `birth_date` | osoba začíná splňovat podmínky pro registrovaného člena; HVO jí může vystavit oddílový členský předpis a po úhradě složky DU ji zařadit do dávky pro ústředí |
+| `registered_member → host` | zakázáno | —                    | degradace vztahu jde jen přes `inactive`, ne zpět na hosta — zabraňuje ztrátě `birth_date` a dalších polí, která registrovaný člen musí mít vyplněná         |
 
 ## Přechody osy `record_state`
 
-| Přechod                        | Spouštěč                                                           | Guard                                                                                                                          | Efekt                                                                                      |
-| ------------------------------ | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
-| `active → inactive`            | job (denně) nebo HVO manuálně                                      | dlouhodobě bez aktivity (viz níže), nebo manuální rozhodnutí HVO bez další podmínky                                            | osoba se přestane počítat do stavu členů, přestane dostávat automatické výzvy a připomínky |
-| `inactive → active`            | HVO (reaktivace), nebo automaticky jakoukoli novou aktivitou osoby | žádný                                                                                                                          | osoba se znovu počítá a dostává výzvy                                                      |
-| `active`/`inactive → archived` | retenční job, nebo Administrátor (průřezový výmaz)                 | uplynutí retenční lhůty **a** `record_state = inactive` ve **všech** oddílech, kde je osoba evidovaná (viz **Rozsah a scope**) | nevratná anonymizace osobních a citlivých údajů, zachování jen agregovaných dat            |
+| Přechod                        | Spouštěč                                                           | Guard                                                                                                                          | Efekt                                                                                                         |
+| ------------------------------ | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `active → inactive`            | job (denně) nebo HVO manuálně                                      | dlouhodobě bez aktivity (viz níže), nebo manuální rozhodnutí HVO bez další podmínky                                            | osoba se přestane počítat do stavu členů, přestane dostávat automatické výzvy a připomínky                    |
+| `inactive → active`            | HVO (reaktivace), nebo automaticky jakoukoli novou aktivitou osoby | žádný                                                                                                                          | osoba se znovu počítá a dostává výzvy                                                                         |
+| `active`/`inactive → archived` | retenční job, nebo Administrátor (průřezový výmaz)                 | uplynutí retenční lhůty **a** `record_state = inactive` ve **všech** oddílech, kde je osoba evidovaná (viz **Rozsah a scope**) | nevratná globální anonymizace osobních a identifikačních údajů, zrušení účtu a zachování jen agregovaných dat |
 
 Podání nové přihlášky, docházkový záznam nebo přihlášení do systému **automaticky reaktivuje** `inactive` osobu — aktivita sama je důkazem, že vztah dál trvá.
 
@@ -78,11 +78,13 @@ Obě osy se kreslí zvlášť právě proto, že jsou na sobě nezávislé — k
 | Budoucí přiřazení k akci      | nové přiřazení vyžaduje `active`; existující přiřazení k už proběhlým akcím zůstává v historii |
 | Založení nové přihlášky       | dovoleno — samotné podání přihlášku reaktivuje (viz výše)                                      |
 
-## Rozsah a scope: per oddíl vs. globální anonymizace
+## Retence: citlivá data per oddíl, osoba globálně
 
 - `record_state` a `member_status` jsou vazba **osoba ↔ oddíl** — stejná osoba může být `active` v oddíle A a `inactive` v oddíle B současně.
-- Retenční job smí spustit **anonymizaci (→ `archived`)** jen tehdy, je-li osoba `inactive` **ve všech** oddílech, kde je evidovaná — anonymizace maže osobní údaje globálně, proto nesmí zasáhnout osobu aktivní jinde.
-- Anonymizace musí vyprázdnit i **`REGISTRATION.contact_email` a `guardian_email`** — osobní údaj tam sedí i na přihláškách, kde osoba není `person_id` (zákonný zástupce, který přihlásil dítě).
+- `PERSON_SENSITIVE_DATA` patří konkrétnímu oddílu (`unit_id`). Retenční job oddílu jej po vlastní lhůtě (u zdravotních údajů typicky do 30 dnů po skončení akce) anonymizuje samostatně, i když je osoba aktivní v jiném oddílu. Lokální anonymizace nemění `PERSON`, účet, `PERSON_UNIT` ani data jiných oddílů.
+- Retenční job smí spustit globální **archivaci (→ `archived`)** až tehdy, je-li osoba `inactive` **ve všech** oddílech, kde je evidovaná, a uplynula nejdelší relevantní retenční lhůta. Globální anonymizace maže `PERSON`, identifikační údaje účtu a všechny dosud neanonymizované lokální záznamy `PERSON_SENSITIVE_DATA`.
+- Globální anonymizace musí vyprázdnit i **`REGISTRATION.contact_email` a `guardian_email`** — osobní údaj tam sedí i na přihláškách, kde osoba není `person_id` (zákonný zástupce, který přihlásil dítě).
+- Každý lokální i globální výmaz vytvoří `GDPR_AUDIT` bez obsahu odstraněných údajů; záznam nese scope (`unit_id` u lokálního výmazu), čas, právní důvod a aktéra nebo retenční job.
 - **Administrátor** smí spustit průřezový výmaz kdykoli i mimo tento guard (README → **Retence a GDPR**), musí ale uvést důvod a operace se loguje.
 
 ## Terminálnost archivace a návrat
@@ -100,7 +102,7 @@ Obě osy se kreslí zvlášť právě proto, že jsou na sobě nezávislé — k
 
 - `DU_MEMBERSHIP` je nezávislý záznam (README → **Člen DU**) a existuje nezávisle na aktuálním `record_state`/`member_status`.
 - Členství je **globální vůči osobě a roku** — `unit_id` na záznamu je jen evidenční oddíl, který členství založil. Ukončení vazby na tento oddíl (deaktivace, přesun jinam) členství **neruší** a nezakládá potřebu založit ho znovu v novém oddílu.
-- HVO smí založit `DU_MEMBERSHIP` osobě v `record_state = active` i `inactive` (založení/platba příspěvku je samo o sobě aktivitou, viz reaktivace výše).
+- HVO může osobě v `record_state = active` i `inactive` vystavit oddílový členský předpis a zařadit ji do dávky pro ústředí, splní-li podmínky příspěvku; vystavení nebo úhrada příspěvku je samo o sobě aktivitou (viz reaktivace výše). `DU_MEMBERSHIP` vzniká až systémově po spárování celé dávky s platbou na účtu ústředí.
 - Osobě v `record_state = archived` **nelze založit nové** `DU_MEMBERSHIP` — historické záznamy pro už proběhlé roky zůstávají zachované podle vlastní retenční lhůty (členská evidence + 10 let), i po anonymizaci osoby.
 
 ## Historie

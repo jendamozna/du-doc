@@ -18,18 +18,18 @@ Oprávnění nevzniká z jednoho zdroje — skládá se ze tří nezávislých v
 
 ## Aktéři
 
-| Aktér                           | Zdroj oprávnění                                                  | Rozsah                                                                                                                                                            |
-| ------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **ADM** Administrátor           | `USER_ROLE`                                                      | napříč všemi oddíly                                                                                                                                               |
-| **HVO** Hlavní vedoucí          | `USER_ROLE` + `unit_id`                                          | jeden oddíl, plná správa                                                                                                                                          |
-| **VO** Vedoucí oddílu           | `USER_ROLE` + `EVENT.unit_id`                                    | akce a základní seznamy přihlášených vlastního oddílu; týmová práva podle přiřazení                                                                               |
-| **RÁD** Rádce (vedoucí družiny) | `USER_ROLE` + `EVENT.unit_id` + družina                          | akce a základní seznamy přihlášených vlastního oddílu; údaje družiny a zvýšená práva podle přiřazení                                                              |
-| **Vedoucí akce**                | `EVENT_ASSIGNMENT.team_role = 'event_leader'`                    | přiřazená akce; předepsaná, uhrazená a zbývající částka jejích přihlášek                                                                                          |
-| **ÚČE** Účetní oddílu           | `USER_ROLE` + `unit_id`                                          | celý oddíl, jen platební agenda                                                                                                                                   |
-| **Zákonný zástupce**            | aktivní `PARENT_CHILD`                                           | **per dítě**, ne globálně                                                                                                                                         |
-| **Vlastník přihlášky**          | token, `submitted_by_account_id` nebo zákonný zástupce účastníka | jedna přihláška a její dílčí přihlášky                                                                                                                            |
-| **Osoba (self)**                | `ACCOUNT.person_id`                                              | vlastní údaje a přihlášky                                                                                                                                         |
-| **Anonym**                      | —                                                                | veřejný výpis akcí, detail a podání přihlášky na veřejné akci, detail a podání přihlášky na neveřejné akci přes sdílecí odkaz, seznam názvů klubů na veřejné akci |
+| Aktér                     | Zdroj oprávnění                                                                         | Rozsah                                                                                                                                                            |
+| ------------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ADM** Administrátor     | `USER_ROLE`                                                                             | napříč všemi oddíly                                                                                                                                               |
+| **HVO** Hlavní vedoucí    | `USER_ROLE` + `unit_id`                                                                 | jeden oddíl, plná správa                                                                                                                                          |
+| **VO** Vedoucí oddílu     | `USER_ROLE` + `EVENT.unit_id`                                                           | akce a základní seznamy přihlášených vlastního oddílu; týmová práva podle přiřazení                                                                               |
+| **RÁD** Rádce (role účtu) | `USER_ROLE` + `EVENT.unit_id` + družiny, kde je členem ve funkci `leader` nebo `deputy` | akce a základní seznamy přihlášených vlastního oddílu; údaje přiřazených družin a zvýšená práva podle přiřazení. Přiřazení družiny není povinné.                  |
+| **Vedoucí akce**          | `EVENT_ASSIGNMENT.team_role = 'event_leader'`                                           | přiřazená akce; předepsaná, uhrazená a zbývající částka jejích přihlášek                                                                                          |
+| **ÚČE** Účetní oddílu     | `USER_ROLE` + `unit_id`                                                                 | celý oddíl, jen platební agenda                                                                                                                                   |
+| **Zákonný zástupce**      | aktivní `PARENT_CHILD`                                                                  | **per dítě**, ne globálně                                                                                                                                         |
+| **Vlastník přihlášky**    | token, `submitted_by_account_id` nebo zákonný zástupce účastníka                        | jedna přihláška a její dílčí přihlášky                                                                                                                            |
+| **Osoba (self)**          | `ACCOUNT.person_id`                                                                     | vlastní údaje a přihlášky                                                                                                                                         |
+| **Anonym**                | —                                                                                       | veřejný výpis akcí, detail a podání přihlášky na veřejné akci, detail a podání přihlášky na neveřejné akci přes sdílecí odkaz, seznam názvů klubů na veřejné akci |
 
 Legenda v maticích: **RW** = čtení i zápis · **R** = jen čtení · **A** = podle příznaku v `EVENT_ASSIGNMENT` · **—** = žádný přístup
 
@@ -96,16 +96,16 @@ Oddílový členský předpis je finanční agenda oddílu. HVO nastavuje lokál
 
 ## Osoby, družiny a docházka
 
-| Operace                                    | ADM      | HVO                     | VO                        | RÁD                           | ÚČE | Osoba / zákonný zástupce |
-| ------------------------------------------ | -------- | ----------------------- | ------------------------- | ----------------------------- | --- | ------------------------ |
-| Evidovat členy a hosty                     | R        | RW                      | R                         | R (svá družina)               | —   | R (sebe / dětí)          |
-| Měnit stav osoby (host → člen, deaktivace) | —        | RW                      | —                         | —                             | —   | —                        |
-| Upravit údaje osoby                        | —        | RW                      | —                         | —                             | —   | RW (sebe / dětí)         |
-| Definovat družiny a jejich členy           | —        | RW                      | —                         | —                             | —   | —                        |
-| Zapsat docházku                            | —        | RW                      | A `can_record_attendance` | **A `can_record_attendance`** | —   | —                        |
-| Založit `DU_MEMBERSHIP`                    | —        | RW                      | —                         | —                             | —   | —                        |
-| Převést evidenční oddíl členství           | RW       | RW (žádost + potvrzení) | —                         | —                             | —   | —                        |
-| Vytvořit účty rolí (pozvánka)              | RW (HVO) | RW (VO/RÁD/ÚČE)         | —                         | —                             | —   | —                        |
+| Operace                                    | ADM      | HVO                                                          | VO                        | RÁD                           | ÚČE | Osoba / zákonný zástupce |
+| ------------------------------------------ | -------- | ------------------------------------------------------------ | ------------------------- | ----------------------------- | --- | ------------------------ |
+| Evidovat členy a hosty                     | R        | RW                                                           | R                         | R (svá družina)               | —   | R (sebe / dětí)          |
+| Měnit stav osoby (host → člen, deaktivace) | —        | RW                                                           | —                         | —                             | —   | —                        |
+| Upravit údaje osoby                        | —        | RW                                                           | —                         | —                             | —   | RW (sebe / dětí)         |
+| Definovat družiny a jejich členy           | —        | RW                                                           | —                         | —                             | —   | —                        |
+| Zapsat docházku                            | —        | RW                                                           | A `can_record_attendance` | **A `can_record_attendance`** | —   | —                        |
+| Sestavit dávku příspěvků DU                | R        | RW                                                           | —                         | —                             | R   | —                        |
+| Převést evidenční oddíl členství           | RW       | RW (žádost + potvrzení)                                      | —                         | —                             | —   | —                        |
+| Vytvořit účty rolí (pozvánka)              | RW (HVO) | RW (VO/ÚČE; RÁD po vyplnění e-mailu dítěte ve věku ≤ 15 let) | —                         | —                             | —   | —                        |
 
 Zápis docházky je **samostatné oprávnění** — může ho mít i Rádce, který nemá přístup k platbám (README → **Docházka**).
 
@@ -118,15 +118,7 @@ Přístup neurčuje role přímo, ale dvě úrovně přístupu na `CUSTOM_FIELD`
 | `owner_access`   | osoba nad vlastní hodnotou, případně aktivní zákonný zástupce | `none` / `view` / `edit` |
 | `advisor_access` | Rádce v povoleném rozsahu                                     | `none` / `view` / `edit` |
 
-HVO má ke sloupcům svého oddílu vždy plný přístup; VO/RÁD podle rozsahu své družiny.
-
-### Delegace HVO
-
-- HVO může delegovat jen konkrétní oprávnění, které sám má, a pouze v rámci svého oddílu.
-- Delegace může být omezena na celý oddíl nebo konkrétní družinu a vždy má `valid_from`; volitelně má `valid_to`.
-- Delegovaný účet nesmí delegované oprávnění dále předat a delegace sama nezakládá roli ani přístup k jiným oblastem.
-- Delegaci může HVO kdykoli odvolat; odvolání uzavře záznam (`revoked_at`, `revoked_by_account_id`) a nemění historii předchozího přístupu.
-- Založení, změna i odvolání delegace se zapisuje do `AUDIT_LOG`.
+HVO má ke sloupcům svého oddílu vždy plný přístup včetně definice i hodnot. Vedoucí nebo zástupce družiny může spravovat definice i hodnoty sloupců své družiny, ale nemůže měnit sloupce oddílu ani jiné družiny. VO může v rámci svého oddílu měnit hodnoty u osob, ale bez funkce vedoucího nebo zástupce nemůže měnit definici sloupce. RÁD má mimo funkci vedoucího nebo zástupce přístup pouze podle `advisor_access` a rozsahu své družiny nebo akce.
 
 Pravidla pro `owner_access`:
 
@@ -139,8 +131,18 @@ Pravidla pro `advisor_access`:
 
 - přístup platí jen pro osoby v rozsahu družiny nebo akce, ke které je Rádce přiřazen;
 - `edit` opravňuje ke změně hodnoty, nikoli k úpravě definice sloupce;
+- vedoucí nebo zástupce družiny může spravovat definici i hodnoty družinových sloupců své družiny z titulu funkce; toto oprávnění není závislé na `advisor_access`;
+- toto nastavení se týká Rádce, nikoli oprávnění VO;
 - vlastní hodnota Rádce se posuzuje z jeho práva osoby nad sebou samým, ne z `advisor_access`;
 - `CUSTOM_FIELD` nesmí zpřístupnit data, která patří do `PERSON_SENSITIVE_DATA`.
+
+### Delegace HVO
+
+- HVO může delegovat jen konkrétní oprávnění, které sám má, a pouze v rámci svého oddílu.
+- Delegace může být omezena na celý oddíl nebo konkrétní družinu a vždy má `valid_from`; volitelně má `valid_to`.
+- Delegovaný účet nesmí delegované oprávnění dále předat a delegace sama nezakládá roli ani přístup k jiným oblastem.
+- Delegaci může HVO kdykoli odvolat; odvolání uzavře záznam (`revoked_at`, `revoked_by_account_id`) a nemění historii předchozího přístupu.
+- Založení, změna i odvolání delegace se zapisuje do `AUDIT_LOG`.
 
 ## Agenda ústředí
 
@@ -222,7 +224,7 @@ Scope se aplikuje jako **filtr odvozený z `USER_ROLE`**, ne z parametru request
 Zdravotní údaje, alergie, léky a stravovací omezení (`PERSON_SENSITIVE_DATA`) mají **vlastní pravidlo**, které přebíjí matice výše:
 
 - **Rádce je vidí** v rámci svého rozsahu — svá družina a akce, ke kterým je přiřazený. K práci rádce jsou nezbytné (README → **Rádce**). Mimo svůj rozsah je nevidí.
-- **Účetní je nevidí** — platební agenda je nepotřebuje.
+- **Účetní je nevidí** — platební agenda je nepotřebuje. Účetní současně nevidí datum narození, adresu, telefon ani zdravotní pojišťovnu osoby.
 - Data jsou **izolovaná per oddíl** — oddíl A nevidí citlivá data téže osoby zapsaná v oddílu B.
 - **Žádný report nevrací citlivé údaje**, bez ohledu na roli volajícího ([reports.md](reports.md)).
 

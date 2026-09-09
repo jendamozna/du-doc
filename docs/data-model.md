@@ -215,7 +215,7 @@ erDiagram
         int id PK
         int account_id FK
         int unit_id FK "role scope"
-        string role "HVO / VO / RAD / ADM / UCE"
+        string role "HVO / VO / RAD / ADM / UCE; RAD je role uctu, ne funkce ve druzine"
     }
     PERMISSION_DELEGATION {
         int id PK
@@ -247,7 +247,7 @@ erDiagram
         int id PK
         int unit_patrol_id FK
         int person_id FK
-        string role "leader / advisor / member"
+        string role "leader / deputy / member; nejvyse jeden leader a jeden deputy v druzine"
     }
     EVENT {
         int id PK
@@ -256,7 +256,7 @@ erDiagram
         int region_id_snapshot FK "region pri zalozeni akce"
         int location_id FK "misto konani (volitelne)"
         int action_template_id FK "sablona (snapshot)"
-        string status "draft / published / hidden / cancelled"
+        string status "draft / published / hidden / cancelled; zivotni cyklus"
         string name
         string ss "specific symbol"
         string type "club / one_off / weekend / course / certificate / mentor_recommendation / group / race / workshop"
@@ -272,7 +272,7 @@ erDiagram
         string what_to_bring "co s sebou; vychozi hodnota ze sablony"
         int capacity "max počet účastníků"
         int substitute_count "max počet náhradníků"
-        string visibility "public / internal / private; rozsah publikace"
+        string visibility "public / internal / private; publikum publikovane akce"
         string share_slug "neverejny sdileci odkaz"
         datetime starts_at
         datetime ends_at

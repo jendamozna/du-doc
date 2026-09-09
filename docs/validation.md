@@ -125,6 +125,13 @@ Ostatní pole (`nickname`, `insurance_company` a jednotlivá pole adresy) jsou p
 - Změna mentora vytvoří novou žádost s novým tokenem a předchozí označí `superseded`; předchozí potvrzení se nepřenáší. Vznik, potvrzení i nahrazení žádosti se zapisují do auditního logu.
 - Stav `RECOMMENDATION` není podmínkou `evaluate(registration)` a nesmí ovlivnit stav přihlášky, kapacitu, dokumenty ani platbu.
 
+### Družiny a role RÁD
+
+- `USER_ROLE.role = 'RAD'` je systémová role účtu v oddílu; sama o sobě neurčuje, že osoba vede konkrétní družinu.
+- Funkce vedoucího a zástupce vedoucího družiny se eviduje přes `UNIT_PATROL_MEMBER.role = 'leader'` nebo `role = 'deputy'` na osobě propojené s účtem přes `ACCOUNT.person_id`.
+- Jedna družina může mít nejvýše jednu osobu s funkcí `leader` a nejvýše jednu osobu s funkcí `deputy`; ostatní osoby mají `role = 'member'`. Jedna osoba může být `leader` nebo `deputy` ve více družinách stejného oddílu. RÁD může mít i nulový počet těchto vazeb.
+- Vazba `leader` nebo `deputy` nesmí odkazovat na družinu jiného oddílu než `USER_ROLE.unit_id`; bez žádné z těchto vazeb nemá RÁD přístup k družinovým údajům.
+
 ### Pomocná evidence
 
 - `field_type` je jedna z hodnot `text`, `number`, `date`, `boolean`, `choice`; uložená hodnota musí odpovídat typu.
@@ -134,6 +141,7 @@ Ostatní pole (`nickname`, `insurance_company` a jednotlivá pole adresy) jsou p
 - `required` se vyhodnocuje při použití sloupce v `EVENT_CUSTOM_FIELD`, ne jako absolutní povinnost pro každou osobu v oddílu.
 - `choice` vyžaduje definovaný seznam povolených hodnot; tento seznam se při změně nesmí změnit tak, aby zneplatnil existující hodnoty bez migrace.
 - `CUSTOM_FIELD` nesmí sloužit jako náhrada `PERSON_SENSITIVE_DATA` ani zpřístupnit zdravotní údaje přes méně přísné oprávnění.
+- HVO může měnit definici i hodnoty sloupců svého oddílu. Vedoucí nebo zástupce družiny může měnit definici i hodnoty družinových sloupců své družiny, ale ne sloupce oddílu ani jiné družiny. VO může měnit hodnoty u osob v rámci svého oddílu, ale bez této funkce nemůže měnit definici sloupce.
 - Změna definice sloupce a změna nebo smazání jeho hodnoty se zapisuje do `AUDIT_LOG`; při změně oprávnění se zachovává předchozí hodnota a aktér změny.
 
 ### Delegace oprávnění
@@ -151,8 +159,9 @@ Ostatní pole (`nickname`, `insurance_company` a jednotlivá pole adresy) jsou p
 
 ### Akce
 
-- `EVENT.status` je jedna z hodnot `draft`, `published`, `hidden` nebo `cancelled`; nový záznam vzniká ve stavu `draft`. Stav `draft` není určen k přihlašování, `cancelled` nepřijímá nové přihlášky a jeho existující přihlášky se řeší podle storno pravidel.
-- Stav `published` odpovídá uživatelskému stavu „veřejný“ a `hidden` stavu „neviditelný“. Rozsah publikace v `EVENT.visibility` (`public` / `internal` / `private`) je samostatné nastavení a nesmí se zaměňovat se stavem workflow.
+- `EVENT.status` a `EVENT.visibility` jsou dvě nezávislé osy. `status` řídí životní cyklus, zatímco `visibility` publikum publikované akce; hodnoty těchto polí se nikdy nesmějí vzájemně zaměňovat.
+- `EVENT.status` je jedna z hodnot `draft`, `published`, `hidden` nebo `cancelled`; nový záznam vzniká ve stavu `draft`. Jen `published` přijímá nové přihlášky v otevřeném přihlašovacím okně. `draft` (koncept) ani `hidden` (skrytá) nepřijímají přihlášky a neposílají pozvánky či připomínky; `cancelled` nepřijímá nové přihlášky a jeho existující přihlášky se řeší podle storno pravidel.
+- `EVENT.visibility` je právě jedna z hodnot `public`, `internal` nebo `private`. U stavu `published` určuje publikum: `public` patří do veřejného výpisu portálu, `internal` je pro osoby s vazbou na pořádající oddíl a `private` je dostupná pouze přes sdílecí odkaz.
 - **Splatnost je výlučná** — vyplněno buď `payment_due_days`, nebo `payment_due_date`, nikdy obojí ani nic.
 - `meeting_at` a `return_at` jsou-li vyplněné, musí ležet v pořadí `meeting_at <= starts_at < ends_at <= return_at`; místo srazu a návratu musí patřit témuž oddílu jako akce. `destination` může být prázdný u akcí bez přesunu.
 - `registration_from < registration_to`, `starts_at < ends_at`; přihlašovací okno smí přesahovat začátek akce.
@@ -168,7 +177,7 @@ Ostatní pole (`nickname`, `insurance_company` a jednotlivá pole adresy) jsou p
 - `EVENT_INVITATION.person_id` musí mít při založení aktivní `PERSON_UNIT` v pořádajícím oddílu. Výběr celé skupiny se při naplánování materializuje do jednotlivých pozvánek; pozdější změna družiny, věku, pohlaví nebo role osoby seznam pozvaných nemění.
 - Na osobu a akci existuje nejvýše jedna pozvánka. `scheduled_at` nesmí ležet po `registration_to`; volitelný `reminder_scheduled_at` musí být po `scheduled_at` a nejpozději v `registration_to`.
 - `response` je `pending`, `accepted` nebo `declined`. Volba **Přihlásit** založí standardní `REGISTRATION` a nastaví `accepted`; volba **Omluvit** nastaví `declined` a přihlášku nezaloží. `registration_id` smí být vyplněné jen při `accepted` a musí odkazovat na přihlášku téže osoby a akce.
-- Job odešle pozvánku právě jednou po dosažení `scheduled_at`. Připomínku odešle právě jednou po dosažení `reminder_scheduled_at` jen tehdy, když pozvánka už byla odeslána, `response = 'pending'` a neexistuje přihláška této osoby na akci; pro koncept, neviditelnou nebo zrušenou akci se pozvánky ani připomínky neposílají.
+- Job odešle pozvánku právě jednou po dosažení `scheduled_at`. Připomínku odešle právě jednou po dosažení `reminder_scheduled_at` jen tehdy, když pozvánka už byla odeslána, `response = 'pending'` a neexistuje přihláška této osoby na akci; pro akci, jejíž `status` není `published`, se pozvánky ani připomínky neposílají.
 
 ### Ceny a storna
 
@@ -192,7 +201,7 @@ Ostatní pole (`nickname`, `insurance_company` a jednotlivá pole adresy) jsou p
 - `CLUB_REGISTRATION.created_by_account_id` musí být účet s aktivní rolí HVO nebo VO v `CLUB_REGISTRATION.unit_id`; `state = 'closed'` vyžaduje `closed_at` a uzavřený kontejner nepřijímá nové přihlášky.
 - Kombinace `CLUB_REGISTRATION.event_id` + `CLUB_REGISTRATION.unit_id` je unikátní; jeden oddíl má na jedné akci nejvýše jeden klubový záznam. `public_name` nesmí být prázdný.
 - `CLUB_REGISTRATION.share_token` je náhodný, jedinečný a opravňuje pouze k založení nebo dokončení přihlášky dítěte vázané na stejný `event_id` a `unit_id`; token nezpřístupňuje jiné akce ani seznam osob oddílu.
-- `CLUB_REGISTRATION.public_name` je snapshot názvu oddílu v okamžiku založení; veřejně se zobrazí pouze tehdy, když `EVENT.status = 'published'`, `EVENT.visibility = 'public'`, `EVENT.type = 'club'`, klubový režim je zapnutý a kontejner je otevřený. Veřejný výpis nesmí obsahovat vedoucího, účastníky ani jejich počet.
+- `CLUB_REGISTRATION.public_name` je snapshot názvu oddílu v okamžiku založení; veřejně se zobrazí pouze tehdy, když `EVENT.status = 'published'`, `EVENT.visibility = 'public'`, akce je ústředí, klubový režim je zapnutý a kontejner je otevřený. Veřejný výpis nesmí obsahovat vedoucího, účastníky ani jejich počet.
 - Veřejné připojení k existujícímu klubu musí použít `CLUB_REGISTRATION.id` z aktuálního seznamu nebo platný `share_token`; pod stejnou akcí může vzniknout nejvýše jedna přihláška osoby bez ohledu na vstupní cestu.
 - `REGISTRATION.club_registration_id` smí být vyplněné jen při zapnutém režimu na stejné akci. Dítě musí mít aktivní `PERSON_UNIT` v oddílu klubové přihlášky a jedna osoba může mít v dané akci nejvýše jednu individuální přihlášku.
 - Klubová přihláška nemá vlastní cenu, stav úhrady ani kapacitní místo. Kapacitu akce zvyšují pouze individuální přihlášky pod ní, které splní stejné podmínky jako ostatní účastnické přihlášky; jejich schválení zákonným zástupcem se vyhodnocuje samostatně.
