@@ -71,7 +71,7 @@ Legenda v maticích: **RW** = čtení i zápis · **R** = jen čtení · **A** =
 
 Platební operace může provést jedna ÚČE bez schválení druhou osobou. Odpovědnost a dohled zajišťuje auditní log, který zaznamenává aktéra, změnu a čas operace.
 
-Rádce má přesně opačné omezení než Účetní: přihlášku vidí včetně údajů o dítěti a zdravotních údajů, ale **platební atributy se mu maskují**. Je-li však Rádce Vedoucím akce, vidí pro přihlášky této akce předepsanou, uhrazenou a zbývající částku, aby mohl řídit účast; nevidí slevy, storno poplatky, přeplatky, dary, bankovní účet ani transakce (README → **Rádce**). Podání vlastní přihlášky RÁD na akci pořádajícího oddílu je odvozené právo osoby nad sebou samým; **brána schválení zákonným zástupcem se v tomto případě nepoužije**, i když je Rádce nezletilý. RÁD tím nezískává právo podávat přihlášky za jiné osoby.
+Rádce má přesně opačné omezení než Účetní: přihlášku vidí včetně údajů o dítěti a zdravotních údajů, ale **platební atributy se mu maskují**. Je-li však Rádce Vedoucím akce, vidí pro přihlášky této akce předepsanou, uhrazenou a zbývající částku, aby mohl řídit účast; nevidí slevy, storno poplatky, přeplatky, vratky, bankovní účet ani transakce (README → **Rádce**). Podání vlastní přihlášky RÁD na akci pořádajícího oddílu je odvozené právo osoby nad sebou samým; **brána schválení zákonným zástupcem se v tomto případě nepoužije**, i když je Rádce nezletilý. RÁD tím nezískává právo podávat přihlášky za jiné osoby.
 
 ## Platby
 
@@ -81,7 +81,7 @@ Rádce má přesně opačné omezení než Účetní: přihlášku vidí včetn�
 | Číst bankovní transakce                     | —   | R   | —   | —   | R            | —                        |
 | Nahrát výpis / ručně zapsat platbu          | —   | RW  | —   | —   | RW           | —                        |
 | Párovat platby, ruční rozdělení             | —   | RW  | —   | —   | RW           | —                        |
-| Řešit přeplatek (vratka / převod / dar)     | —   | RW  | —   | —   | RW           | —                        |
+| Řešit přeplatek (vratka / převod)           | —   | RW  | —   | —   | RW           | —                        |
 | Odeslat výzvu k platbě                      | —   | RW  | —   | —   | RW           | —                        |
 | Vygenerovat potvrzení o platbě              | —   | RW  | —   | —   | RW           | R (vlastní)              |
 | Nastavit lokální složku členského příspěvku | —   | RW  | —   | —   | R            | —                        |
@@ -146,16 +146,19 @@ Pravidla pro `advisor_access`:
 
 ADM může číst osobní údaje a přihlášky napříč všemi oddíly, včetně údajů potřebných pro podporu a kontrolu systému. Toto oprávnění je pouze čtecí; změny provádí ADM jen tam, kde je to výslovně uvedeno v matici. Na archivované osoby se vztahuje zákaz čtení po anonymizaci.
 
-| Operace                                      | ADM | HVO               | Ostatní |
-| -------------------------------------------- | --- | ----------------- | ------- |
-| Spravovat oddíly, přiřazovat HVO             | RW  | —                 | —       |
-| Definovat regiony, přiřazovat oddíly         | RW  | —                 | —       |
-| Řídit deduplikaci a schvalovat sloučení      | RW  | RW (svého oddílu) | —       |
-| Reporty ústředí (napříč oddíly)              | RW  | —                 | —       |
-| Katalog kurzů a požadavky kvalifikací        | RW  | R (svého oddílu)  | —       |
-| Ověřovat kvalifikace vedoucích napříč oddíly | RW  | —                 | —       |
-| Systémové šablony, jmenný whitelist          | RW  | —                 | —       |
-| Spustit výmaz podle GDPR napříč oddíly       | RW  | RW (svého oddílu) | —       |
+| Operace                                      | ADM | HVO                   | Ostatní |
+| -------------------------------------------- | --- | --------------------- | ------- |
+| Spravovat oddíly, přiřazovat HVO             | RW  | —                     | —       |
+| Definovat regiony, přiřazovat oddíly         | RW  | —                     | —       |
+| Řídit deduplikaci a schvalovat sloučení      | RW  | RW (svého oddílu)     | —       |
+| Zrušit potlačení zamítnuté dvojice           | RW  | —                     | —       |
+| Požádat o revert sloučení                    | RW  | RW (dotčeného oddílu) | —       |
+| Provést revert sloučení                      | RW  | —                     | —       |
+| Reporty ústředí (napříč oddíly)              | RW  | —                     | —       |
+| Katalog kurzů a požadavky kvalifikací        | RW  | R (svého oddílu)      | —       |
+| Ověřovat kvalifikace vedoucích napříč oddíly | RW  | —                     | —       |
+| Systémové šablony, jmenný whitelist          | RW  | —                     | —       |
+| Spustit výmaz podle GDPR napříč oddíly       | RW  | RW (svého oddílu)     | —       |
 
 ## Reporty
 
@@ -225,10 +228,10 @@ Zdravotní údaje, alergie, léky a stravovací omezení (`PERSON_SENSITIVE_DATA
 
 ## Finanční údaje
 
-Stav a výše plateb, slevy, storno poplatky, přeplatky, vratky, dary a bankovní účty mají pro Rádce zákaz čtení s úzkou výjimkou pro Vedoucího akce:
+Stav a výše plateb, slevy, storno poplatky, přeplatky, vratky a bankovní účty mají pro Rádce zákaz čtení s úzkou výjimkou pro Vedoucího akce:
 
 - Rádce, který není Vedoucím akce, je nevidí nikdy — ani u akcí, ke kterým je přiřazený, ani sjednocením s jinou rolí.
-- **Vedoucí akce s rolí RÁD** vidí u přihlášek své akce předepsanou, uhrazenou a zbývající částku. Nesmí vidět datum, zdroj platby, VS/SS, bankovní účet, jednotlivé transakce, slevy, storno poplatky, přeplatky, vratky ani dary.
+- **Vedoucí akce s rolí RÁD** vidí u přihlášek své akce předepsanou, uhrazenou a zbývající částku. Nesmí vidět datum, zdroj platby, VS/SS, bankovní účet, jednotlivé transakce, slevy, storno poplatky, přeplatky ani vratky.
 - Platební atributy přihlášky se Rádci **maskují na serveru**, ne skrývají v UI — nesmí odejít v odpovědi API.
 - Výjimkou je **vlastní přihláška Rádce**, u které platební údaje vidí z odvozeného práva osoby nad sebou samou.
 

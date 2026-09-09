@@ -7,23 +7,31 @@ Doplněk k [data-model.md](data-model.md), který popisuje **co je platná hodno
 - **Validace na hranici systému** — všechna pravidla se vynucují na serveru bez ohledu na to, co kontroluje UI. Klientská validace je pohodlí, ne ochrana.
 - **Invarianty i v databázi** — unikátnosti a nepřekryvy z tabulek níže patří do schématu jako `UNIQUE` / `EXCLUDE`, ne jen do aplikační logiky. Souběžné požadavky by je jinak obešly.
 - **Povinnost je kontextová, ne absolutní** — většina polí osoby je povinná až podle toho, co vyžaduje šablona akce nebo stav osoby (viz **Podmíněná povinnost**).
-- Pravidla označená **[K rozhodnutí]** ve specifikaci chybí a jsou zde jako návrh.
+- U normalizovaných hodnot se před validací odstraní okolní mezery; mezery uvnitř hodnoty se odstraňují nebo zachovávají podle pravidla konkrétního údaje. Heslo je výjimka: okolní i vnitřní mezery mohou být součástí přístupové fráze a nesmí se tiše měnit.
+- Pravidla v tomto dokumentu jsou závazná pro serverovou validaci; klientská validace je pouze pomocná.
 
 ## Formáty
 
-| Údaj              | Pravidlo                                                                                                                            | Zdroj                                             |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| Částka            | desetinné číslo v CZK, **nezaokrouhluje se**; porovnává se přesně (rozdíl 1 Kč = nedoplatek/přeplatek)                              | [README.md](../README.md) → Modul párování plateb |
-| Datum a čas       | ukládá se v UTC, zobrazuje v `Europe/Prague`; čistě datumové údaje se nepřepočítávají                                               | [non-functional.md](non-functional.md)            |
-| E-mail            | **[K rozhodnutí]** návrh: syntaktická kontrola + normalizace na malá písmena; doménu neověřovat DNS dotazem                         | —                                                 |
-| IČO               | **[K rozhodnutí]** návrh: 8 číslic včetně kontrolní číslice (modulo 11); povinné u typu `branch` a `collective`, prázdné u `hq_ico` | [README.md](../README.md) → Oddíl                 |
-| Křestní jméno     | proti `NAME_WHITELIST`; neshoda se dá povolit výjimkou `NAME_EXCEPTION` v rámci oddílu                                              | [README.md](../README.md) → Deduplikace           |
-| Příjmení          | **neověřuje se** proti žádnému seznamu                                                                                              | [README.md](../README.md) → Deduplikace           |
-| Adresa            | volný text (`PERSON.address`) — **[K rozhodnutí]**, zda strukturovat na ulici/město/PSČ                                             | [data-model.md](data-model.md)                    |
-| GPS souřadnice    | `lat` ∈ ⟨−90; 90⟩, `lng` ∈ ⟨−180; 180⟩                                                                                              | [data-model.md](data-model.md) → LOCATION         |
-| Variabilní symbol | číselný, generuje systém při vzniku přihlášky; neposkytuje ho uživatel                                                              | [payment-matching.md](payment-matching.md)        |
-| Specifický symbol | číselný, zadává vedoucí u akce                                                                                                      | [README.md](../README.md) → Konfigurace akce      |
-| Soubor dokumentu  | max **10 MB**, typ PDF/JPG/PNG/HEIC ověřený podle **obsahu, ne přípony**                                                            | [non-functional.md](non-functional.md)            |
+| Údaj              | Pravidlo                                                                                                                                                                                                                                                                                               | Zdroj                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- |
+| Částka            | desetinné číslo v CZK, **nezaokrouhluje se**; porovnává se přesně (rozdíl 1 Kč = nedoplatek/přeplatek)                                                                                                                                                                                                 | [README.md](../README.md) → Modul párování plateb |
+| Datum a čas       | ukládá se v UTC, zobrazuje v `Europe/Prague`; čistě datumové údaje se nepřepočítávají                                                                                                                                                                                                                  | [non-functional.md](non-functional.md)            |
+| E-mail            | Po odstranění okolních mezer nejvýše 254 znaků, syntakticky platný podle běžného e-mailového parseru; celá adresa se ukládá malými písmeny, DNS se neověřuje. `ACCOUNT.login_email` je po normalizaci unikátní a `PERSON.email` unikátní není                                                          | —                                                 |
+| IČO               | Po odstranění okolních mezer přesně 8 ASCII číslic včetně kontrolní číslice: první 7 číslic se násobí vahami 8 až 2, součet se modulo 11 převede na poslední číslici (`0` pro zbytek 0 nebo 1, jinak `11 - zbytek`); povinné u typu `branch` a `collective`, prázdné u `hq_ico`                        | [README.md](../README.md) → Oddíl                 |
+| Telefon           | Po odstranění okolních mezer volitelný kontaktní telefon; vstup může obsahovat mezery, závorky a spojovníky, ale ukládá se normalizovaný v E.164 (`+` a 8–15 číslic). Devítimístné české číslo bez předvolby se uloží s `+420`; jiné národní formáty se bez předvolby země nepřijímají                 | [data-model.md](data-model.md)                    |
+| Křestní jméno     | proti centrálnímu systémovému číselníku `NAME_WHITELIST`, který spravuje ADM; neshoda se dá povolit výjimkou `NAME_EXCEPTION` v rámci oddílu schválenou HVO                                                                                                                                            | [README.md](../README.md) → Deduplikace           |
+| Příjmení          | **neověřuje se** proti žádnému seznamu                                                                                                                                                                                                                                                                 | [README.md](../README.md) → Deduplikace           |
+| Adresa            | strukturovaná pole `PERSON.street`, `PERSON.house_number`, `PERSON.postal_code`, `PERSON.city` a `PERSON.country`; `country` se ukládá jako kód ISO 3166-1 alpha-2. Jednotlivá pole jsou volitelná podle šablony akce, ale pokud je adresa povinná, musí být vyplněna minimálně `city` a `postal_code` | [data-model.md](data-model.md)                    |
+| GPS souřadnice    | `lat` ∈ ⟨−90; 90⟩, `lng` ∈ ⟨−180; 180⟩                                                                                                                                                                                                                                                                 | [data-model.md](data-model.md) → LOCATION         |
+| Variabilní symbol | číselný, generuje systém při vzniku přihlášky; neposkytuje ho uživatel                                                                                                                                                                                                                                 | [payment-matching.md](payment-matching.md)        |
+| Specifický symbol | číselný, zadává vedoucí u akce                                                                                                                                                                                                                                                                         | [README.md](../README.md) → Konfigurace akce      |
+| Soubor dokumentu  | max **10 MB**, typ PDF/JPG/PNG/HEIC ověřený podle **obsahu, ne přípony**                                                                                                                                                                                                                               | [non-functional.md](non-functional.md)            |
+
+### UX pomoc pro jméno
+
+- U jména se po zadání alespoň 2 znaků zobrazí našeptávané hodnoty z centrálního seznamu `NAME_WHITELIST`. Našeptávač je pouze pomůcka; uživatel může ponechat vlastní zadaný text a výběr návrhu není povinný.
+- U příjmení se při odchodu z pole automaticky nastaví pohlaví na ženské pouze tehdy, je-li zvoleno „neuvedeno“ a příjmení končí na `á`. Jde jen o předvyplnění; explicitně zvolené pohlaví se nepřepisuje a uživatel je může změnit.
+- U adresy se po zadání alespoň 3 znaků po prodlevě 300 ms načtou z API Mapy.cz nejvýše 5 návrhů typu `regional.address`. Po výběru se vyplní strukturovaná pole `street`, `house_number`, `postal_code`, `city` a `country`; pokud API návrh nenajde nebo není dostupné, uživatel může pokračovat ručním vyplněním polí.
 
 ## Podmíněná povinnost polí osoby
 
@@ -39,7 +47,7 @@ Která pole `PERSON` musí být vyplněná, závisí na kontextu:
 | Člen hlídky na závodě                        | `birth_date` (bez něj nelze ověřit složení hlídky)                                                                                                  | [race-patrols.md](race-patrols.md)                     |
 | Vlastník účtu                                | `ACCOUNT.login_email`                                                                                                                               | [data-model.md](data-model.md)                         |
 
-Ostatní pole (`nickname`, `insurance_company`, `address`) jsou povinná jen tehdy, označí-li je tak šablona akce nebo `EVENT_CUSTOM_FIELD.required`.
+Ostatní pole (`nickname`, `insurance_company` a jednotlivá pole adresy) jsou povinná jen tehdy, označí-li je tak šablona akce nebo `EVENT_CUSTOM_FIELD.required`.
 
 ## Unikátnosti
 
@@ -223,6 +231,7 @@ Ostatní pole (`nickname`, `insurance_company`, `address`) jsou povinná jen teh
 
 - Vazba zákonný zástupce ↔ dítě: `parent_person_id ≠ child_person_id`; dítě musí být v okamžiku vzniku nezletilé ([parent-child-lifecycle.md](parent-child-lifecycle.md)).
 - `DU_MEMBERSHIP.year` — rozsah rozumných let (např. ⟨2000; aktuální + 1⟩), aby překlep nezaložil členství na rok 20250.
+- `PERSON.birth_date` nesmí být v budoucnosti a při běžném založení nebo úpravě osoby nesmí být starší než 90 let k aktuálnímu datu. Tato hranice slouží jen jako kontrola zjevné chyby v datu; věkovou způsobilost pro konkrétní akci určuje její vlastní referenční datum a pravidla.
 - `DU_MEMBERSHIP.unit_id` je **evidenční oddíl** — musí to být oddíl, kde je osoba v okamžiku založení evidovaná (`PERSON_UNIT`). Do vyhodnocování ceny a způsobilosti **nevstupuje**; ověřuje se jen existence záznamu pro osobu a rok.
 - Kolize při založení členství **není chyba validace, ale stav k zobrazení** — porušení unikátu `person_id + year` se přeloží na hlášku „členství pro rok _R_ už založil oddíl _X_", ne na obecné „nelze uložit".
 - Přepsání `unit_id` (převod evidenčního oddílu) je přípustné jen na oddíl, kde je osoba evidovaná, a jen po potvrzení druhou stranou ([authorization.md](authorization.md)).
@@ -244,10 +253,3 @@ Pravidla složení (počty členů, věkové limity, právě jeden kapitán) jso
 - Účastník má v jednom `WORKSHOP_BLOCK` nejvýše **jeden** běh.
 - `WORKSHOP.capacity` platí na běh (`WORKSHOP_OFFERING`), ne na workshop jako celek.
 - Bloky téže akce se nesmí časově překrývat.
-
-## Otevřené otázky
-
-- **Formát e-mailu, IČO a adresy** — specifikace je nedefinuje vůbec (návrhy výše jsou označené **[K rozhodnutí]**).
-- **Telefonní číslo** v datovém modelu neexistuje, přestože u dětských akcí bývá kontakt na zákonného zástupce provozně nutný.
-- **Minimální délka a složitost hesla** není specifikovaná; [non-functional.md](non-functional.md) řeší jen hashování (Argon2id).
-- **Horní věková hranice** u `birth_date` (kontrola překlepu v roce) není nikde uvedená.

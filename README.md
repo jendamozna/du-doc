@@ -401,12 +401,12 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 #### Modul párování plateb
 
 - Modul má dvě nezávislé vrstvy: **evidence plateb** (VS/SS, výzvy k platbě, QR, párování, stav úhrady, vratky, potvrzení) je dostupná každému oddílu s bankovním účtem, **bankovní synchronizace** se aktivuje doplněním tokenu k účtu.
-- Transakce se **stahují pravidelně z banky, samostatně za každý bankovní účet**; opakovaný import stejné platby nic nezdvojí a hned po stažení běží automatické párování. Do párování vstupují jen příchozí platby. Detaily integrace viz [docs/fio-sync.md](docs/fio-sync.md).
+- Transakce se **stahují pravidelně z banky, samostatně za každý bankovní účet**; opakovaný import stejné platby nic nezdvojí a hned po stažení běží automatické párování. Běžné párování používá příchozí platby; záporné transakce se používají pro vypořádání vratek. Detaily integrace viz [docs/fio-sync.md](docs/fio-sync.md).
 - **Oddíl bez bankovního API** (jiná banka než Fio, účet bez tokenu) plní transakce sám — nahráním výpisu z internetbankingu, nebo ručním zápisem jednotlivé platby. Párovací pravidla, výpočet stavu úhrady i vratky pak fungují úplně stejně; systém jen sám neví, kdy platba dorazila, a proto **neposílá připomínky nezaplacených plateb** a neruší nezaplacené přihlášky.
 - Párování je M:N — jedna bankovní transakce může pokrýt více přihlášek (např. zákonný zástupce platí za více dětí jednou platbou) a jedna přihláška může být uhrazena více platbami (postupné / částečné platby)
 - Systém automaticky navrhuje párování podle SS=akce a VS=přihláška, případně podle jména odesílatele; když částka neodpovídá jediné přihlášce, umožní účetní ruční rozdělení částky mezi více přihlášek. U každé části se eviduje, jak vznikla — automaticky a podle jaké shody, nebo ručně.
 - Stav úhrady přihlášky (částečně zaplaceno / zaplaceno / přeplatek) se počítá ze součtu přiřazených částek vůči ceně. Částky se porovnávají přesně — rozdíl o korunu je nedoplatek nebo přeplatek, systém nic nezaokrouhluje.
-- **Přeplatek se nevrací automaticky** — systém ho jen ukáže a nabídne účetní tři možnosti: vrátit odesílateli, převést na jinou přihlášku téže osoby, nebo ponechat jako dar. Samotnou výplatu vratky provádí účetní ve své bance, systém ji jen eviduje.
+- **Přeplatek se nevypořádá automaticky bez skutečné vratky** — systém ho zobrazí účetní. Ta může zvolit vratku, na jejíž zápornou bankovní transakci systém počká a po importu ji jednoznačně automaticky spáruje, nebo ruční převod na jinou přihlášku téže osoby.
 - Systém automaticky posílá potvrzení za každou napárovanou platbu (i částečnou); odeslání se eviduje, aby se neposílalo dvakrát
 - Přesná pravidla párování viz [docs/payment-matching.md](docs/payment-matching.md).
 

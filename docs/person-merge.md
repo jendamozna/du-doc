@@ -10,7 +10,7 @@ Dokument řeší tři věci, které business popis nechává otevřené: **kdo c
 - Silný kandidát = shodné `birth_date` **a** shodné normalizované jméno i příjmení (bez diakritiky, malá písmena, ořezané mezery). Slabý kandidát = shodné `birth_date` a podobné příjmení, nebo shodné jméno i příjmení bez data narození.
 - Přezdívka (`nickname`) se do porovnání započítává jako alternativa křestního jména (Pepa / Josef), a to jen na straně návrhu — sama o sobě kandidáta nezakládá.
 - Kandidáti se hledají **napříč oddíly**; duplicity uvnitř jednoho oddílu vidí HVO přímo v seznamu osob.
-- Zamítnutá žádost (`state = 'rejected'`) funguje jako **trvalé potlačení dvojice** — stejná dvojice se už znovu nenabízí, dokud ji administrátor nepovolí.
+- Zamítnutá žádost (`state = 'rejected'`) funguje jako **trvalé potlačení dvojice** — stejná dvojice se už znovu nenabízí, dokud je ADM výslovně neodblokuje. Odblokování zapíše `suppression_lifted_at`, ADM, který jej provedl, a povinný důvod; vytvoří také záznam `AUDIT_LOG` typu `MERGE_REQUEST` s akcí `update`. Další nalezení kandidáta pak založí novou žádost, původní zamítnutá žádost zůstává v historii.
 
 ## Schvalování
 
@@ -87,6 +87,8 @@ Pravidla:
 - Revert **neobnoví** data smazaná mezitím podle retence a **nevrátí** odeslané e-maily ani potvrzení o platbě.
 - Zrušený účet se obnoví jen tehdy, není-li mezitím jeho přihlašovací e-mail použitý jiným účtem; jinak se revert dokončí bez účtu a administrátor dostane upozornění.
 - Obojí — co revert vrátí a co ne — se zobrazí **před potvrzením**, ne až po něm.
+- HVO dotčeného oddílu může u dokončeného sloučení podat žádost o revert s povinným důvodem. Žádost obsahuje stejný náhled změn, které se vrátí a které zůstanou u cílové osoby; samotný revert provádí vždy ADM. ADM může žádost také podat i schválit.
+- Podání žádosti i její vyřízení se zapíše do `AUDIT_LOG` jako změna `MERGE_REQUEST` s aktérem a důvodem.
 - Revert je jednorázový (`reverted_at`, `MERGE_REQUEST.state = 'reverted'`). Opětovné sloučení znamená novou žádost.
 
 ## Reportovací sloučení (`REPORT_MERGE`)
@@ -100,13 +102,10 @@ Jiný mechanismus, snadno se plete se skutečným sloučením:
 
 ## Požadavky na datový model
 
-| Co                                      | Proč                                                          |
-| --------------------------------------- | ------------------------------------------------------------- |
-| `PERSON.merged_into_person_id`          | tombstone zdrojové osoby, přesměrování starých odkazů         |
-| `MERGE_REQUEST.expires_at`              | propadnutí žádosti bez odezvy po 30 dnech                     |
-| struktura `MERGE_LOG.snapshot` viz výše | bez seznamu přenesených vazeb nelze revert provést spolehlivě |
-
-## Otevřené otázky
-
-- Má se dvojice po zamítnutí potlačit natrvalo, nebo jen na určitou dobu (lidé si to mohou rozmyslet)?
-- Smí revert provést i HVO oddílu, kde sloučení vzniklo, nebo je to výhradně role administrátora?
+| Co                                        | Proč                                                          |
+| ----------------------------------------- | ------------------------------------------------------------- |
+| `PERSON.merged_into_person_id`            | tombstone zdrojové osoby, přesměrování starých odkazů         |
+| `MERGE_REQUEST.expires_at`                | propadnutí žádosti bez odezvy po 30 dnech                     |
+| údaje o zrušení potlačení `MERGE_REQUEST` | auditovatelné ruční odblokování zamítnuté dvojice pouze ADM   |
+| údaje žádosti o revert `MERGE_REQUEST`    | HVO může požádat, ale revert provádí pouze ADM                |
+| struktura `MERGE_LOG.snapshot` viz výše   | bez seznamu přenesených vazeb nelze revert provést spolehlivě |

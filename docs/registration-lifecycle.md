@@ -121,7 +121,7 @@ Každá změna stavu se zapisuje s časem, původcem a událostí, která ji vyv
 - **Terminální stavy jsou konečné.** Vrátit stornovanou přihlášku nelze — vzniká nová (původní zůstává pro historii a účetnictví).
 - **Náhradník nemá otevřené brány.** Dokud nepřijme nabídku, zůstává v `New`, nezapočítává se do kapacity a nemůže nahrávat dokumenty ani platit.
 - **Uvolnění kapacity** (storno, expirace) spouští výběr náhradníka; nabídka je časově omezená a její propadnutí nemění stav přihlášky náhradníka.
-- **Po skončení akce** se automatické přepočty zastaví s jedinou výjimkou plateb (účetní může dopárovat i zpětně). Dokumenty ani zástupce už stav nemění.
+- **Po uzavření přihlašování** lze přihlášku stále doplnit a opravit: zamítnutý povinný dokument ji vrátí do `PendingDocuments`, i když se už nové přihlášky nepřijímají. Po skončení akce se automatické přepočty zastaví s jedinou výjimkou plateb (účetní může dopárovat i zpětně); dokumenty ani zástupce už stav nemění.
 - **Dílčí přihlášky** (přihláška s nadřazenou přihláškou) mají vlastní stav a vyhodnocují se nezávisle; skládání hlídek pracuje jen s těmi, které nejsou v terminálním stavu.
 - **Přihláška bez data narození** nelze vyhodnotit v bráně zástupce — systém místo toho vyžádá doplnění a přihláška zůstává v `New`.
 - **Potvrzení e-mailu registrujícího** je samostatná, neblokující událost: nemění výsledek `evaluate(registration)`, kapacitu ani splatnost. U akce typu `mentor_recommendation` je však podmínkou pro odeslání žádostí mentorovi a hlavnímu vedoucímu.
@@ -136,8 +136,3 @@ Každá změna stavu se zapisuje s časem, původcem a událostí, která ji vyv
 | vypršení nezaplacené přihlášky | vypnuto                   | nastavení oddílu                          |
 
 Vypršení nezaplacené přihlášky je **záměrně vypnuté ve výchozím stavu** — přihlášku ruší vedoucí vědomě, aby systém sám nerušil místa lidem, kteří platí pozdě. U akce navázané na **bankovní účet bez API** (`provider = 'manual'`) ho nelze zapnout vůbec — systém nezná stav úhrady v reálném čase a rušil by místa na základě neúplné informace. Ze stejného důvodu se u takové akce neposílají automatické připomínky nezaplacených plateb (viz [payment-matching.md](payment-matching.md) → **Oddíl bez bankovního API**).
-
-## Otevřené otázky
-
-- Má zamítnutý dokument po skončení přihlašování ještě vracet přihlášku do `PendingDocuments`, nebo už jen upozornit vedoucího?
-- Má se přeplatek nabídnout k převodu na jinou přihlášku téže osoby automaticky, nebo vždy jen jako návrh účetní?

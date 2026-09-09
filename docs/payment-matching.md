@@ -36,18 +36,18 @@ Předpis se vytváří jen pro aktivního registrovaného člena oddílu. Zaplat
 
 Pravidla tvoří **seřazený seznam**. Vyhodnocují se shora dolů a vyhrává první, které vrátí právě jednoho kandidáta:
 
-| Hodnota               | Shoda                                                                                 | Alokace     |
-| --------------------- | ------------------------------------------------------------------------------------- | ----------- |
-| `ss_vs_amount`        | SS, VS i částka                                                                       | automaticky |
-| `ss_vs_partial`       | SS, VS a částečná úhrada                                                              | automaticky |
-| `ss_vs_overpayment`   | SS, VS a přeplatek                                                                    | automaticky |
-| `vs_exact_name`       | VS, částka a jméno odesílatele = vlastník přihlášky nebo poznámka platby = název akce | automaticky |
-| `ss_exact_name`       | SS, částka a jméno odesílatele = vlastník přihlášky                                   | automaticky |
-| `vs_exact`            | VS, částka                                                                            | automaticky |
-| `vs_partial_name`     | VS, částečná úhrada a shoda jména odesílatele / poznámky platby                       | návrh       |
-| `vs_overpayment_name` | VS, přeplatek a shoda jména odesílatele / poznámky platby                             | návrh       |
-| `manual`              | ruční rozdělení účetní                                                                |             |
-| `refund`              | vratka nebo převod přeplatku — záporná alokace                                        |             |
+| Hodnota               | Shoda                                                                                      | Alokace     |
+| --------------------- | ------------------------------------------------------------------------------------------ | ----------- |
+| `ss_vs_amount`        | SS, VS i částka                                                                            | automaticky |
+| `ss_vs_partial`       | SS, VS a částečná úhrada                                                                   | automaticky |
+| `ss_vs_overpayment`   | SS, VS a přeplatek                                                                         | automaticky |
+| `vs_exact_name`       | VS, částka a jméno odesílatele = vlastník přihlášky nebo poznámka platby = název akce      | automaticky |
+| `ss_exact_name`       | SS, částka a jméno odesílatele = vlastník přihlášky                                        | automaticky |
+| `vs_exact`            | VS, částka                                                                                 | automaticky |
+| `vs_partial_name`     | VS, částečná úhrada a shoda jména odesílatele / poznámky platby                            | návrh       |
+| `vs_overpayment_name` | VS, přeplatek a shoda jména odesílatele / poznámky platby                                  | návrh       |
+| `manual`              | ruční rozdělení účetní                                                                     |             |
+| `refund`              | automatické spárování záporné bankovní transakce s evidovaným přeplatkem — záporná alokace | automaticky |
 
 - SS identifikuje akci, VS přihlášku.
 - **Částky se porovnávají přesně, žádná tolerance se neuplatňuje.** Rozdíl o korunu není shoda — je to nedoplatek (`PartialPaid`), nebo přeplatek (`Overpayment`). Zaokrouhlovací pásmo by zavádělo tichou ztrátu penez a v účetnictví se hledá hůř než viditelný rozdíl.
@@ -72,11 +72,11 @@ Po každém běhu párovacího automatu vzniká událost `payment.reconciliation
 
 ## Přeplatek a vratka
 
-- Přeplatek přihlášky = `Σ alokací − cena` a **počítá se**, neukládá se jako záznam. Nikdy se nevrací automaticky.
-- Systém nabídne účetní tři řešení: **vrátit** odesílateli, **převést** na jinou přihlášku též osoby, nebo **ponechat** (dar) s poznámkou. Do rozhodnutí zůstává přihláška ve stavu `Overpayment` a je vidět v reportu Platby.
+- Přeplatek přihlášky = `Σ alokací − cena` a **počítá se**, neukládá se jako samostatný finanční záznam. Do vypořádání zůstává přihláška ve stavu `Overpayment` a je vidět v reportu Platby.
+- Při volbě vratky účetní určí přeplatek a částku k vrácení. Systém čeká na skutečně zaúčtovanou zápornou bankovní transakci; po jejím importu ji automaticky spáruje s odpovídajícím přeplatkem, **jen pokud existuje právě jeden jednoznačný kandidát**. Jinak transakce zůstane ve frontě účetní k ručnímu potvrzení.
 - Vratka se eviduje jako **záporná alokace** na původní transakci (`match_method = 'refund'`), nikoli mazaním nebo úpravou původní alokace — historie plateb zůstává dohledatelná a stav přihlášky se přepočte sám.
 - Převod na jinou přihlášku je dvojice záporná + kladná alokace též transakce, takže součet alokací transakce zůstává roven její částce.
-- Účetní provádí **výplatu vratky mimo systém** — aplikace nedrží odchozí platební příkazy, jen eviduje, že vratka byla vypořádána.
+- Aplikace nevytváří odchozí platební příkazy; pouze importuje nebo zaeviduje zápornou transakci a automaticky ji spáruje.
 - Stejný postup se použije při stornu přihlášky ([registration-lifecycle.md](registration-lifecycle.md)); liší se jen výše vratky, kterou určují storno pravidla akce.
 
 ## Potvrzení

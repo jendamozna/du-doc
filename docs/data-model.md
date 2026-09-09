@@ -180,7 +180,12 @@ erDiagram
         string gender "male / female / other"
         date birth_date "povinne u registrovaneho clena"
         string email "kontaktni e-mail (nemusi byt unikatni)"
-        string address "trvale bydliste"
+        string phone "kontaktni telefon v E.164 (volitelny)"
+        string street "ulice (volitelna)"
+        string house_number "cislo domu (volitelne)"
+        string postal_code "PSC (volitelne)"
+        string city "mesto nebo obec (volitelne)"
+        string country "kod statu ISO 3166-1 alpha-2 (volitelny)"
         string insurance_company
         int merged_into_person_id FK "NULL = platna osoba; jinak tombstone po slouceni"
     }
@@ -296,7 +301,7 @@ erDiagram
         int id PK
         int event_id FK
         string membership_type "DU / non_DU / volunteer / leader / leader_child / sponsor"
-        decimal amount
+        decimal amount "kladna = prijem, zaporna = odchozi vratka"
         date valid_from
         date valid_to
     }
@@ -746,12 +751,12 @@ erDiagram
     }
     NAME_WHITELIST {
         int id PK
-        string name "krestni jmeno"
+        string name "krestni jmeno; centralni seznam spravovany ADM"
     }
     NAME_EXCEPTION {
         int id PK
         int unit_id FK
-        string name "krestni jmeno mimo whitelist"
+        string name "krestni jmeno mimo centralni seznam"
         int approved_by_account_id FK "schvalil HVO"
         datetime created_at
     }
@@ -766,6 +771,12 @@ erDiagram
         datetime created_at
         datetime expires_at "propadnuti zadosti bez odezvy"
         datetime completed_at
+        datetime suppression_lifted_at "NULL = zamitnuta dvojice zustava potlacena"
+        int suppression_lifted_by_account_id FK "ADM, ktery potlaceni zrusil"
+        string suppression_lifted_reason "povinny duvod zruseni potlaceni"
+        datetime revert_requested_at "NULL = o revert nebylo pozadano"
+        int revert_requested_by_account_id FK "HVO dotceneho oddilu nebo ADM"
+        string revert_request_reason "povinny duvod zadosti o revert"
     }
     MERGE_APPROVAL {
         int id PK
