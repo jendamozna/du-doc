@@ -1,0 +1,38 @@
+{layout 'layout.latte'}
+
+{block content}
+    <p>Dobrý den, <br />
+    přijali jsme přihlášku na akci Dorostové unie - <strong>{$event['name']}</strong>, prosíme o její potvrzení.</p>
+
+    <h3>Přihlášení účastníci</h3>
+    <table>
+        <tr>
+            <th>Jméno</th>
+            <th>Příjmení</th>
+            <th>Cena</th>
+        </tr>
+        {foreach $users as $user}
+        <tr>
+            <td>{$user['firstname']}</td>
+            <td>{$user['surname']}</td>
+            <td>{$user['price']} Kč</td>
+        </tr>
+        {/foreach}
+        <tr class="total">
+            <td colspan="2">Celkem k úhradě:</td>
+            <td>{$totalPrice} Kč</td>
+        </tr>
+    </table>
+
+    <p>Pro potvrzení přihlášky použijte následující odkaz:</p>
+    <p style="text-align: center;">
+        <a href="{$manageUrl}" class="button">Potvrzení a správa přihlášky</a>
+    </p>
+
+    <p><small>Nebo zkopírujte tento odkaz: {$manageUrl}</small></p>
+
+    <p>
+        <strong>Důležité:</strong> Tento odkaz uchovejte v bezpečí.
+        Umožňuje úpravu přihlášky bez nutnosti se přihlásit.
+    </p>
+{/block}

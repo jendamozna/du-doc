@@ -235,21 +235,25 @@ Jmenná konvence `modul.agregát.událost` v minulém čase. Události, které u
 
 ### Registrations
 
-| Událost                                            | Payload (nad rámec hlavičky)                     | Odebírá                                             |
-| -------------------------------------------------- | ------------------------------------------------ | --------------------------------------------------- |
-| `registration.created`                             | `registration_id`, `event_id`, `person_id`, `vs` | Notifications, Audit, Reporting                     |
-| `registration.state_changed`                       | `from`, `to`, `trigger`                          | Notifications, Audit, Reporting                     |
-| `registration.canceled`                            | `fee_amount`, `refund_due`                       | Payments (vratka), Events (kapacita), Notifications |
-| `registration.expired`                             | `reason`                                         | Notifications, Audit                                |
-| `registration.capacity_released`                   | `event_id`, `freed_slots`                        | Registrations (výběr náhradníka), Reporting         |
-| `club_registration.created`                        | `club_registration_id`, `event_id`, `unit_id`    | Registrations, Audit                                |
-| `club_registration.closed`                         | `club_registration_id`, `event_id`, `unit_id`    | Registrations, Audit                                |
-| `club_registration.registration_added`             | `club_registration_id`, `registration_id`        | Notifications, Audit, Reporting                     |
-| `guardian.requested` / `.approved` / `.expired`    | `guardian_email`, `deadline`                     | Notifications, People (vznik vazby), Audit          |
-| `document.uploaded` / `.approved` / `.rejected`    | `document_id`, `comment`                         | Notifications, Files, Audit                         |
-| `substitute.offer.sent` / `.accepted` / `.expired` | `offer_id`, `valid_until`                        | Notifications, Audit                                |
-| `recommendation.requested` / `.confirmed`          | `mentor_contact`                                 | Notifications, Audit                                |
-| `race_patrol.composition_changed`                  | `patrol_id`, `is_consistent`                     | Notifications (připomínka), Audit                   |
+| Událost                                               | Payload (nad rámec hlavičky)                                  | Odebírá                                             |
+| ----------------------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------- |
+| `registration.created`                                | `registration_id`, `event_id`, `person_id`, `vs`              | Notifications, Audit, Reporting                     |
+| `registration.contact_email_confirmed`                | `registration_id`                                             | Notifications, Audit                                |
+| `registration.state_changed`                          | `from`, `to`, `trigger`                                       | Notifications, Audit, Reporting                     |
+| `registration.canceled`                               | `fee_amount`, `refund_due`                                    | Payments (vratka), Events (kapacita), Notifications |
+| `registration.expired`                                | `reason`                                                      | Notifications, Audit                                |
+| `registration.invoice_note_changed`                   | `registration_id`, `unit_id`, `invoice_note`                  | Notifications, Audit                                |
+| `registration.capacity_released`                      | `event_id`, `freed_slots`                                     | Registrations (výběr náhradníka), Reporting         |
+| `club_registration.created`                           | `club_registration_id`, `event_id`, `unit_id`                 | Registrations, Audit                                |
+| `club_registration.closed`                            | `club_registration_id`, `event_id`, `unit_id`                 | Registrations, Audit                                |
+| `club_registration.registration_added`                | `club_registration_id`, `registration_id`                     | Notifications, Audit, Reporting                     |
+| `club_registration.registration_updated`              | `club_registration_id`, `registration_id`, `changed_fields[]` | Notifications, Audit                                |
+| `guardian.requested` / `.approved` / `.expired`       | `guardian_email`, `deadline`                                  | Notifications, People (vznik vazby), Audit          |
+| `document.uploaded` / `.approved` / `.rejected`       | `document_id`, `comment`                                      | Notifications, Files, Audit                         |
+| `substitute.offer.sent` / `.accepted` / `.expired`    | `offer_id`, `valid_until`                                     | Notifications, Audit                                |
+| `mentor.requested` / `.confirmed` / `.updated`        | `registration_id`, `recommendation_id`, `mentor_contact`      | Notifications, Audit                                |
+| `head_leader_recommendation.requested` / `.submitted` | `registration_id`, `recommendation_id`, `head_leader_contact` | Notifications, Audit                                |
+| `race_patrol.composition_changed`                     | `patrol_id`, `is_consistent`                                  | Notifications (připomínka), Audit                   |
 
 ### Events
 
@@ -264,15 +268,16 @@ Jmenná konvence `modul.agregát.událost` v minulém čase. Události, které u
 
 ### Payments & Banking
 
-| Událost                              | Payload                                        | Odebírá                                              |
-| ------------------------------------ | ---------------------------------------------- | ---------------------------------------------------- |
-| `bank.transaction.imported`          | `transaction_id`, `account_id`, `amount`, `vs` | Payments (párování), Audit                           |
-| `bank.sync.failed`                   | `account_id`, `attempts`, `error`              | Notifications (`EMAIL_FIO_SYNC_FAILURE`)             |
-| `bank.statement.imported_manually`   | `account_id`, `batch_id`                       | Payments, Audit                                      |
-| `payment.allocated` / `.deallocated` | `registration_id`, `amount`, `match_method`    | Registrations (`evaluate`), Notifications, Reporting |
-| `payment.overpaid`                   | `registration_id`, `surplus`                   | Notifications, Payments (návrh vratky)               |
-| `payment.refund_issued`              | `registration_id`, `amount`                    | Registrations, Notifications, Audit                  |
-| `payment.match.ambiguous`            | `transaction_id`, `candidates[]`               | UI fronta ÚČE, Audit                                 |
+| Událost                              | Payload                                                                                          | Odebírá                                              |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
+| `bank.transaction.imported`          | `transaction_id`, `account_id`, `amount`, `vs`                                                   | Payments (párování), Audit                           |
+| `bank.sync.failed`                   | `account_id`, `attempts`, `error`                                                                | Notifications (`EMAIL_FIO_SYNC_FAILURE`)             |
+| `bank.statement.imported_manually`   | `account_id`, `batch_id`                                                                         | Payments, Audit                                      |
+| `payment.allocated` / `.deallocated` | `registration_id`, `amount`, `match_method`                                                      | Registrations (`evaluate`), Notifications, Reporting |
+| `payment.reconciliation_completed`   | `transaction_id`, `account_id`, `result`, `allocated_amount`, `unmatched_amount`, `candidates[]` | Notifications, Audit                                 |
+| `payment.overpaid`                   | `registration_id`, `surplus`                                                                     | Notifications, Payments (návrh vratky)               |
+| `payment.refund_issued`              | `registration_id`, `amount`                                                                      | Registrations, Notifications, Audit                  |
+| `payment.match.ambiguous`            | `transaction_id`, `candidates[]`                                                                 | UI fronta ÚČE, Audit                                 |
 
 ### People & Identity
 

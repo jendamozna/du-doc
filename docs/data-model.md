@@ -130,7 +130,6 @@ erDiagram
     UNIT ||--o{ PERSON_SENSITIVE_DATA : owns
     EVENT ||--o{ PERSON_SENSITIVE_DATA : "context of"
     PERSON ||--o{ PARENT_INVITATION : "guardian invite"
-    PERSON ||--o{ RECOMMENDATION : "as mentor"
     PERSON ||--o{ REPORT_MERGE : "candidate A"
     PERSON ||--o{ REPORT_MERGE : "candidate B"
     PERSON ||--o{ MERGE_REQUEST : "as source"
@@ -255,7 +254,7 @@ erDiagram
         string status "draft / published / hidden / cancelled"
         string name
         string ss "specific symbol"
-        string type "club / one_off / weekend / course / certificate / recommendation / group / race / workshop"
+        string type "club / one_off / weekend / course / certificate / mentor_recommendation / group / race / workshop"
         int course_id FK "udeluje kurz po absolvovani"
         int meeting_location_id FK "misto srazu (volitelne)"
         datetime meeting_at "datum a cas srazu"
@@ -395,7 +394,7 @@ erDiagram
     ACTION_TEMPLATE {
         int id PK
         int unit_id FK "NULL = systemova sablona"
-        string type "club / one_off / weekend / course / certificate / recommendation / group / race / workshop"
+        string type "club / one_off / weekend / course / certificate / mentor_recommendation / group / race / workshop"
         string name
         json config "vychozi nastaveni akce"
         bool active
@@ -450,6 +449,8 @@ erDiagram
         int person_id FK "ucastnik (prave jeden na prihlasku)"
         int submitted_by_account_id FK "kdo prihlasku podal; NULL = podano tokenem bez uctu"
         string contact_email "dorucovaci adresa prihlasky; povinna jen kdyz submitted_by_account_id IS NULL, jinak NULL a bere se z uctu"
+        string contact_email_confirmation_token "jednorazovy token jen pro akci mentor_recommendation"
+        datetime contact_email_confirmed_at "NULL = kontakt registrujiciho dosud nepotvrzen"
         int parent_registration_id FK "nadrazena prihlaska (NULL = hlavni); definuje club scope"
         int price_id FK "EVENT_PRICE platna k okamziku podani; zafixovana"
         decimal base_price "snapshot zakladni ceny pri podani"
@@ -650,12 +651,17 @@ erDiagram
     RECOMMENDATION {
         int id PK
         int registration_id FK
-        int mentor_person_id FK "NULL = jen e-mail"
-        string mentor_email
-        string type "mentor / leader"
-        string expectation
-        string state "requested / confirmed / rejected"
+        string type "mentor / head_leader"
+        int source_unit_id FK "oddil, z jehoz aktivni role HVO se odvodil kontakt; NULL = rucni kontakt u ucastnika bez oddilu"
+        string contact_name "jen mentor; NULL u hlavniho vedouciho"
+        string contact_email
+        string token "jednorazovy, nahodny a unikatni"
+        string state "requested / confirmed / superseded"
+        string reason_leader "povinne jen u head_leader; max 600 znaku"
+        string reason_participant "povinne jen u head_leader; max 600 znaku"
+        datetime requested_at
         datetime confirmed_at
+        datetime token_used_at
     }
     EVENT_CUSTOM_FIELD {
         int id PK

@@ -1,0 +1,7 @@
+{layout 'layout.latte'}
+
+{block content}
+<p>Dobrý den,</p>
+<p>Akce <strong>{$event['name']}</strong> byla zrušena. Vaše přihláška byla stornována bez storno poplatku.</p>
+{if $refundAmount > 0}<div class="details"><p><strong>K vrácení:</strong> {$refundAmount} Kč</p><p>Vrácení platby s vámi vyřeší pořadatel akce.</p></div>{/if}
+{/block}

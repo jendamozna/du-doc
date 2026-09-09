@@ -1,0 +1,9 @@
+{layout 'layout.latte'}
+
+{block content}
+<p>Dobrý den,</p>
+<p>Pro odeslání žádosti mentorovi a hlavnímu vedoucímu potvrďte e-mail k přihlášce na akci <strong>{$event['name']}</strong>.</p>
+<p style="text-align: center;"><a href="{$confirmUrl}" class="button">Potvrdit e-mail</a></p>
+<p><small>Nebo zkopírujte tento odkaz: {$confirmUrl}</small></p>
+<p>Potvrzením e-mailu se nemění stav vaší přihlášky.</p>
+{/block}

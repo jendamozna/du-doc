@@ -1,0 +1,8 @@
+{layout 'layout.latte'}
+
+{block content}
+<p>Dobrý den,</p>
+<p>Na závodní akci <strong>{$event['name']}</strong> stále nejsou zařazeni do hlídek všichni závodníci.</p>
+{if $participants}<div class="details"><p><strong>Bez hlídky:</strong></p><ul>{foreach $participants as $participant}<li>{$participant['name']}</li>{/foreach}</ul></div>{/if}
+<p style="text-align: center;"><a href="{$eventUrl}" class="button">Spravovat hlídky</a></p>
+{/block}

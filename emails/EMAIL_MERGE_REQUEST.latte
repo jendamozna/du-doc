@@ -1,0 +1,8 @@
+{layout 'layout.latte'}
+
+{block content}
+<p>Dobrý den,</p>
+<p>Byla podána žádost o sloučení záznamů osob <strong>{$sourcePerson['name']}</strong> a <strong>{$targetPerson['name']}</strong>.</p>
+<p style="text-align: center;"><a href="{$requestUrl}" class="button">Posoudit žádost</a></p>
+<p><small>Nebo zkopírujte tento odkaz: {$requestUrl}</small></p>
+{/block}

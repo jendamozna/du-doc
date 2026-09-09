@@ -1,0 +1,8 @@
+{layout 'layout.latte'}
+
+{block content}
+<p>Dobrý den,</p>
+<p>Dávka příspěvků DU byla uzamčena a je připravena k úhradě.</p>
+<div class="details"><p>Částka: <strong>{$amount} Kč</strong><br>Číslo účtu: <strong>{$payment['account']}/{$payment['bank']}</strong><br>Variabilní symbol: <strong>{$payment['vs']}</strong><br>Specifický symbol: <strong>{$payment['ss']}</strong></p></div>
+<img alt="QR platba" src="{$payment['qrLink']}">
+{/block}

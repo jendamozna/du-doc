@@ -1,0 +1,17 @@
+{layout 'layout.latte'}
+
+{block content}
+    <p>Dobrý den,</p>
+
+    <p>
+        potvrzujeme přijetí role mentora pro účastníka
+        <strong>{$participant['firstname']} {$participant['surname']}</strong>
+        na akci <strong>{$event['name']}</strong>.
+    </p>
+
+    <div class="details">
+        <p><strong>Akce:</strong> {$event['name']}</p>
+        <p><strong>Účastník:</strong> {$participant['firstname']} {$participant['surname']}</p>
+    </div>
+
+{/block}

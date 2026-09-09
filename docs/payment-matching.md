@@ -68,6 +68,8 @@ Nejčastější reálný případ: zákonný zástupce pošle jednou platbou za 
 - **Stav transakce se počítá** ze součtu alokací vůči její částce: `unmatched` (nic) → `partially_allocated` (něco zbývá) → `allocated` (rozděleno beze zbytku). Navíc lze transakci označit jako `ignored` (příspěvek, refundace, platba mimo systém) — to je jediný ručně nastavený příznak.
 - **Nerozdělený zbytek** (`amount − Σ alokací`) je hlavní pracovní fronta účetní; jeho výše a stáří jsou vidět v přehledu.
 
+Po každém běhu párovacího automatu vzniká událost `payment.reconciliation_completed`. Nese `transaction_id`, `account_id`, výsledek (`allocated`, `partially_allocated`, `unmatched` nebo `ambiguous`), `allocated_amount`, `unmatched_amount` a případné `candidates[]`. Událost slouží jako vstup pro notifikaci účetnímu oddílu; ruční potvrzení nebo oprava návrhu je samostatná operace a tento automatický výstup se jí nemění.
+
 ## Přeplatek a vratka
 
 - Přeplatek přihlášky = `Σ alokací − cena` a **počítá se**, neukládá se jako záznam. Nikdy se nevrací automaticky.

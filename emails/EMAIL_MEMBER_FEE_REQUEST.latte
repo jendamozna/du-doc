@@ -1,0 +1,8 @@
+{layout 'layout.latte'}
+
+{block content}
+<p>Dobrý den,</p>
+<p>Byl vystaven členský předpis pro rok <strong>{$membershipYear}</strong>.</p>
+<div class="details"><p>Složka DU: <strong>{$duAmount} Kč</strong><br>Lokální složka: <strong>{$localAmount} Kč</strong><br>Celkem: <strong>{$totalAmount} Kč</strong></p><p>Číslo účtu: <strong>{$payment['account']}/{$payment['bank']}</strong><br>Variabilní symbol: <strong>{$payment['vs']}</strong></p></div>
+<img alt="QR platba" src="{$payment['qrLink']}">
+{/block}

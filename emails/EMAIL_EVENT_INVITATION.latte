@@ -1,0 +1,9 @@
+{layout 'layout.latte'}
+
+{block content}
+<p>Dobrý den,</p>
+<p>Oddíl vás zve na akci <strong>{$event['name']}</strong>.</p>
+<div class="details"><p><strong>Termín:</strong> {$event['startsAt']|date:'j. n. Y H:i'}{if $event['endsAt']} - {$event['endsAt']|date:'j. n. Y H:i'}{/if}</p></div>
+<p style="text-align: center;"><a href="{$registrationUrl}" class="button">Přihlásit se</a></p>
+<p style="text-align: center;"><a href="{$excuseUrl}" class="button">Omluvit se</a></p>
+{/block}

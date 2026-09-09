@@ -1,0 +1,12 @@
+{layout 'layout.latte'}
+
+{block content}
+<p>Dobrý den,</p>
+<p>Dokument k přihlášce na akci <strong>{$event['name']}</strong> nebyl schválen.</p>
+<div class="details">
+    <p><strong>Dokument:</strong> {$document['name']}</p>
+    <p><strong>Důvod:</strong> {$reviewNote}</p>
+</div>
+<p>Nahrajte prosím nový dokument ve správě přihlášky.</p>
+<p style="text-align: center;"><a href="{$manageUrl}" class="button">Spravovat přihlášku</a></p>
+{/block}

@@ -1,0 +1,8 @@
+{layout 'layout.latte'}
+
+{block content}
+<p>Dobrý den,</p>
+<p>Opakovaně se nepodařilo stáhnout transakce z bankovního účtu <strong>{$bankAccount['name']}</strong>.</p>
+<div class="details"><p><strong>Počet neúspěšných pokusů:</strong> {$attempts}</p><p><strong>Poslední chyba:</strong> {$error}</p></div>
+<p>Zkontrolujte prosím platnost přístupu k bankovnímu API.</p>
+{/block}

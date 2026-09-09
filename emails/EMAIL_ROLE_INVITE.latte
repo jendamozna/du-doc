@@ -1,0 +1,8 @@
+{layout 'layout.latte'}
+
+{block content}
+<p>Dobrý den,</p>
+<p>Byli jste pozváni do role <strong>{$roleName}</strong> v oddílu <strong>{$unit['name']}</strong>.</p>
+<p style="text-align: center;"><a href="{$inviteUrl}" class="button">Přijmout pozvánku</a></p>
+<p><small>Nebo zkopírujte tento odkaz: {$inviteUrl}</small></p>
+{/block}

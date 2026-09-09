@@ -1,0 +1,9 @@
+{layout 'layout.latte'}
+
+{block content}
+<p>Dobrý den,</p>
+<p>Na akci <strong>{$event['name']}</strong> se uvolnilo místo. Nabízíme vám účast místo náhradníka.</p>
+<p><strong>Nabídka platí do {$offerExpiresAt|date:'j. n. Y H:i'}.</strong></p>
+<p style="text-align: center;"><a href="{$offerUrl}" class="button">Přijmout nabídku</a></p>
+<p><small>Nebo zkopírujte tento odkaz: {$offerUrl}</small></p>
+{/block}

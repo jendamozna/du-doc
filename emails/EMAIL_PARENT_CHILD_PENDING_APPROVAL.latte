@@ -1,0 +1,9 @@
+{layout 'layout.latte'}
+
+{block content}
+<p>Dobrý den,</p>
+<p>Byla podána žádost o přidání dalšího zákonného zástupce k dítěti <strong>{$child['name']}</strong>.</p>
+<p style="text-align: center;"><a href="{$approvalUrl}" class="button">Posoudit žádost</a></p>
+<p><small>Nebo zkopírujte tento odkaz: {$approvalUrl}</small></p>
+<p>Žádost platí do {$expiresAt|date:'j. n. Y H:i'}.</p>
+{/block}

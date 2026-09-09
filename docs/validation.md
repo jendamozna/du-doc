@@ -29,14 +29,15 @@ Doplněk k [data-model.md](data-model.md), který popisuje **co je platná hodno
 
 Která pole `PERSON` musí být vyplněná, závisí na kontextu:
 
-| Kontext                                      | Povinná pole                                                   | Zdroj                                                  |
-| -------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------ |
-| Host v oddílu                                | jméno **a** příjmení, **nebo** přezdívka                       | [README.md](../README.md) → Hlavní vedoucí             |
-| Registrovaný člen                            | jméno, příjmení, pohlaví, **datum narození**                   | [README.md](../README.md) → Hlavní vedoucí             |
-| Přihláška nezletilého bez zákonného zástupce | `birth_date` (jinak nelze vyhodnotit bránu) + `guardian_email` | [registration-lifecycle.md](registration-lifecycle.md) |
-| Akce typu „S certifikátem"                   | tituly před/za + adresa trvalého bydliště                      | [README.md](../README.md) → Typy a šablony             |
-| Člen hlídky na závodě                        | `birth_date` (bez něj nelze ověřit složení hlídky)             | [race-patrols.md](race-patrols.md)                     |
-| Vlastník účtu                                | `ACCOUNT.login_email`                                          | [data-model.md](data-model.md)                         |
+| Kontext                                      | Povinná pole                                                                                                                                        | Zdroj                                                  |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Host v oddílu                                | jméno **a** příjmení, **nebo** přezdívka                                                                                                            | [README.md](../README.md) → Hlavní vedoucí             |
+| Registrovaný člen                            | jméno, příjmení, pohlaví, **datum narození**                                                                                                        | [README.md](../README.md) → Hlavní vedoucí             |
+| Přihláška nezletilého bez zákonného zástupce | `birth_date` (jinak nelze vyhodnotit bránu) + `guardian_email`                                                                                      | [registration-lifecycle.md](registration-lifecycle.md) |
+| Akce typu „Mentor a doporučení"              | volitelně jméno + e-mail mentora; bez aktivního `PERSON_UNIT` je e-mail hlavního vedoucího povinný, jinak se odvodí z aktivní role HVO vazby oddílu | [README.md](../README.md) → Přihlašování na akce       |
+| Akce typu „S certifikátem"                   | tituly před/za + adresa trvalého bydliště                                                                                                           | [README.md](../README.md) → Typy a šablony             |
+| Člen hlídky na závodě                        | `birth_date` (bez něj nelze ověřit složení hlídky)                                                                                                  | [race-patrols.md](race-patrols.md)                     |
+| Vlastník účtu                                | `ACCOUNT.login_email`                                                                                                                               | [data-model.md](data-model.md)                         |
 
 Ostatní pole (`nickname`, `insurance_company`, `address`) jsou povinná jen tehdy, označí-li je tak šablona akce nebo `EVENT_CUSTOM_FIELD.required`.
 
@@ -63,6 +64,8 @@ Ostatní pole (`nickname`, `insurance_company`, `address`) jsou povinná jen teh
 | `RACE_PATROL_MEMBER`   | `person_id` + `event_id` (přes hlídku)        | osoba je nejvýše v jedné hlídce téže akce                                  |
 | `EVENT`                | `share_slug`                                  | sdílecí odkaz je globálně unikátní a nepředvídatelný                       |
 | `REGISTRATION`         | `vs`                                          | variabilní symbol musí párování jednoznačně identifikovat                  |
+| `REGISTRATION`         | `contact_email_confirmation_token`            | jednorázový token potvrzení kontaktu musí být náhodný a globálně unikátní  |
+| `RECOMMENDATION`       | `token`                                       | jednorázový token musí být náhodný a globálně unikátní                     |
 | `PERSON_UNIT`          | `person_id` + `unit_id` (otevřený záznam)     | osoba má v oddílu nejvýše jeden platný záznam                              |
 
 | `CUSTOM_FIELD` | `unit_id` + `unit_patrol_id` + `name` | název je unikátní v daném rozsahu |
@@ -103,6 +106,16 @@ Ostatní pole (`nickname`, `insurance_company`, `address`) jsou povinná jen teh
 - Vratka nebo oprava nesmí snížit krytí složky DU pod `du_amount`, pokud je předpis v uzamčené nebo zaplacené dávce; nejdřív se provede oprava odpovídající dávky u ústředí.
 
 ## Invarianty po entitách
+
+### Mentor a doporučení
+
+- `RECOMMENDATION` smí vzniknout jen pro `REGISTRATION` akce s `EVENT.type = 'mentor_recommendation'`; pro každou kombinaci `registration_id` + `type` existuje nejvýše jedna aktuální žádost ve stavu `requested` nebo `confirmed`.
+- `REGISTRATION.contact_email_confirmation_token` smí být vyplněn jen pro akci typu `mentor_recommendation` před potvrzením kontaktu. Po úspěšném potvrzení se zneplatní; použitý nebo neplatný token nesmí nic změnit.
+- `type = 'mentor'` vyžaduje neprázdné `contact_name` a `contact_email`. U `type = 'head_leader'` účastník bez aktivního `PERSON_UNIT` povinně zadá `contact_email` a `source_unit_id` je `NULL`; u účastníka s aktivním oddílem musí `source_unit_id` odkazovat na jeho aktivní `PERSON_UNIT` a `contact_email` se uloží jako snapshot e-mailu aktivního HVO tohoto oddílu. Má-li osoba více aktivních vazeb, výběr `source_unit_id` je povinný. Po potvrzení jsou v obou případech povinné neprázdné odpovědi `reason_leader` a `reason_participant`, každá nejvýše 600 znaků.
+- Zvolený `source_unit_id` musí mít aktivní roli HVO s přihlašovacím e-mailem. Chybí-li, žádost o doporučení se nevytvoří a systém oznámí konfigurační chybu pořadateli; nesmí nabídnout ruční náhradu e-mailu HVO účastníkovi, který vazbu na oddíl má.
+- Token platí jen pro žádost ve stavu `requested`. Úspěšné potvrzení jej jednou provždy zneplatní (`token_used_at`); neplatný, použitý nebo nahrazený token nesmí měnit data.
+- Změna mentora vytvoří novou žádost s novým tokenem a předchozí označí `superseded`; předchozí potvrzení se nepřenáší. Vznik, potvrzení i nahrazení žádosti se zapisují do auditního logu.
+- Stav `RECOMMENDATION` není podmínkou `evaluate(registration)` a nesmí ovlivnit stav přihlášky, kapacitu, dokumenty ani platbu.
 
 ### Pomocná evidence
 

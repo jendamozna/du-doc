@@ -1,0 +1,8 @@
+{layout 'layout.latte'}
+
+{block content}
+<p>Dobrý den,</p>
+<p>Hlídka <strong>{$patrol['name']}</strong> na akci <strong>{$event['name']}</strong> byla rozpuštěna.</p>
+<div class="details"><p><strong>Důvod:</strong> {$reason}</p></div>
+<p style="text-align: center;"><a href="{$manageUrl}" class="button">Spravovat přihlášku</a></p>
+{/block}

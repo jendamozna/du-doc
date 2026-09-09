@@ -1,0 +1,31 @@
+{layout 'layout.latte'}
+
+{block content}
+    <p>Dobrý den,</p>
+
+    <p>
+        byl(a) jste uveden(a) jako hlavní vedoucí účastníka
+        <strong>{$participant['firstname']} {$participant['surname']}</strong>,
+        kter{if $participant['is_man']=="z"}á{else}ý{/if} se přihlásil{if $participant['is_man']=="z"}a{/if} na akci <strong>{$event['name']}</strong>.
+    </p>
+
+    <p>
+        Prosíme Vás o vyplnění krátkého doporučení pro tohoto účastníka.
+        Formulář obsahuje dvě otázky, jejichž zodpovězení by nemělo zabrat více než pár minut.
+    </p>
+
+    <div class="details">
+        <p><strong>Akce:</strong> {$event['name']}</p>
+        <p><strong>Účastník:</strong> {$participant['firstname']} {$participant['surname']}</p>
+    </div>
+
+    <p style="text-align: center;">
+        <a href="{$formUrl}" class="button">Vyplnit doporučení</a>
+    </p>
+
+    <p><small>Nebo zkopírujte tento odkaz: {$formUrl}</small></p>
+
+    <p>
+        Pokud tento e-mail přišel omylem, ignorujte ho prosím.
+    </p>
+{/block}

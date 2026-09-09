@@ -1,0 +1,47 @@
+{layout 'layout.latte'}
+
+{block content}
+    <p>Dobrý den,</p>
+
+    <p>
+        byl(a) jste uveden(a) jako mentor pro účastníka
+        <strong>{$participant['firstname']} {$participant['surname']}</strong>
+        na akci <strong>{$event['name']}</strong>.
+    </p>
+
+    <p>
+        Prosíme o potvrzení, že roli mentora přijímáte.
+        Potvrzením zároveň berete na vědomí podmínky mentoringu po kurzu.
+    </p>
+
+    <div class="details">
+        <p><strong>Akce:</strong> {$event['name']}</p>
+        <p><strong>Účastník:</strong> {$participant['firstname']} {$participant['surname']}</p>
+    </div>
+
+
+    <p><strong>Podmínky mentoringu po kurzu DU</strong></p>
+    <ul>
+        <li>min. 4 setkání během následujícího školního roku (září až červen, doporučujeme setkání každý měsíc)</li>
+        <li>každé setkání trvá 60 min (délka je na domluvě)</li>
+        <li>místo setkání je na domluvě</li>
+        <li>mentor využije připravené okruhy témat a doporučení DU</li>
+        <li>mentor iniciuje setkání s menteem</li>
+        <li>mentor využije telefonické (on-line) podpory pracovníka DU alespoň jedenkrát během mentoringu</li>
+        <li>mentor vykáže počet setkání a stručně popíše užitečnost mentoringu po kurzu přes Google formulář</li>
+        <li>mentor může využít on-line setkání, workshopy DU a dalšího vzdělávání</li>
+    </ul>
+    <p><em>Změny vyhrazeny.</em></p>
+
+    <p>Další informace k mentoringu najdete na webu <a href="https://dorostovaunie.cz/mentoring">dorostovaunie.cz/mentoring</a>.</p>
+
+    <p style="text-align: center;">
+        <a href="{$confirmUrl}" class="button">Přijímám roli mentora</a>
+    </p>
+
+    <p><small>Nebo zkopírujte tento odkaz: {$confirmUrl}</small></p>
+
+    <p>
+        Pokud tento e-mail přišel omylem, ignorujte ho prosím.
+    </p>
+{/block}

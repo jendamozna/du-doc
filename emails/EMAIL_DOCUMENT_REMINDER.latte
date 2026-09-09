@@ -1,0 +1,10 @@
+{layout 'layout.latte'}
+
+{block content}
+<p>Dobrý den,</p>
+<p>K přihlášce na akci <strong>{$event['name']}</strong> stále chybí schválené povinné dokumenty.</p>
+{if $missingDocuments}
+<div class="details"><p><strong>Chybějící dokumenty:</strong></p><ul>{foreach $missingDocuments as $document}<li>{$document['name']}</li>{/foreach}</ul></div>
+{/if}
+<p style="text-align: center;"><a href="{$manageUrl}" class="button">Doplnit dokumenty</a></p>
+{/block}

@@ -1,0 +1,8 @@
+{layout 'layout.latte'}
+
+{block content}
+<p>Dobrý den,</p>
+<p>Nepodařilo se doručit e-mail týkající se <strong>{$contextLabel}</strong>.</p>
+<div class="details"><p><strong>Příjemce:</strong> {$recipientEmail}</p><p><strong>Důvod:</strong> {$error}</p></div>
+<p>Zkontrolujte prosím kontaktní e-mail nebo kontaktujte příjemce jinou cestou.</p>
+{/block}

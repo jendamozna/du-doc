@@ -1,0 +1,8 @@
+{layout 'layout.latte'}
+
+{block content}
+<p>Dobrý den,</p>
+<p>Platba dávky příspěvků DU byla spárována.</p>
+{if $members}<div class="details"><p><strong>Členství vzniklo:</strong></p><ul>{foreach $members as $member}<li>{$member['name']}</li>{/foreach}</ul></div>{/if}
+{if $skippedItems}<div class="details"><p><strong>Přeskočené položky:</strong></p><ul>{foreach $skippedItems as $item}<li>{$item['name']}</li>{/foreach}</ul></div>{/if}
+{/block}

@@ -1,0 +1,52 @@
+{layout 'layout.latte'}
+
+{block content}
+    <p>Dobrý den,<br />
+    dovolujeme si Vás upozornit, že Vaše přihláška na akci <strong>{$event['name']}</strong>
+    dosud nebyla plně uhrazena.
+    {if $deadline}
+        Zbývá {$daysUntilDeadline} {sklonuj($daysUntilDeadline, 'den', 'dny', 'dní')} do termínu splatnosti.
+    {/if}
+    </p>
+
+    <div class="warning-box">
+        <p><strong>Stav platby:</strong><br>
+            Celková cena: {$totalPrice} Kč<br>
+            Zaplaceno: {$totalPaid} Kč<br>
+            Zbývá zaplatit: {$remaining} Kč<br>
+            {if $deadline}
+                <strong>Termín splatnosti: {$deadline|date:'j. n. Y'}</strong>
+            {/if}
+        </p>
+    </div>
+
+    <div class="details">
+        <strong>Platební údaje:</strong><br>
+        Číslo účtu: <strong>{$payment['account']}/{$payment['bank']}</strong><br>
+        Variabilní symbol: <strong>{$payment['vs']}</strong><br>
+        Specifický symbol: <strong>{$payment['ss']}</strong><br>
+        Zpráva pro příjemce: <strong>{$payment['message']}</strong><br>
+        Částka k úhradě: <strong>{$remaining} Kč</strong>
+    </div>
+
+    Naskenujte QR kód mobilním bankovnictvím pro rychlou platbu:
+    <img
+        alt="QR platba"
+        src="{$payment['qrLink']}"
+    />
+
+    <p>
+        <strong>Upozornění:</strong> Při neuhrazení do termínu splatnosti
+        bude Vaše registrace zrušena.
+    </p>
+
+    <p style="text-align: center;">
+        <a href="{$manageUrl}" class="button">Zobrazit registraci</a>
+    </p>
+
+     <p>Pokud jste platbu již provedli, tuto zprávu ignorujte.</p>
+
+{/block}
+{*
+        src="cid:{$payment['cid']}"
+*}

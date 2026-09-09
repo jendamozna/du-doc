@@ -18,18 +18,18 @@ Oprávnění nevzniká z jednoho zdroje — skládá se ze tří nezávislých v
 
 ## Aktéři
 
-| Aktér                           | Zdroj oprávnění                                                  | Rozsah                                                                                               |
-| ------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| **ADM** Administrátor           | `USER_ROLE`                                                      | napříč všemi oddíly                                                                                  |
-| **HVO** Hlavní vedoucí          | `USER_ROLE` + `unit_id`                                          | jeden oddíl, plná správa                                                                             |
-| **VO** Vedoucí oddílu           | `USER_ROLE` + `EVENT.unit_id`                                    | akce a základní seznamy přihlášených vlastního oddílu; týmová práva podle přiřazení                  |
-| **RÁD** Rádce (vedoucí družiny) | `USER_ROLE` + `EVENT.unit_id` + družina                          | akce a základní seznamy přihlášených vlastního oddílu; údaje družiny a zvýšená práva podle přiřazení |
-| **Vedoucí akce**                | `EVENT_ASSIGNMENT.team_role = 'event_leader'`                    | přiřazená akce; předepsaná, uhrazená a zbývající částka jejích přihlášek                             |
-| **ÚČE** Účetní oddílu           | `USER_ROLE` + `unit_id`                                          | celý oddíl, jen platební agenda                                                                      |
-| **Zákonný zástupce**            | aktivní `PARENT_CHILD`                                           | **per dítě**, ne globálně                                                                            |
-| **Vlastník přihlášky**          | token, `submitted_by_account_id` nebo zákonný zástupce účastníka | jedna přihláška a její dílčí přihlášky                                                               |
-| **Osoba (self)**                | `ACCOUNT.person_id`                                              | vlastní údaje a přihlášky                                                                            |
-| **Anonym**                      | —                                                                | veřejný výpis akcí, seznam názvů klubů na veřejné akci, sdílecí odkaz                                |
+| Aktér                           | Zdroj oprávnění                                                  | Rozsah                                                                                                                                                            |
+| ------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ADM** Administrátor           | `USER_ROLE`                                                      | napříč všemi oddíly                                                                                                                                               |
+| **HVO** Hlavní vedoucí          | `USER_ROLE` + `unit_id`                                          | jeden oddíl, plná správa                                                                                                                                          |
+| **VO** Vedoucí oddílu           | `USER_ROLE` + `EVENT.unit_id`                                    | akce a základní seznamy přihlášených vlastního oddílu; týmová práva podle přiřazení                                                                               |
+| **RÁD** Rádce (vedoucí družiny) | `USER_ROLE` + `EVENT.unit_id` + družina                          | akce a základní seznamy přihlášených vlastního oddílu; údaje družiny a zvýšená práva podle přiřazení                                                              |
+| **Vedoucí akce**                | `EVENT_ASSIGNMENT.team_role = 'event_leader'`                    | přiřazená akce; předepsaná, uhrazená a zbývající částka jejích přihlášek                                                                                          |
+| **ÚČE** Účetní oddílu           | `USER_ROLE` + `unit_id`                                          | celý oddíl, jen platební agenda                                                                                                                                   |
+| **Zákonný zástupce**            | aktivní `PARENT_CHILD`                                           | **per dítě**, ne globálně                                                                                                                                         |
+| **Vlastník přihlášky**          | token, `submitted_by_account_id` nebo zákonný zástupce účastníka | jedna přihláška a její dílčí přihlášky                                                                                                                            |
+| **Osoba (self)**                | `ACCOUNT.person_id`                                              | vlastní údaje a přihlášky                                                                                                                                         |
+| **Anonym**                      | —                                                                | veřejný výpis akcí, detail a podání přihlášky na veřejné akci, detail a podání přihlášky na neveřejné akci přes sdílecí odkaz, seznam názvů klubů na veřejné akci |
 
 Legenda v maticích: **RW** = čtení i zápis · **R** = jen čtení · **A** = podle příznaku v `EVENT_ASSIGNMENT` · **—** = žádný přístup
 
@@ -210,8 +210,9 @@ Scope se aplikuje jako **filtr odvozený z `USER_ROLE`**, ne z parametru request
 
 ### Anonym
 
-- Veřejný výpis akcí s viditelností `public`; detail akce přes `share_slug` bez ohledu na viditelnost.
-- Podání přihlášky na veřejnou akci. Nic dalšího.
+- Veřejný výpis akcí s viditelností `public`.
+- Detail akce přes `share_slug` bez ohledu na viditelnost; u neveřejné akce je sdílecí odkaz zároveň oprávněným vstupem k podání přihlášky.
+- Podání přihlášky na veřejnou akci nebo na neveřejnou akci přes její sdílecí odkaz. Po podání vzniká vlastnictví konkrétní přihlášky přes token, nikoli přístup k oddílu nebo k jiným akcím.
 
 ## Citlivá data
 

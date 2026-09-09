@@ -32,7 +32,8 @@ Synchronizace je **volitelná vrstva**. Oddíl bez bankovního API plní `BANK_T
 ## Chybové stavy
 
 - Neplatný token, nedostupné API nebo překročený limit se zaznamenají do `sync_state` / `sync_error`; synchronizace se u daného účtu nezastaví natrvalo.
-- Po opakovaném selhání systém upozorní účetní a HVO.
+- Po **3 po sobě jdoucích neúspěšných bězích** systém vytvoří událost `bank_account.sync_failed` a upozorní účetní a HVO šablonou `EMAIL_FIO_SYNC_FAILURE`. Událost obsahuje `bank_account_id`, název účtu, počet po sobě jdoucích selhání, `last_sync_at`, čas posledního neúspěšného běhu a bezpečně zkrácenou poslední chybu; nikdy neobsahuje token.
+- Během trvání problému se upozornění odešle nejvýše jednou za 24 hodin. Po úspěšném běhu se počitadlo po sobě jdoucích selhání vynuluje; případné další selhání po novém dosažení prahu vytvoří nový alert.
 - Poslední úspěšné stažení drží `last_sync_at`.
 
 ## Doplňková pole `BANK_ACCOUNT`
