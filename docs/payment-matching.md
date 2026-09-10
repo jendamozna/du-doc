@@ -9,7 +9,7 @@ Implementační detail k modulu párování plateb ([README.md](../README.md) �
   - součet < cena → `PartialPaid`,
   - součet = cena → `Paid`,
   - součet > cena → `Overpayment`.
-- Cena přihlášky = **základní cena zafixovaná při podání** (`REGISTRATION.base_price`, odvozená z `EVENT_PRICE` platné k `created_at` a typu účastníka) + součet příplatků aktuálně zvolených položek číselníků (viz [event-fields.md](event-fields.md)). Pozdější změna ceníku ani vznik členství DU už podanou přihlášku nepřeceňuje — základní cenu může změnit jen vedoucí ručně.
+- Cena přihlášky = **základní cena zafixovaná při podání** (`REGISTRATION.base_price`, odvozená z `EVENT_PRICE` platné k `created_at` a typu účastníka — určení typu a fallback při chybějící ceně viz [validation.md](validation.md) → **Ceny a storna**) + součet **zafixovaných** příplatků aktuálně zvolených položek číselníků (`REGISTRATION_FIELD_VALUE.price_modifier`, viz [event-fields.md](event-fields.md)). Pozdější změna ceníku (`EVENT_PRICE` ani `EVENT_FIELD_OPTION.price_modifier`) ani vznik členství DU už podanou přihlášku nepřeceňuje — cenu může změnit jen vedoucí ručně, nebo změna samotné volby položky.
 - **Splatnost je vlastnost akce** a zadává se jedním ze dvou způsobů: relativně (`EVENT.payment_due_days`, např. 14 dní od podání přihlášky), nebo absolutně (`EVENT.payment_due_date`, pevné datum pro celou akci). Vyplňuje se právě jedno z polí; výchozí hodnota přichází ze šablony akce, fallback je 14 dní. Termín přihlášky se pak počítá:
   - relativně → `MIN(REGISTRATION.created_at + payment_due_days, EVENT.starts_at)`,
   - absolutně → `payment_due_date` (u přihlášek podávaných po tomto datu platí splatnost ihned).
@@ -46,10 +46,13 @@ Pravidla tvoří **seřazený seznam**. Vyhodnocují se shora dolů a vyhrává 
 | `vs_exact`            | VS, částka                                                                                 | automaticky |
 | `vs_partial_name`     | VS, částečná úhrada a shoda jména odesílatele / poznámky platby                            | návrh       |
 | `vs_overpayment_name` | VS, přeplatek a shoda jména odesílatele / poznámky platby                                  | návrh       |
+| `member_fee_vs_exact` | VS oddílového členského předpisu a přesná částka                                           | automaticky |
+| `member_fee_vs_partial` | VS oddílového členského předpisu a částečná úhrada                                       | automaticky |
 | `manual`              | ruční rozdělení účetní                                                                     |             |
 | `refund`              | automatické spárování záporné bankovní transakce s evidovaným přeplatkem — záporná alokace | automaticky |
 
-- SS identifikuje akci, VS přihlášku.
+- SS identifikuje akci, VS platební cíl.
+- **VS má vyhrazený prefix podle typu cíle** — `1…` přihláška, `2…` oddílový členský předpis, `3…` dávka příspěvků DU. `REGISTRATION.vs`, `UNIT_MEMBER_FEE.vs` a `DU_FEE_BATCH.vs` jsou tři nezávislé unikáty, každý jednoznačný jen ve své tabulce; párovač ale hledá napříč všemi třemi, takže bez prefixu by shodný VS předpisu a přihlášky vyrobil dva kandidáty tam, kde má být jeden. Prefix je levnější než společná tabulka VS a párovač z něj rovnou pozná, kam se dívat.
 - **Částky se porovnávají přesně, žádná tolerance se neuplatňuje.** Rozdíl o korunu není shoda — je to nedoplatek (`PartialPaid`), nebo přeplatek (`Overpayment`). Zaokrouhlovací pásmo by zavádělo tichou ztrátu penez a v účetnictví se hledá hůř než viditelný rozdíl.
 - Automatické párování běží hned po importu nových transakcí; ruční alokace lze kdykoli opravit.
 - **Automaticky** znamená, že alokace vznikne bez zásahu člověka; **návrh** znamená, že se transakce zobrazí účetní s předvyplněným rozdělením, které potvrdí nebo upraví. Hranice mezi oběma sloupci je konfigurace, ne konstanta v kódu.
@@ -65,15 +68,17 @@ Nejčastější reálný případ: zákonný zástupce pošle jednou platbou za 
 - Vrátí-li pravidlo víc než jednoho kandidáta, **nikdy se nealokuje automaticky**. Vznikne návrh rozdělení, který účetní potvrdí nebo upraví.
 - Sedí-li součet zbývajících cen všech kandidátů přesně na částku platby, nabídne se rozpad 1:N s již předvyplněnými částkami; jinak se nabídne seznam kandidátů s prázdnými částkami.
 - Návrh se **neukládá** — počítá se při otevření transakce, aby nezastaral, když mezitím přibude přihláška nebo se změní cena.
-- **Stav transakce se počítá** ze součtu alokací vůči její částce: `unmatched` (nic) → `partially_allocated` (něco zbývá) → `allocated` (rozděleno beze zbytku). Navíc lze transakci označit jako `ignored` (příspěvek, refundace, platba mimo systém) — to je jediný ručně nastavený příznak.
+- **Stav transakce se počítá** ze součtu alokací vůči její částce: `unmatched` (nic) → `partially_allocated` (něco zbývá) → `allocated` (rozděleno beze zbytku). Vedle počítaného stavu nese transakce **dva ručně nastavené příznaky**, které se nevylučují s ním, ale s frontou k párování: `ignored_at` (příspěvek, refundace, platba mimo systém — účetní ji z fronty odklidí) a `voided_at` (storno chybného ručního zápisu, viz **Oprava chybného zápisu**). Obojí transakci z fronty odebere; `ignored` ji ponechá v evidenci jako platnou, `voided` ji prohlásí za omyl.
 - **Nerozdělený zbytek** (`amount − Σ alokací`) je hlavní pracovní fronta účetní; jeho výše a stáří jsou vidět v přehledu.
 
-Po každém běhu párovacího automatu vzniká událost `payment.reconciliation_completed`. Nese `transaction_id`, `account_id`, výsledek (`allocated`, `partially_allocated`, `unmatched` nebo `ambiguous`), `allocated_amount`, `unmatched_amount` a případné `candidates[]`. Událost slouží jako vstup pro notifikaci účetnímu oddílu; ruční potvrzení nebo oprava návrhu je samostatná operace a tento automatický výstup se jí nemění.
+Po každém běhu párovacího automatu vzniká událost `payment.reconciliation_completed`. Nese `transaction_id`, `bank_account_id`, výsledek (`allocated`, `partially_allocated`, `unmatched` nebo `ambiguous`), `allocated_amount`, `unmatched_amount` a případné `candidates[]`. Událost vzniká **vždy** (čtou ji i reporty), ale notifikace účetní se z ní odesílá **jen při výsledku `unmatched`, `partially_allocated` nebo `ambiguous`** — tedy když zbývá lidská práce. Čistě spárovaná platba své potvrzení posílá plátci a účetní o ní vědět nepotřebuje; jinak by u oddílu s API chodil e-mail za každou bezchybně spárovanou platbu. Ruční potvrzení nebo oprava návrhu je samostatná operace a tento automatický výstup se jí nemění.
 
 ## Přeplatek a vratka
 
 - Přeplatek přihlášky = `Σ alokací − cena` a **počítá se**, neukládá se jako samostatný finanční záznam. Do vypořádání zůstává přihláška ve stavu `Overpayment` a je vidět v reportu Platby.
-- Při volbě vratky účetní určí přeplatek a částku k vrácení. Systém čeká na skutečně zaúčtovanou zápornou bankovní transakci; po jejím importu ji automaticky spáruje s odpovídajícím přeplatkem, **jen pokud existuje právě jeden jednoznačný kandidát**. Jinak transakce zůstane ve frontě účetní k ručnímu potvrzení.
+- **Rozhodnutí o vratce se ale ukládá** — jako `REFUND_REQUEST` (cíl, částka, důvod, kdo a kdy rozhodl). Počítaný přeplatek sám o sobě párovat nestačí: bez uloženého záměru nelze odlišit vratku, kterou účetní schválila, od libovolného odchozího pohybu shodné výše. Záznam zároveň tvoří frontu **schválené vratky čekající na provedení v bance**.
+- Systém čeká na skutečně zaúčtovanou zápornou bankovní transakci; po jejím importu ji spáruje s `REFUND_REQUEST` ve stavu `pending`, **jen pokud existuje právě jeden jednoznačný kandidát** (shodná částka na témž bankovním účtu). Jinak transakce zůstane ve frontě účetní k ručnímu potvrzení.
+- Spárováním se založí záporná alokace, `REFUND_REQUEST.state = 'matched'` a `allocation_id` na ni ukáže. Neprovedenou vratku lze **stornovat** (`canceled`) — třeba když se účetní rozhodne přeplatek převést na jinou přihlášku místo vracení.
 - Vratka se eviduje jako **záporná alokace** na původní transakci (`match_method = 'refund'`), nikoli mazaním nebo úpravou původní alokace — historie plateb zůstává dohledatelná a stav přihlášky se přepočte sám.
 - Převod na jinou přihlášku je dvojice záporná + kladná alokace též transakce, takže součet alokací transakce zůstává roven její částce.
 - Aplikace nevytváří odchozí platební příkazy; pouze importuje nebo zaeviduje zápornou transakci a automaticky ji spáruje.
@@ -85,7 +90,7 @@ Po každém běhu párovacího automatu vzniká událost `payment.reconciliation
 
 ## Oddíl bez bankovního API
 
-Modul má dvě nezávislé vrstvy: **evidence plateb** (vše v tomto dokumentu) běží vždy, **synchronizace z API** ([fio-sync.md](fio-sync.md)) jen při přítomnosti tokenu. Oddíl s jinou bankou než Fio si `BANK_TRANSACTION` plní sám (`BANK_ACCOUNT.provider = 'manual'`).
+Modul má dvě nezávislé vrstvy: **evidence plateb** (vše v tomto dokumentu) běží vždy, **synchronizace z API** ([fio-sync.md](fio-sync.md)) jen při `BANK_ACCOUNT.provider = 'fio'`. Oddíl s jinou bankou než Fio si `BANK_TRANSACTION` plní sám (`provider = 'manual'`).
 
 Výpočet stavu úhrady, pořadí párovacích pravidel, přeplatky i vratky se tím **nemění vůbec** — `evaluate()` čte součet alokací, ne banku. Liší se jen zdroj transakcí.
 
@@ -111,6 +116,8 @@ fingerprint = hash(bank_account_id, date, amount, vs, ss, sender_account, messag
 external_id = "stmt:" + fingerprint
 ```
 
+`vs` a `ss` vstupují do otisku **už zbavené počátečních nul** — normalizace probíhá při zápisu do `BANK_TRANSACTION` bez ohledu na zdroj ([fio-sync.md](fio-sync.md) → **Rozsah**), takže stejná platba dostane stejný otisk bez ohledu na to, jestli přišla přes API nebo ve výpisu.
+
 - Pořadové číslo ve skupině shodných řádků kryje legální případ dvou stejných částek bez VS ve stejný den.
 - Opakované nahrání téhož nebo překrývajícího se výpisu narazí na stávající unikát `účet + external_id` a nic nezdvojí; před potvrzením se ukáže rozpad „nové / už známé“ řádky.
 - Ruční zápis dostane `manual:<uuid>`. `external_id` tím zůstává povinné a unikátní pro všechny zdroje — v kódu nevzniká větev „transakce bez identifikátoru“.
@@ -130,4 +137,4 @@ external_id = "stmt:" + fingerprint
 
 ### Přechod na API
 
-Doplní-li oddíl později token, nic se nemigruje — ruční i stažené transakce koexistují na témž účtu a připomínky se zapnou. Při importu se hledá ruční transakce se shodným účtem, datem a částkou; shoda se nabídne ke sloučení místo tichého zdvojení.
+Přepne-li oddíl později účet z `manual` na `fio` (a v téže operaci zadá token, viz [fio-sync.md](fio-sync.md) → **Token**), nic se nemigruje — ruční i stažené transakce koexistují na témž účtu a připomínky se zapnou. Při importu se hledá ruční transakce se shodným účtem, datem a částkou; shoda se nabídne ke sloučení místo tichého zdvojení.

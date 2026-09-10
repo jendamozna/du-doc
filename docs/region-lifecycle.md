@@ -4,7 +4,7 @@ Formální model `REGION` a `UNIT_REGION` ([README.md](../README.md) → **Regio
 
 ## Princip: dvě věci, které se mění nezávisle
 
-- **`REGION`** — samotný region jako entita se stavem (`active` / `merged` / `cancelled`).
+- **`REGION`** — samotný region jako entita se stavem (`active` / `merged` / `canceled`).
 - **`UNIT_REGION`** — **verzovaná příslušnost oddílu k regionu** s platností od/do. Díky ní lze určit, do jakého regionu oddíl patřil k libovolnému datu.
 
 Regiony se **nikdy nemažou** — historie příslušností na ně odkazuje a reporty z nich čtou. Zrušení je vždy jen změna stavu.
@@ -17,9 +17,9 @@ Regiony se **nikdy nemažou** — historie příslušností na ně odkazuje a re
 | ----------- | ---------------------------------------------------------- | ------------------------- | ---------- |
 | `active`    | běžný, funkční region                                      | ano                       | ne         |
 | `merged`    | sloučen do nástupnického regionu (`merged_into_region_id`) | ne                        | ano        |
-| `cancelled` | zrušen bez nástupce (rozpuštěn)                            | ne                        | ano        |
+| `canceled` | zrušen (rozpuštěn) nebo rozdělen                           | ne                        | ano        |
 
-Oba koncové stavy jsou **terminální** — region se z nich nevrací. Rozdíl je v tom, že `merged` nese odkaz na nástupce, takže reporty umí dohledat, kam se historie přelila; `cancelled` nástupce nemá.
+Oba koncové stavy jsou **terminální** — region se z nich nevrací. Rozdíl je ve směru, kterým se stopa drží: `merged` nese odkaz na svého nástupce (`merged_into_region_id`), zatímco u rozdělení odkazují **nástupci na předchůdce** (`split_from_region_id` na každém z nově vzniklých regionů). Sloučení má jednoho nástupce, rozdělení jich má víc — proto se u něj vazba obrací místo zavádění vazební tabulky. Zrušení bez nástupce nemá ani jedno.
 
 ## Diagram
 
@@ -28,10 +28,11 @@ stateDiagram-v2
     [*] --> active : ADM založí region
 
     active --> merged : sloučení (A + B → C)
-    active --> cancelled : zrušení bez nástupce
+    active --> canceled : zrušení bez nástupce
+    active --> canceled : rozdělení (C → A + B)
 
     merged --> [*]
-    cancelled --> [*]
+    canceled --> [*]
 ```
 
 ## Operace
@@ -44,16 +45,17 @@ Všechny operace smí provést **jen ADM** ([README.md](../README.md) → **Admi
 | **Přiřazení oddílu**      | žádný                                                               | nový řádek s `valid_from`, `valid_to = NULL`                                            |
 | **Přesun oddílu**         | žádný                                                               | stávající řádek dostane `valid_to`, založí se nový do cílového regionu se stejným datem |
 | **Sloučení (A + B → C)**  | A i B → `merged` s `merged_into_region_id = C`; C musí být `active` | všem oddílům z A i B se uzavře příslušnost a otevře nová na C ke stejnému datu          |
-| **Rozdělení (C → A + B)** | vzniknou nové regiony `active`; C → `cancelled`                     | oddílům se uzavře příslušnost na C a otevře nová na cílový region                       |
-| **Zrušení**               | → `cancelled`                                                       | všem oddílům se uzavře příslušnost; zůstávají bez regionu, dokud je ADM nepřiřadí jinam |
+| **Rozdělení (C → A + B)** | vzniknou nové regiony `active` se `split_from_region_id = C`; C → `canceled` | oddílům se uzavře příslušnost na C a otevře nová na cílový region              |
+| **Zrušení**               | → `canceled`                                                       | všem oddílům se uzavře příslušnost; zůstávají bez regionu, dokud je ADM nepřiřadí jinam |
 
 ## Guardy
 
 - **Sloučení:** nástupnický region musí být `active` a různý od zdrojových. Nelze slučovat do regionu, který je sám `merged` — vznikl by řetěz.
-- **Rozdělení** je opačná operace ke sloučení, ne její návrat: původní region skončí jako `cancelled`, historie se nepřepisuje.
+- **Rozdělení** je opačná operace ke sloučení, ne její návrat: původní region skončí jako `canceled`, historie se nepřepisuje. Každý vzniklý region si nese `split_from_region_id`, aby šlo z historického snapshotu dohledat, kam se region rozpadl.
+- **Zrušení bez nástupce** nechává `merged_into_region_id` i `split_from_region_id` prázdné — nemá kam ukázat. Právě tím se v datech liší od rozdělení, ačkoli oba končí v `canceled`.
 - **Zrušení regionu s aktivními oddíly** je povolené, ale ADM dostane upozornění se seznamem osiřelých oddílů. Oddíl bez regionu je platný stav — jen se nezapočítá do žádné regionální agregace.
 - **Ústředí nelze přiřadit** do regionu (guard na `UNIT.is_hq`).
-- Terminální stavy jsou konečné — `merged` ani `cancelled` region nelze reaktivovat.
+- Terminální stavy jsou konečné — `merged` ani `canceled` region nelze reaktivovat.
 
 ## Invarianty verzované příslušnosti
 
@@ -72,3 +74,4 @@ Region se do reportů nebere dotazem „kam oddíl patří teď", ale ze **snaps
 - Nové akce počítají podle aktuálního zařazení.
 - Je-li oddíl v okamžiku vzniku akce bez regionu, snapshot je prázdný a akce se v regionální agregaci neobjeví.
 - Ukazuje-li snapshot na region, který je dnes `merged`, reporty ho zobrazí pod původním názvem; přes `merged_into_region_id` lze dohledat nástupce, ale agregace ho **nepřepočítává** (viz [reports.md](reports.md)).
+- Totéž platí u rozděleného regionu — zobrazí se pod původním názvem a nástupce lze dohledat opačným směrem, dotazem na regiony se `split_from_region_id` rovným snapshotu. Agregace se ani zde nepřepočítává; historický výkaz zůstává tak, jak byl pořízen.

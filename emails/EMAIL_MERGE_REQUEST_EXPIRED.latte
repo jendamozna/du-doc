@@ -1,0 +1,8 @@
+{layout 'layout.latte'}
+
+{block content}
+<p>Dobrý den,</p>
+<p>Vaše žádost o sloučení záznamů osob <strong>{$sourcePerson['name']}</strong> a <strong>{$targetPerson['name']}</strong> propadla — některá ze stran o ní do <strong>{$expiresAt}</strong> nerozhodla.</p>
+<div class="details"><p>Osoby zůstávají oddělené. Nejde o zamítnutí: dvojice není trvale zablokovaná a systém ji může navrhnout znovu, nejdříve však za 30 dní.</p></div>
+<p style="text-align: center;"><a href="{$requestUrl}" class="button">Zobrazit žádost</a></p>
+{/block}

@@ -20,4 +20,8 @@ backend/log
 # tooling caches
 backend/.php-cs-fixer.cache
 
+# ai
+.github/
+.claude/
+
 

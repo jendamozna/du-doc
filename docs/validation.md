@@ -101,7 +101,7 @@ Ostatní pole (`nickname`, `insurance_company` a jednotlivá pole adresy) jsou p
 - Nový dokument se stává použitelným až ve stavu `valid`; zamítnutý, prošlý nebo odvolaný dokument nelze použít ke splnění požadavku akce. Pro konkrétní akci je dokument platný právě tehdy, když `valid_from <= EVENT.starts_at` a `valid_to IS NULL OR valid_to >= EVENT.ends_at`; platnost se tedy posuzuje pro celou dobu akce, ne jen v okamžiku podání přihlášky.
 - `EVENT_DOCUMENT.accepts_person_document = true` dovolí splnit požadavek odkazem na platný `PERSON_DOCUMENT` stejné osoby a stejného `document_type`. Systém takový dokument automaticky přiřadí vytvořením `REGISTRATION_DOCUMENT.person_document_id`; jiný typ dokumentu ani dokument jiné osoby se nepřijme.
 - Pokud pro požadovaný typ neexistuje platný osobní dokument, nebo jeho platnost skončí před `EVENT.ends_at`, systém zobrazí při podání přihlášky varování aktivnímu zákonnému zástupci nezletilého účastníka, případně zletilému účastníkovi. Varování nenahrazuje povinnost dokumentu: dokud není dokument nahrán a schválen nebo automaticky přiřazen, přihláška zůstává ve stavu čekání na dokumenty.
-- `REGISTRATION_DOCUMENT` může mít vyplněné právě jedno z `person_document_id` a `file`: odkaz na trvalý dokument, nebo nově nahranou kopii. Při použití trvalého dokumentu se soubor nekopíruje do přihlášky; zachová se odkaz a výsledek posouzení.
+- `REGISTRATION_DOCUMENT` může mít vyplněné právě jedno z `person_document_id` a `content`: odkaz na trvalý dokument, nebo nově nahranou kopii. Při použití trvalého dokumentu se soubor nekopíruje do přihlášky; zachová se odkaz a výsledek posouzení.
 - Aktivní zákonný zástupce smí dokument dítěte nahrát, obnovit a vybrat pro jeho přihlášku. Operace se zapíše s účtem zákonného zástupce jako aktérem; po zletilosti lze dokument použít, ale zákonný zástupce jej už nesmí měnit.
 
 ### Oddílové členské příspěvky
@@ -155,12 +155,13 @@ Ostatní pole (`nickname`, `insurance_company` a jednotlivá pole adresy) jsou p
 
 - **Ústředí (`is_hq`) nemá registrované členy** a nepatří do žádného regionu.
 - `UNIT_REGION`: intervaly téhož oddílu se **nesmí překrývat**, nejvýše jeden otevřený (`valid_to = NULL`); díra povolená je ([region-lifecycle.md](region-lifecycle.md)).
+- `REGION`: `merged_into_region_id` smí být vyplněné **jen** při `state = 'merged'` a nesmí ukazovat na region, který je sám `merged` (nevznikne řetěz). `split_from_region_id` smí ukazovat jen na region ve stavu `canceled` a nesmí se rovnat vlastnímu `id`.
 - `LOCATION` je viditelná jen v rámci vlastnícího oddílu — akci nelze přiřadit lokaci cizího oddílu.
 
 ### Akce
 
 - `EVENT.status` a `EVENT.visibility` jsou dvě nezávislé osy. `status` řídí životní cyklus, zatímco `visibility` publikum publikované akce; hodnoty těchto polí se nikdy nesmějí vzájemně zaměňovat.
-- `EVENT.status` je jedna z hodnot `draft`, `published`, `hidden` nebo `cancelled`; nový záznam vzniká ve stavu `draft`. Jen `published` přijímá nové přihlášky v otevřeném přihlašovacím okně. `draft` (koncept) ani `hidden` (skrytá) nepřijímají přihlášky a neposílají pozvánky či připomínky; `cancelled` nepřijímá nové přihlášky a jeho existující přihlášky se řeší podle storno pravidel.
+- `EVENT.status` je jedna z hodnot `draft`, `published`, `hidden` nebo `canceled`; nový záznam vzniká ve stavu `draft`. Jen `published` přijímá nové přihlášky v otevřeném přihlašovacím okně. `draft` (koncept) ani `hidden` (skrytá) nepřijímají přihlášky a neposílají pozvánky či připomínky; `canceled` nepřijímá nové přihlášky a jeho existující přihlášky se řeší podle storno pravidel.
 - `EVENT.visibility` je právě jedna z hodnot `public`, `internal` nebo `private`. U stavu `published` určuje publikum: `public` patří do veřejného výpisu portálu, `internal` je pro osoby s vazbou na pořádající oddíl a `private` je dostupná pouze přes sdílecí odkaz.
 - **Splatnost je výlučná** — vyplněno buď `payment_due_days`, nebo `payment_due_date`, nikdy obojí ani nic.
 - `meeting_at` a `return_at` jsou-li vyplněné, musí ležet v pořadí `meeting_at <= starts_at < ends_at <= return_at`; místo srazu a návratu musí patřit témuž oddílu jako akce. `destination` může být prázdný u akcí bez přesunu.
@@ -168,8 +169,12 @@ Ostatní pole (`nickname`, `insurance_company` a jednotlivá pole adresy) jsou p
 - `visibility` má tři **vzájemně výlučné** hodnoty; `share_slug` má **každá** akce bez ohledu na viditelnost.
 - `capacity ≥ 0`, `substitute_count ≥ 0`. Kapacitu nelze snížit pod počet přihlášek, které se do ní už počítají.
 - Dobrovolnická pole (`volunteer_registration_*`) dávají smysl jen při `volunteers_enabled = true`.
-- Akce bez přihlášek (typ `club`, `one_off`) nesmí mít ceny, storno pravidla ani otevřenou registraci.
+- Akce bez přihlášek (typ `regular_meeting`, `one_off`) nesmí mít ceny, storno pravidla ani otevřenou registraci.
 - `bank_account_id` musí patřit **témuž oddílu** jako akce.
+- **Placená akce nemůže být publikovaná bez bankovního účtu.** Má-li akce nenulovou cenu (`EVENT_PRICE.amount > 0` u kterékoli `membership_type` nebo nenulovou cenu dobrovolníků), vyžaduje `status = 'published'` vyplněné `bank_account_id`. Guard platí **v obou směrech**: publikované placené akci nelze účet odebrat ani jí nelze přidat nenulovou cenu, dokud účet nemá. Jednosměrné pravidlo by šlo obejít pořadím kroků.
+- Kontrola sedí na **publikaci**, ne na založení — koncept smí mít ceny dřív než účet. Publikací ale akce začne přijímat přihlášky a první z nich hned odešle `EMAIL_REG_CONFIRM` s QR a platebními údaji ([notifications.md](notifications.md)); bez účtu by odešla výzva k platbě bez čísla účtu, což už nejde vzít zpět.
+- Vyžaduje se **existence účtu, ne API**. Účet s `provider = 'manual'` stačí — QR se sestaví z čísla účtu a párování běží přes nahraný výpis ([payment-matching.md](payment-matching.md) → **Oddíl bez bankovního API**). Pravidlo se nesmí zúžit na `provider = 'fio'`, jinak by odřízlo oddíly s jinou bankou.
+- Akce s **nulovými cenami** účet nepotřebuje; typy `regular_meeting` a `one_off` ceny mít nesmějí vůbec (viz výše).
 - `EVENT_ASSIGNMENT.account_id` musí mít v pořádajícím oddílu akce aktivní roli `VO` nebo `RAD`; aktivní přiřazení těchto účtů tvoří tým akce a řídí jejich zvýšená/týmová oprávnění. Základní čtení detailu akce a seznamu přihlášených pro VO/RÁD plyne z aktivní role v témže oddílu a na přiřazení není vázané. Účet s rolí HVO, ÚČE, ADM nebo bez role se do týmu akce nezařazuje.
 - `EVENT_ASSIGNMENT.team_role` je `member` nebo `event_leader`; roli `event_leader` lze přiřadit jen aktivnímu členu týmu. Jeden tým může mít více vedoucích akce.
 - `EVENT_ASSIGNMENT` se **nemaže** — odebrání přístupu vyplní `revoked_at` a `revoked_by_account_id`; `revoked_at >= assigned_at` a uzavřený záznam už nelze měnit. Změna rozsahu příznaků uzavře starý záznam a založí nový.
@@ -182,48 +187,81 @@ Ostatní pole (`nickname`, `insurance_company` a jednotlivá pole adresy) jsou p
 ### Ceny a storna
 
 - `EVENT_PRICE`: intervaly platnosti pro **tutéž** `membership_type` se nesmí překrývat.
+- **`non_DU` je základní cena akce.** Placená akce musí mít při publikaci platnou cenu `non_DU` pokrývající **celé přihlašovací okno**; guard platí obousměrně stejně jako u bankovního účtu (viz **Akce**). Ostatní typy jsou odchylky od základu, ne samostatné ceníky.
+- **Chybějící cena typu se řeší fallbackem, ne odmítnutím přihlášky.** „Chybí" znamená **neexistuje řádek platný k `REGISTRATION.created_at`** — ne pouze „řádek není"; pokrývá to i akci, kde jedna platnost skončí a další nenaváže. Odmítnout přihlášku by trestalo účastníka za konfigurační chybu pořadatele, a to ve chvíli, kdy s tím nemůže nic udělat.
+  - `DU`, `leader`, `leader_child`, `sponsor`, `external` → použije se `non_DU`. Nevyplněná odchylka znamená „žádná odchylka".
+  - `volunteer` → **`0`, nikdy `non_DU`**. Cenu dobrovolníků zadává výslovně ten, kdo akci konfiguruje (HVO, resp. vedoucí s `can_edit_prices`); není-li zadaná, dobrovolník neplatí. Fallback na plnou účastnickou cenu je vždy omyl a pozná se až podle výzvy k platbě, která dobrovolníkovi přijde.
+
+**Určení `membership_type` přihlášky.** Typy se překrývají — vedoucí bývá zároveň členem DU — proto rozhoduje pořadí, kde vyhrává první vyhovující:
+
+1. `REGISTRATION.category = 'volunteer'` → `volunteer` (rozhoduje cesta přihlášení, ne vlastnosti osoby),
+2. osoba má aktivní roli HVO/VO/RÁD v pořádajícím oddílu → `leader`,
+3. osoba má aktivní vazbu `PARENT_CHILD` na osobu z bodu 2 → `leader_child`,
+4. existuje `DU_MEMBERSHIP(person_id, rok akce)` → `DU`,
+5. osoba **nemá vazbu `PERSON_UNIT` na žádný oddíl** → `external`,
+6. jinak → `non_DU`.
+
+**Krok 5 rozlišuje člena kteréhokoli oddílu v databázi od člověka úplně mimo.** Má smysl hlavně u akcí ústředí, kam se přes veřejný portál hlásí i lidé bez vazby na jakýkoli oddíl; oddíl si takovou cenu zavést může, ale u vlastních akcí ji nevyužije, protože jeho účastníci vazbu mají. Dvě upřesnění, bez kterých pravidlo neplatí:
+
+- Rozhoduje vazba na **jakýkoli** oddíl, ne na pořádající, a stačí **nearchivovaná** — `guest` i `inactive` člen je pořád člen oddílu v databázi. `external` je jen ten, kdo v evidenci není vůbec.
+- Vyhodnocuje se stav **před** vznikem přihlášky. Podání přihlášky totiž může založit vazbu na pořádající oddíl a `inactive` osobu rovnou reaktivuje ([person-lifecycle.md](person-lifecycle.md)) — kdyby se typ určoval až po zápisu, žádný účastník by nikdy `external` nevyšel.
+
+- **`sponsor` se nikdy neodvozuje.** Není to vlastnost osoby, ale rozhodnutí pořadatele — nastaví ho jen vedoucí s `can_edit_prices` přepsáním `price_id` (viz pravidlo o fixaci níže).
+- Typ i cena se **zafixují při podání**; dodatečně doplněný řádek `EVENT_PRICE` už podanou přihlášku nepřecení, k tomu slouží ruční úprava vedoucím.
 - `REGISTRATION.base_price` a `price_id` se určí **při podání** z ceníku platného k `created_at` a od té chvíle se samy nemění — přepsat je smí jen vedoucí s `can_edit_prices` (loguje se). Změna `EVENT_PRICE` ani nové `DU_MEMBERSHIP` už podanou přihlášku nepřeceňuje.
+- `REGISTRATION_FIELD_VALUE.price_modifier` se stejně jako `base_price` zafixuje **při volbě** z aktuální hodnoty `EVENT_FIELD_OPTION.price_modifier` a od té chvíle se sám nemění. Pozdější úprava `price_modifier` číselníkové položky platí jen pro volby učiněné od okamžiku úpravy, ne zpětně; nová cena přihlášky se přepočte jen tehdy, změní-li účastník samotnou volbu (viz [event-fields.md](event-fields.md)).
 - `CANCELLATION_RULE.percent` ∈ ⟨0; 100⟩.
 - **Výsledná cena může být záporná?** Ne — součet základní ceny a příplatků (`price_modifier` může být záporný) se ošetří na minimum 0.
 
 ### Výběrové číselníky
 
-- `EVENT_FIELD_OPTION.capacity ≥ 1` nebo `NULL` (bez limitu); `selection_mode = exclusive` odpovídá kapacitě 1.
+- `EVENT_FIELD_OPTION.capacity ≥ 1` nebo `NULL` (bez limitu). **Kapacitu položky nelze snížit pod počet `REGISTRATION_FIELD_VALUE`, které se do ní už počítají** — existující volby se tím neruší; nový limit platí jen pro další zájemce, dokud se místo neuvolní (stornem nebo změnou volby).
+- `EVENT_FIELD.max_select ≥ 1` nebo `NULL` (bez limitu); `0` a záporné hodnoty jsou neplatné — číselník, který nejde vůbec vyplnit, se vyjadřuje podmínkou `condition`, ne nulovým limitem.
 - Počet voleb v jednovýběrovém číselníku je 1; ve vícevýběrovém nejvýše `max_select`.
 - Volbu nelze uložit, je-li položka **plná** — kontrola kapacity musí být atomická, jinak dvě souběžné přihlášky obsadí totéž lůžko.
+- **Uložení volby je jedna atomická operace:** kontrola kapacity, zápis `REGISTRATION_FIELD_VALUE`, přepočet ceny přihlášky a spuštění `evaluate` (`price.changed`, viz [registration-lifecycle.md](registration-lifecycle.md)) proběhnou v jedné transakci. Nesmí nastat stav, kdy je volba uložená, ale cena nebo stav úhrady neodpovídá aktuálnímu výběru, ani naopak.
 - Číselník s `assigned_by = leader` nesmí vyplnit účastník.
+- **Položka číselníku s `required_phase = before_event` musí mít `price_modifier = 0`.** Volba s tímto `required_phase` se záměrně dokončuje až těsně před akcí; kdyby nesla příplatek, mohla by pozdní volba nebo její změna vrátit už zaplacenou přihlášku do `PartialPaid` těsně před akcí, bez rozumného času platbu dořešit. Číselník, jehož položky ovlivňují cenu, proto musí mít `required_phase = on_submit`.
 - Nesplňuje-li osoba `condition`, číselník se jí nenabízí a volba se odmítne i při přímém požadavku.
 
 ### Přihláška
 
 - `person_id` musí být platná osoba (`merged_into_person_id IS NULL`) — na tombstone po sloučení nelze zakládat.
-- `EVENT.club_registration_enabled` lze nastavit jen u akcí pořádaných ústředím. `CLUB_REGISTRATION.event_id` musí odkazovat na takovou akci a `CLUB_REGISTRATION.unit_id` musí být oddíl zakladatele.
-- `CLUB_REGISTRATION.created_by_account_id` musí být účet s aktivní rolí HVO nebo VO v `CLUB_REGISTRATION.unit_id`; `state = 'closed'` vyžaduje `closed_at` a uzavřený kontejner nepřijímá nové přihlášky.
-- Kombinace `CLUB_REGISTRATION.event_id` + `CLUB_REGISTRATION.unit_id` je unikátní; jeden oddíl má na jedné akci nejvýše jeden klubový záznam. `public_name` nesmí být prázdný.
-- `CLUB_REGISTRATION.share_token` je náhodný, jedinečný a opravňuje pouze k založení nebo dokončení přihlášky dítěte vázané na stejný `event_id` a `unit_id`; token nezpřístupňuje jiné akce ani seznam osob oddílu.
-- `CLUB_REGISTRATION.public_name` je snapshot názvu oddílu v okamžiku založení; veřejně se zobrazí pouze tehdy, když `EVENT.status = 'published'`, `EVENT.visibility = 'public'`, akce je ústředí, klubový režim je zapnutý a kontejner je otevřený. Veřejný výpis nesmí obsahovat vedoucího, účastníky ani jejich počet.
-- Veřejné připojení k existujícímu klubu musí použít `CLUB_REGISTRATION.id` z aktuálního seznamu nebo platný `share_token`; pod stejnou akcí může vzniknout nejvýše jedna přihláška osoby bez ohledu na vstupní cestu.
-- `REGISTRATION.club_registration_id` smí být vyplněné jen při zapnutém režimu na stejné akci. Dítě musí mít aktivní `PERSON_UNIT` v oddílu klubové přihlášky a jedna osoba může mít v dané akci nejvýše jednu individuální přihlášku.
-- Klubová přihláška nemá vlastní cenu, stav úhrady ani kapacitní místo. Kapacitu akce zvyšují pouze individuální přihlášky pod ní, které splní stejné podmínky jako ostatní účastnické přihlášky; jejich schválení zákonným zástupcem se vyhodnocuje samostatně.
+- `EVENT.unit_registration_enabled` lze nastavit jen u akcí pořádaných ústředím. `UNIT_REGISTRATION.event_id` musí odkazovat na takovou akci a `UNIT_REGISTRATION.unit_id` musí být oddíl zakladatele.
+- `UNIT_REGISTRATION.created_by_account_id` musí být účet s aktivní rolí HVO nebo VO v `UNIT_REGISTRATION.unit_id`; `state = 'closed'` vyžaduje `closed_at` a uzavřený kontejner nepřijímá nové přihlášky.
+- Kombinace `UNIT_REGISTRATION.event_id` + `UNIT_REGISTRATION.unit_id` je unikátní; jeden oddíl má na jedné akci nejvýše jeden oddílový záznam. `public_name` nesmí být prázdný.
+- `UNIT_REGISTRATION.share_token` je náhodný, jedinečný a opravňuje pouze k založení nebo dokončení přihlášky dítěte vázané na stejný `event_id` a `unit_id`; token nezpřístupňuje jiné akce ani seznam osob oddílu.
+- `UNIT_REGISTRATION.public_name` je snapshot názvu oddílu v okamžiku založení; veřejně se zobrazuje pouze tehdy, když `EVENT.status = 'published'`, `EVENT.visibility = 'public'`, akce je ústředí, režim přihlášek oddílů je zapnutý a kontejner je otevřený. Veřejný výpis nesmí obsahovat vedoucího, účastníky ani jejich počet.
+- Veřejné připojení k existujícímu oddílu musí použít `UNIT_REGISTRATION.id` z aktuálního seznamu nebo platný `share_token`; pod stejnou akcí může vzniknout nejvýše jedna přihláška osoby bez ohledu na vstupní cestu.
+- `REGISTRATION.unit_registration_id` smí být vyplněné jen při zapnutém režimu na stejné akci. Dítě musí mít aktivní `PERSON_UNIT` v oddílu oddílové přihlášky a jedna osoba může mít v dané akci nejvýše jednu individuální přihlášku.
+- Oddílová přihláška nemá vlastní cenu, stav úhrady ani kapacitní místo. Kapacitu akce zvyšují pouze individuální přihlášky pod ní, které splní stejné podmínky jako ostatní účastnické přihlášky; jejich schválení zákonným zástupcem se vyhodnocuje samostatně.
 - `person_id` je **účastník**, právě jeden na přihlášku; kdo přihlášku podal, drží `submitted_by_account_id` (NULL u podání tokenem).
 - `contact_email` je **doručovací adresa přihlášky, ne kontakt osoby**. Povinný — a musí projít formátem e-mailu — právě tehdy, když `submitted_by_account_id IS NULL`; jinak zůstává prázdný a adresa se bere z účtu podavatele.
 - Dílčí přihláška dědí `contact_email` z nadřazené, dokud nemá vlastní hodnotu.
 - Dílčí přihláška (`parent_registration_id`) musí patřit **téže akci** jako nadřazená a nesmí mít vlastní dílčí přihlášky (zanoření jen jedna úroveň).
 - `guardian_email` má smysl jen u nezletilého bez aktivní vazby na zákonného zástupce; jinak zůstává prázdný.
+- **Znovuposlání odkazu vymění token a starý zneplatní, ale `expires_at` dědí z původního** ([non-functional.md](non-functional.md) → **Znovuposlání ztraceného odkazu**). Prodloužení lhůty rotací je zakázané — jinak by šlo resendem obcházet expirační joby. Po lhůtě se neposílá nic. Každé znovuposlání zapíše `*_resent_at` a řídí se prodlevou i throttlingem podle adresy a IP.
+- Nový odkaz jde **výhradně na adresu uloženou u tokenu**; adresa z požadavku se s ní jen porovnává a nikdy se nepoužije jako cíl.
+- `guardian_approved_at` a `guardian_rejected_at` se **vzájemně vylučují** — vyplněné je nejvýše jedno. Obě lze nastavit jen ze stavu `PendingGuardian` platným `guardian_approval_token`, který se použitím zneplatní; `guardian_rejection_reason` smí být vyplněný jen spolu s `guardian_rejected_at`.
 - Přihlášku nelze podat mimo přihlašovací okno ani nad kapacitu (kromě náhradnických míst).
 - Dokumenty a povinné číselníky **náhradníka** jsou uzamčené, dokud nepřijme nabídku.
 
 ### Platby
 
 - `PAYMENT_ALLOCATION`: součet alokací jedné transakce **nesmí překročit** její částku (v absolutní hodnotě).
-- Do párování vstupují **jen příchozí** platby.
+- Do **běžného** párování (SS/VS/jméno) vstupují jen příchozí platby; odchozí pohyb se páruje výhradně jako vratka (`match_method = 'refund'`).
 - Záporná alokace (`refund`) nesmí stáhnout součet u přihlášky pod nulu.
 - Alokace musí odkazovat na přihlášku akce nebo oddílový členský předpis **téhož oddílu**, jako je bankovní účet transakce (u dávky příspěvků na účet ústředí).
 - `external_id` je povinné u **všech** zdrojů — u ručního zápisu se generuje (`manual:<uuid>`), u importu výpisu odvodí z otisku řádku (`stmt:<hash>`).
 - **VS ani SS nejsou u transakce povinné** — v nahraném výpisu i u ručního zápisu často chybí; příslušná párovací pravidla se pak jen přeskočí.
+- `BANK_TRANSACTION.vs` a `.ss` se ukládají **bez počátečních nul**, bez ohledu na zdroj (`import` / `statement_import` / `manual_entry`) — jinak by shoda s `REGISTRATION.vs` nenaskočila ([fio-sync.md](fio-sync.md) → **Rozsah**).
 - `voided_at` lze nastavit **jen** u transakce se `source != 'import'` a **jen** když nemá žádnou alokaci.
-- `api_token_enc` smí být vyplněný jen při `provider = 'fio'`; `provider = 'manual'` vylučuje synchronizační pole (`last_sync_at`, `sync_state`, `last_external_id`).
+- **`provider` a token jsou svázané obousměrně**: `provider = 'fio'` **vyžaduje** vyplněný `api_token_enc`, `provider = 'manual'` ho i všechna synchronizační pole (`last_sync_at`, `sync_state`, `token_set_at`) **vylučuje**. Jednosměrná vazba by připustila `provider = 'fio'` bez tokenu — účet, který nic nestahuje, ale pro zbytek systému vypadá jako napojený na API ([fio-sync.md](fio-sync.md) → **Token**).
 - `PAYMENT_ALLOCATION` má vyplněné **právě jedno** z `registration_id` / `fee_batch_id` / `unit_member_fee_id` — alokace míří na přihlášku, dávku příspěvků DU nebo oddílový členský předpis.
+- **VS nese prefix typu cíle**: `1…` `REGISTRATION`, `2…` `UNIT_MEMBER_FEE`, `3…` `DU_FEE_BATCH`. Tři nezávislé unikáty by se jinak mohly křížit a párovač hledá napříč všemi ([payment-matching.md](payment-matching.md) → **Způsoby spárování**).
+- `REFUND_REQUEST` má vyplněné **právě jedno** z `registration_id` / `unit_member_fee_id`, `amount > 0` a nesmí přesáhnout aktuálně vypočtený přeplatek cíle (u storna výši vratky dle storno pravidel).
+- Na jeden cíl smí být nejvýše **jeden `REFUND_REQUEST` ve stavu `pending`** — jinak by záporný pohyb neměl jednoznačného kandidáta.
+- `allocation_id` a `matched_at` jsou vyplněné **právě při** `state = 'matched'`; alokace, na kterou ukazují, musí mít `match_method = 'refund'` a zápornou částku.
 
 ### Příspěvek DU
 
@@ -238,6 +276,7 @@ Ostatní pole (`nickname`, `insurance_company` a jednotlivá pole adresy) jsou p
 
 ### Osoba a vazby
 
+- `AUDIT_LOG.actor_type` je `account`, `token` nebo `system`. Pro `account` je povinné `actor_account_id` a `actor_email` je prázdný; pro `token` je `actor_account_id` prázdné a `actor_email` je volitelný; pro `system` jsou obě pole prázdná.
 - Vazba zákonný zástupce ↔ dítě: `parent_person_id ≠ child_person_id`; dítě musí být v okamžiku vzniku nezletilé ([parent-child-lifecycle.md](parent-child-lifecycle.md)).
 - `DU_MEMBERSHIP.year` — rozsah rozumných let (např. ⟨2000; aktuální + 1⟩), aby překlep nezaložil členství na rok 20250.
 - `PERSON.birth_date` nesmí být v budoucnosti a při běžném založení nebo úpravě osoby nesmí být starší než 90 let k aktuálnímu datu. Tato hranice slouží jen jako kontrola zjevné chyby v datu; věkovou způsobilost pro konkrétní akci určuje její vlastní referenční datum a pravidla.
@@ -256,6 +295,8 @@ Pravidla složení (počty členů, věkové limity, právě jeden kapitán) jso
 - Přiřazení ke stanovišti je **vzájemně výlučné** s členstvím v hlídce.
 - Rozhodčí je nejvýše na jednom stanovišti; běžné stanoviště obsadí nejvýše jeden rozhodčí (pseudo-stanoviště „Jakékoliv" je bez limitu).
 - Hlídku smí měnit jen vlastnící přihláška.
+- Členem hlídky smí být **jen osoba z registration scope** vlastnící přihlášky — tedy z ní samotné nebo z jejích dílčích přihlášek, se stavem mimo `Canceled`, `Expired` a `New`. Osoba, jejíž přihláška do některého z těchto stavů přejde, se z hlídky odpojí a složení se ověří znovu.
+- Kapitán (`role = 'leader'`) je **právě jeden** v kategoriích Stezka a Pěšinka a **žádný** v ostatních.
 
 ### Workshopy
 

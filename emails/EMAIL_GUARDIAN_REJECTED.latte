@@ -1,0 +1,8 @@
+{layout 'layout.latte'}
+
+{block content}
+<p>Dobrý den,</p>
+<p>Zákonný zástupce Vaši přihlášku na akci <strong>{$event['name']}</strong> neschválil, takže byla zrušena.</p>
+{if $reason}<div class="details"><p><strong>Důvod:</strong> {$reason}</p></div>{/if}
+<p>Nic se neplatilo a žádné místo se neblokuje. Domluvíte-li se se zástupcem jinak, můžete se přihlásit znovu — pošle se mu nová žádost o schválení.</p>
+{/block}

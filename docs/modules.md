@@ -28,7 +28,7 @@ Dále v textu „modul" = architektonický modul. Zapínatelné moduly jsou jeho
 3. **Synchronně se ptáme, asynchronně oznamujeme.** Guard (potřebuji rozhodnout teď) = dotaz do nižší vrstvy. Následek (stalo se, ostatní ať reagují) = událost.
 4. **Doména nezná e-maily.** Žádný modul nevolá odesílání pošty; notifikace se odvozují z událostí ([notifications.md](notifications.md)).
 5. **Audit je posluchač, ne volaný.** Do [audit-log.md](audit-log.md) zapisuje modul Audit z odebíraných událostí, ne autor změny.
-6. **Události jsou fakta v minulém čase** a nesou vždy `event_id`, `occurred_at`, `actor_account_id` (NULL = systém/job), `unit_id` (je-li v oddílovém scope) a identifikátory dotčených entit — ne celé objekty.
+6. **Události jsou fakta v minulém čase** a nesou vždy `domain_event_id`, `occurred_at`, `actor_type` (`account` / `token` / `system`), `actor_account_id`, volitelný `actor_email` pro token, `unit_id` (je-li v oddílovém scope) a identifikátory dotčených entit — ne celé objekty. `domain_event_id` je identita samotné události; nezaměňovat s `event_id` v payloadu, který u řady událostí odkazuje na konkrétní akci (`EVENT`).
 
 ## Mapa modulů a závislostí
 
@@ -136,7 +136,7 @@ Tohle je nejcitlivější hranice: bez pravidla „přenos vazeb dělá vlastní
 
 | Položka              | Obsah                                                                                                                                                                                                                                                       |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Vlastní entity**   | `EVENT`, `ACTION_TEMPLATE`, `EVENT_PRICE`, `CANCELLATION_RULE`, `EVENT_ASSIGNMENT`, `EVENT_INVITATION`, `CLUB_REGISTRATION`, `EVENT_FIELD`, `EVENT_FIELD_OPTION`, `EVENT_DOCUMENT`, `EVENT_CUSTOM_FIELD`, `WORKSHOP`, `WORKSHOP_BLOCK`, `WORKSHOP_OFFERING` |
+| **Vlastní entity**   | `EVENT`, `ACTION_TEMPLATE`, `EVENT_PRICE`, `CANCELLATION_RULE`, `EVENT_ASSIGNMENT`, `EVENT_INVITATION`, `UNIT_REGISTRATION`, `EVENT_FIELD`, `EVENT_FIELD_OPTION`, `EVENT_DOCUMENT`, `EVENT_CUSTOM_FIELD`, `WORKSHOP`, `WORKSHOP_BLOCK`, `WORKSHOP_OFFERING` |
 | **Vlastní pravidla** | [event-fields.md](event-fields.md) (režimy, kapacita volby, fáze, ceny), storno matice, splatnost relativní/absolutní, snapshot regionu při založení akce                                                                                                   |
 | **Čte odjinud**      | `UNIT`, `LOCATION`, `REGION` z Org; `BANK_ACCOUNT` z Banking (jen reference)                                                                                                                                                                                |
 | **Nevlastní**        | kapacitu **obsazenou** — tu počítá Registrations; Events drží jen limit                                                                                                                                                                                     |
@@ -146,13 +146,13 @@ Cena je **funkce**, ne uložené číslo — Registrations si ji vyžádá a ulo
 
 ### 6 · Registrations (doména)
 
-| Položka              | Obsah                                                                                                                                                                                             |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Vlastní entity**   | `REGISTRATION` (vč. klubových a dílčích), `REGISTRATION_FIELD_VALUE`, `REGISTRATION_DOCUMENT`, `SUBSTITUTE_OFFER`, `RECOMMENDATION`, `WORKSHOP_REGISTRATION`, `RACE_PATROL`, `RACE_PATROL_MEMBER` |
-| **Vlastní pravidla** | [registration-lifecycle.md](registration-lifecycle.md) — funkce `evaluate`, brány, guardy, kapacita a fronta náhradníků; skládání hlídek dle [race-patrols.md](race-patrols.md)                   |
-| **Čte odjinom**      | Events (cena, dokumenty, kapacita, splatnost), People (věk, zástupci, evidence v oddíle), Org (lhůty), Payments (součet alokací)                                                                  |
-| **Nevlastní**        | platby ani stav úhrady jako uložené pole — `evaluate` si součet alokací **vyžádá** a přepočte stav                                                                                                |
-| **Rozhraní**         | `registration(id)`, `openRegistrations(personId)`, `occupancy(eventId)` (v **účastnících**, ne přihláškách), `amountDue(registrationId)`                                                          |
+| Položka              | Obsah                                                                                                                                                                                              |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Vlastní entity**   | `REGISTRATION` (vč. oddílových a dílčích), `REGISTRATION_FIELD_VALUE`, `REGISTRATION_DOCUMENT`, `SUBSTITUTE_OFFER`, `RECOMMENDATION`, `WORKSHOP_REGISTRATION`, `RACE_PATROL`, `RACE_PATROL_MEMBER` |
+| **Vlastní pravidla** | [registration-lifecycle.md](registration-lifecycle.md) — funkce `evaluate`, brány, guardy, kapacita a fronta náhradníků; skládání hlídek dle [race-patrols.md](race-patrols.md)                    |
+| **Čte odjinom**      | Events (cena, dokumenty, kapacita, splatnost), People (věk, zástupci, evidence v oddíle), Org (lhůty), Payments (součet alokací)                                                                   |
+| **Nevlastní**        | platby ani stav úhrady jako uložené pole — `evaluate` si součet alokací **vyžádá** a přepočte stav                                                                                                 |
+| **Rozhraní**         | `registration(id)`, `openRegistrations(personId)`, `occupancy(eventId)` (v **účastnících**, ne přihláškách), `amountDue(registrationId)`                                                           |
 
 Klíčová hrana: **Payments neposouvá stav přihlášky.** Publikuje `payment.allocated`, Registrations na ni zavolá vlastní `evaluate`.
 
@@ -160,7 +160,7 @@ Klíčová hrana: **Payments neposouvá stav přihlášky.** Publikuje `payment.
 
 | Položka              | Obsah                                                                                                                                                                                        |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Vlastní entity**   | `PAYMENT_ALLOCATION` (vč. záporných = vratky), `UNIT_MEMBER_FEE_RATE`, `UNIT_MEMBER_FEE`                                                                                                     |
+| **Vlastní entity**   | `PAYMENT_ALLOCATION` (vč. záporných = vratky), `REFUND_REQUEST`, `UNIT_MEMBER_FEE_RATE`, `UNIT_MEMBER_FEE`                                                                                   |
 | **Vlastní pravidla** | [payment-matching.md](payment-matching.md) — pořadí pravidel párování, více kandidátů, přeplatek a vratka, potvrzení, ruční režim                                                            |
 | **Čte odjinud**      | Banking (transakce), Registrations (VS, dlužná částka, vlastník), People (členství v oddílu, zákonní zástupci), DU Membership (sazba a existence členství), Org (zapnutý `payment_matching`) |
 | **Rozhraní**         | `paidAmount(registrationId)`, `memberFeePaidAmount(memberFeeId)`, `allocationsOf(transactionId)`                                                                                             |
@@ -170,7 +170,7 @@ Klíčová hrana: **Payments neposouvá stav přihlášky.** Publikuje `payment.
 | Položka              | Obsah                                                                                                   |
 | -------------------- | ------------------------------------------------------------------------------------------------------- |
 | **Vlastní entity**   | `BANK_ACCOUNT`, `BANK_TRANSACTION`                                                                      |
-| **Vlastní pravidla** | [fio-sync.md](fio-sync.md) — token, kurzor, idempotence, rate limit, chybové stavy; ruční import výpisu |
+| **Vlastní pravidla** | [fio-sync.md](fio-sync.md) — token, okno stahování, idempotence, souběh a rate limit, chybové stavy; ruční import výpisu |
 | **Čte odjinud**      | `UNIT` z Org                                                                                            |
 | **Nevlastní**        | přiřazení k přihláškám — to je Payments                                                                 |
 
@@ -194,7 +194,7 @@ Vlastní `COURSE`, `PERSON_COURSE`. Čte People a Events (akce udělující kurz
 
 ### 12 · Notifications (platforma)
 
-Vlastní frontu odchozích e-mailů a evidenci odeslání ([non-functional.md](non-functional.md), [notifications.md](notifications.md)). **Nemá doménová pravidla** — jen mapu `událost → šablona → příjemce → načasování`. Odesílatele (oddílové SMTP vs. systém) si bere z `UNIT_MAIL_SETTING` v Org. Idempotenci drží na `event_id`, aby opakovaná fronta neposlala potvrzení o platbě dvakrát.
+Vlastní frontu odchozích e-mailů a evidenci odeslání ([non-functional.md](non-functional.md), [notifications.md](notifications.md)). **Nemá doménová pravidla** — jen mapu `událost → šablona → příjemce → načasování`. Odesílatele (oddílové SMTP vs. systém) si bere z `UNIT_MAIL_SETTING` v Org. Idempotenci drží na `domain_event_id`, aby opakovaná fronta neposlala potvrzení o platbě dvakrát.
 
 ### 13 · Files (platforma)
 
@@ -244,11 +244,11 @@ Jmenná konvence `modul.agregát.událost` v minulém čase. Události, které u
 | `registration.expired`                                | `reason`                                                      | Notifications, Audit                                |
 | `registration.invoice_note_changed`                   | `registration_id`, `unit_id`, `invoice_note`                  | Notifications, Audit                                |
 | `registration.capacity_released`                      | `event_id`, `freed_slots`                                     | Registrations (výběr náhradníka), Reporting         |
-| `club_registration.created`                           | `club_registration_id`, `event_id`, `unit_id`                 | Registrations, Audit                                |
-| `club_registration.closed`                            | `club_registration_id`, `event_id`, `unit_id`                 | Registrations, Audit                                |
-| `club_registration.registration_added`                | `club_registration_id`, `registration_id`                     | Notifications, Audit, Reporting                     |
-| `club_registration.registration_updated`              | `club_registration_id`, `registration_id`, `changed_fields[]` | Notifications, Audit                                |
-| `guardian.requested` / `.approved` / `.expired`       | `guardian_email`, `deadline`                                  | Notifications, People (vznik vazby), Audit          |
+| `unit_registration.created`                           | `unit_registration_id`, `event_id`, `unit_id`                 | Registrations, Audit                                |
+| `unit_registration.closed`                            | `unit_registration_id`, `event_id`, `unit_id`                 | Registrations, Audit                                |
+| `unit_registration.registration_added`                | `unit_registration_id`, `registration_id`                     | Notifications, Audit, Reporting                     |
+| `unit_registration.registration_updated`              | `unit_registration_id`, `registration_id`, `changed_fields[]` | Notifications, Audit                                |
+| `guardian.requested` / `.approved` / `.rejected` / `.expired` | `guardian_email`, `deadline`, `reason` (u `.rejected`) | Notifications, People (vznik vazby jen u `.approved`), Audit |
 | `document.uploaded` / `.approved` / `.rejected`       | `document_id`, `comment`                                      | Notifications, Files, Audit                         |
 | `substitute.offer.sent` / `.accepted` / `.expired`    | `offer_id`, `valid_until`                                     | Notifications, Audit                                |
 | `mentor.requested` / `.confirmed` / `.updated`        | `registration_id`, `recommendation_id`, `mentor_contact`      | Notifications, Audit                                |
@@ -270,13 +270,14 @@ Jmenná konvence `modul.agregát.událost` v minulém čase. Události, které u
 
 | Událost                              | Payload                                                                                          | Odebírá                                              |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
-| `bank.transaction.imported`          | `transaction_id`, `account_id`, `amount`, `vs`                                                   | Payments (párování), Audit                           |
-| `bank.sync.failed`                   | `account_id`, `attempts`, `error`                                                                | Notifications (`EMAIL_FIO_SYNC_FAILURE`)             |
-| `bank.statement.imported_manually`   | `account_id`, `batch_id`                                                                         | Payments, Audit                                      |
+| `bank.transaction.imported`          | `transaction_id`, `bank_account_id`, `amount`, `vs`, `ss`                                        | Payments (párování)                                  |
+| `bank_account.sync_failed`           | `bank_account_id`, `account_name`, `last_sync_at`, `failed_at`, `error`                          | Notifications (`EMAIL_FIO_SYNC_FAILURE`)             |
+| `bank.statement.imported_manually`   | `bank_account_id`, `batch_id`                                                                    | Payments, Audit                                      |
 | `payment.allocated` / `.deallocated` | `registration_id`, `amount`, `match_method`                                                      | Registrations (`evaluate`), Notifications, Reporting |
-| `payment.reconciliation_completed`   | `transaction_id`, `account_id`, `result`, `allocated_amount`, `unmatched_amount`, `candidates[]` | Notifications, Audit                                 |
+| `payment.reconciliation_completed`   | `transaction_id`, `bank_account_id`, `result`, `allocated_amount`, `unmatched_amount`, `candidates[]` | Notifications, Audit                            |
 | `payment.overpaid`                   | `registration_id`, `surplus`                                                                     | Notifications, Payments (návrh vratky)               |
-| `payment.refund_issued`              | `registration_id`, `amount`                                                                      | Registrations, Notifications, Audit                  |
+| `payment.refund_requested`           | `refund_request_id`, `registration_id`, `amount`, `reason`                                       | Audit (rozhodnutí účetní, ještě bez pohybu peněz)    |
+| `payment.refund_issued`              | `refund_request_id`, `registration_id`, `amount`                                                 | Registrations, Notifications, Audit                  |
 | `payment.match.ambiguous`            | `transaction_id`, `candidates[]`                                                                 | UI fronta ÚČE, Audit                                 |
 
 ### People & Identity
@@ -316,7 +317,7 @@ Jmenná konvence `modul.agregát.událost` v minulém čase. Události, které u
 ## Pravidla pro doručování
 
 - **Transakční outbox.** Událost se ukládá ve stejné transakci jako změna stavu; odesílá ji samostatný worker. Bez toho se rozejde stav přihlášky s odeslaným e-mailem.
-- **Idempotentní konzumenti.** Každý odběratel si drží zpracované `event_id`; opakované doručení nesmí poslat druhý e-mail ani druhou alokaci.
+- **Idempotentní konzumenti.** Každý odběratel si drží zpracované `domain_event_id`; opakované doručení nesmí poslat druhý e-mail ani druhou alokaci.
 - **Pořadí jen v rámci agregátu.** Napříč moduly se na pořadí nespoléháme — `evaluate` v Registrations je čistá funkce nad aktuálním stavem, takže i přeházené `payment.allocated` dají správný výsledek.
 - **Události nejsou API pro čtení.** Kdo potřebuje aktuální hodnotu, zeptá se přes čtecí rozhraní vlastníka; událost je notifikace o změně, ne zdroj pravdy.
 - **Retence.** Události se uchovávají podle lhůt v [audit-log.md](audit-log.md); po expiraci zůstává jen auditní záznam.

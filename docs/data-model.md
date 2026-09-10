@@ -42,7 +42,7 @@ erDiagram
     UNIT ||--o{ UNIT_MEMBER_FEE_RATE : sets
     UNIT ||--o{ UNIT_MEMBER_FEE : collects
     UNIT ||--o{ DU_FEE_BATCH : submits
-    UNIT ||--o{ CLUB_REGISTRATION : owns
+    UNIT ||--o{ UNIT_REGISTRATION : owns
     DU_FEE_BATCH ||--o{ DU_FEE_BATCH_ITEM : contains
     DU_FEE_BATCH ||--o{ DU_MEMBERSHIP : "creates on payment"
     DU_FEE_BATCH ||--o{ PAYMENT_ALLOCATION : "paid by"
@@ -77,7 +77,7 @@ erDiagram
     ACTION_TEMPLATE ||--o{ EVENT : "instantiated as"
     EVENT ||--o{ EVENT_ASSIGNMENT : "has team members"
     EVENT ||--o{ EVENT_INVITATION : "invites"
-    EVENT ||--o{ CLUB_REGISTRATION : "accepts club registrations"
+    EVENT ||--o{ UNIT_REGISTRATION : "accepts unit registrations"
     ACCOUNT ||--o{ EVENT_ASSIGNMENT : "team member (versioned)"
     PERSON ||--o{ EVENT_INVITATION : "is invited to"
     REGISTRATION ||--o| EVENT_INVITATION : "accepts"
@@ -86,7 +86,7 @@ erDiagram
     EVENT ||--o{ CANCELLATION_RULE : has
     EVENT ||--o{ EVENT_FIELD : has
     EVENT ||--o{ REGISTRATION : contains
-    CLUB_REGISTRATION ||--o{ REGISTRATION : contains
+    UNIT_REGISTRATION ||--o{ REGISTRATION : contains
     REGISTRATION ||--o{ REGISTRATION : "sub-registrations"
     EVENT ||--o{ EVENT_DOCUMENT : requires
     EVENT ||--o{ ATTENDANCE_RECORD : attendance
@@ -116,6 +116,9 @@ erDiagram
     REGISTRATION ||--o{ PAYMENT_ALLOCATION : "paid by"
     BANK_ACCOUNT ||--o{ BANK_TRANSACTION : records
     BANK_TRANSACTION ||--o{ PAYMENT_ALLOCATION : "split into"
+    REGISTRATION ||--o{ REFUND_REQUEST : "refunded by"
+    UNIT_MEMBER_FEE ||--o{ REFUND_REQUEST : "refunded by"
+    REFUND_REQUEST }o--o| PAYMENT_ALLOCATION : "settled by"
 
     CUSTOM_FIELD ||--o{ CUSTOM_FIELD_VALUE : has
     CUSTOM_FIELD ||--o{ CUSTOM_FIELD_OPTION : offers
@@ -150,10 +153,11 @@ erDiagram
     REGION {
         int id PK
         string name
-        string state "active / merged / cancelled"
+        string state "active / merged / canceled"
         date valid_from
         date valid_to "NULL = aktivni"
-        int merged_into_region_id FK "nastupnicky region"
+        int merged_into_region_id FK "nastupnicky region po slouceni"
+        int split_from_region_id FK "predchudce, z nehoz region vznikl rozdelenim"
     }
     UNIT {
         int id PK
@@ -177,7 +181,7 @@ erDiagram
         string nickname
         string title_before
         string title_after
-        string gender "male / female / other"
+        string gender "male / female / other / unspecified; UI popisek unspecified = 'neuvedeno'"
         date birth_date "povinne u registrovaneho clena"
         string email "kontaktni e-mail (nemusi byt unikatni)"
         string phone "kontaktni telefon v E.164 (volitelny)"
@@ -188,6 +192,7 @@ erDiagram
         string country "kod statu ISO 3166-1 alpha-2 (volitelny)"
         string insurance_company
         int merged_into_person_id FK "NULL = platna osoba; jinak tombstone po slouceni"
+        datetime anonymized_at "NULL = neanonymizovano; vyplni globalni archivace, az je osoba archived ve vsech oddilech"
     }
     PERSON_UNIT {
         int id PK
@@ -200,22 +205,22 @@ erDiagram
     }
     ACCOUNT {
         int id PK
-        int person_id FK "1:1"
-        string login_email "prihlasovaci e-mail (unikatni)"
+        int person_id FK,UK "1:1"
+        string login_email UK "prihlasovaci e-mail (unikatni)"
         string password_hash
     }
     OAUTH_IDENTITY {
         int id PK
         int account_id FK
-        string provider "google / facebook"
-        string provider_user_id
+        string provider UK "google / facebook"
+        string provider_user_id UK
         bool email_verified
     }
     USER_ROLE {
         int id PK
-        int account_id FK
-        int unit_id FK "role scope"
-        string role "HVO / VO / RAD / ADM / UCE; RAD je role uctu, ne funkce ve druzine"
+        int account_id FK,UK
+        int unit_id FK,UK "role scope"
+        string role UK "HVO / VO / RAD / ADM / UCE; RAD je role uctu, ne funkce ve druzine"
     }
     PERMISSION_DELEGATION {
         int id PK
@@ -233,7 +238,7 @@ erDiagram
         int id PK
         int parent_person_id FK
         int child_person_id FK
-        string state "pending / active / cancelled / readonly_after_adulthood"
+        string state "pending / active / canceled / readonly_after_adulthood"
         int approved_by_account_id FK "NULL, dokud stav pending; existujici rodic nebo HVO"
         datetime valid_from
         datetime valid_to
@@ -256,10 +261,10 @@ erDiagram
         int region_id_snapshot FK "region pri zalozeni akce"
         int location_id FK "misto konani (volitelne)"
         int action_template_id FK "sablona (snapshot)"
-        string status "draft / published / hidden / cancelled; zivotni cyklus"
+        string status "draft / published / hidden / canceled; zivotni cyklus"
         string name
         string ss "specific symbol"
-        string type "club / one_off / weekend / course / certificate / mentor_recommendation / group / race / workshop"
+        string type "regular_meeting / one_off / weekend / course / certificate / mentor_recommendation / group / race / workshop"
         int course_id FK "udeluje kurz po absolvovani"
         int meeting_location_id FK "misto srazu (volitelne)"
         datetime meeting_at "datum a cas srazu"
@@ -273,7 +278,7 @@ erDiagram
         int capacity "max počet účastníků"
         int substitute_count "max počet náhradníků"
         string visibility "public / internal / private; publikum publikovane akce"
-        string share_slug "neverejny sdileci odkaz"
+        string share_slug UK "neverejny sdileci odkaz"
         datetime starts_at
         datetime ends_at
         datetime registration_from
@@ -284,15 +289,15 @@ erDiagram
         datetime volunteer_registration_from
         datetime volunteer_registration_to
         bool age_at_year_end "vek pocitan ke konci roku (jinak k datu akce)"
-        bool club_registration_enabled "jen pro vybrane akce ustredi"
+        bool unit_registration_enabled "jen pro vybrane akce ustredi"
     }
-    CLUB_REGISTRATION {
+    UNIT_REGISTRATION {
         int id PK
         int event_id FK
-        int unit_id FK "oddil, ktery klubovou prihlasku zalozil"
+        int unit_id FK "oddil, ktery oddilovou prihlasku zalozil"
         int created_by_account_id FK "HVO nebo VO oddilu"
-        string public_name "snapshot nazvu klubu pro verejny seznam"
-        string share_token "nahodne tajemstvi pro sdileny odkaz"
+        string public_name "snapshot nazvu oddilu pro verejny seznam"
+        string share_token UK "nahodne tajemstvi pro sdileny odkaz"
         string state "open / closed"
         datetime created_at
         datetime closed_at "NULL = otevrena"
@@ -300,7 +305,7 @@ erDiagram
     EVENT_PRICE {
         int id PK
         int event_id FK
-        string membership_type "DU / non_DU / volunteer / leader / leader_child / sponsor"
+        string membership_type "DU / non_DU / external / volunteer / leader / leader_child / sponsor; non_DU = zaklad, ostatni jsou odchylky; external = osoba bez vazby na jakykoli oddil"
         decimal amount "kladna = prijem, zaporna = odchozi vratka"
         date valid_from
         date valid_to
@@ -327,8 +332,8 @@ erDiagram
     }
     EVENT_INVITATION {
         int id PK
-        int event_id FK
-        int person_id FK "pozvany clen oddilu"
+        int event_id FK,UK
+        int person_id FK,UK "pozvany clen oddilu"
         int registration_id FK "vznikla prihlaska po volbe Prihlasit; NULL = dosud neprihlasen"
         int invited_by_account_id FK "HVO nebo VO, ktery pozvanku naplanoval"
         datetime scheduled_at "datum a cas odeslani"
@@ -344,10 +349,9 @@ erDiagram
         string name "nazev ciselniku"
         string comment "verejny popis pro ucastnika"
         string internal_note "neverejna poznamka pro vedouci"
-        string selection_mode "exclusive / shared"
         string assigned_by "self / leader"
         int max_select "max poctu voleb (NULL = bez limitu)"
-        string required_phase "on_submit / before_payment / before_event (NULL = nepovinny)"
+        string required_phase "on_submit / before_event (NULL = nepovinny)"
         string condition "podminka zpusobilosti (NULL = vsichni)"
     }
     EVENT_FIELD_OPTION {
@@ -361,6 +365,7 @@ erDiagram
         int id PK
         int registration_id FK
         int event_field_option_id FK
+        decimal price_modifier "snapshot EVENT_FIELD_OPTION.price_modifier v okamziku volby; pozdejsi uprava ceniku ji nemeni"
     }
     EVENT_DOCUMENT {
         int id PK
@@ -375,7 +380,10 @@ erDiagram
         int registration_id FK
         int event_document_id FK "ktery pozadavek plni"
         int person_document_id FK "automaticky nebo rucne pouzity trvaly dokument osoby; NULL = nova kopie"
-        string file "volitelne; NULL pri pouziti person_document_id"
+        blob content "LONGBLOB, sifrovany obsah souboru; NULL pri pouziti person_document_id"
+        string filename "puvodni nazev pro Content-Disposition"
+        string mime_type "overeny podle obsahu, ne podle pripony"
+        int key_version "verze sifrovaciho klice pro rotaci"
         string state "pending / uploaded / approved / rejected"
         string review_note "duvod zamitnuti"
         int reviewed_by_account_id FK "kdo posoudil"
@@ -386,7 +394,10 @@ erDiagram
         int id PK
         int person_id FK
         string document_type "insurance_card / medical_fitness / other"
-        string file
+        blob content "LONGBLOB, sifrovany obsah souboru"
+        string filename "puvodni nazev pro Content-Disposition"
+        string mime_type "overeny podle obsahu, ne podle pripony"
+        int key_version "verze sifrovaciho klice pro rotaci"
         string state "pending / valid / expired / rejected / revoked"
         date valid_from
         date valid_to "NULL = bez casoveho omezeni"
@@ -399,23 +410,24 @@ erDiagram
     ACTION_TEMPLATE {
         int id PK
         int unit_id FK "NULL = systemova sablona"
-        string type "club / one_off / weekend / course / certificate / mentor_recommendation / group / race / workshop"
+        string type "regular_meeting / one_off / weekend / course / certificate / mentor_recommendation / group / race / workshop"
         string name
         json config "vychozi nastaveni akce"
         bool active
     }
     RACE_PATROL {
         int id PK
-        int event_id FK
+        int event_id FK,UK
         int owner_registration_id FK "prihlaska, ktera hlidku zalozila"
-        string name "unikatni v ramci akce"
+        string name UK "unikatni v ramci akce"
         string category "Stezka / Pesinka / Serpa_s_detmi / Pocestni"
     }
     RACE_PATROL_MEMBER {
         int id PK
         int race_patrol_id FK
-        int person_id FK "osoba z club scope"
+        int person_id FK "osoba z registration scope"
         string role "leader (kapitan) / member"
+        datetime joined_at "poradi vstupu; urcuje vychoziho i nastupujiciho kapitana"
     }
     WORKSHOP_BLOCK {
         int id PK
@@ -444,29 +456,34 @@ erDiagram
     WORKSHOP_REGISTRATION {
         int id PK
         int workshop_offering_id FK
-        int registration_id FK "prihlaska (club scope)"
-        int person_id FK "ucastnik z club scope"
+        int registration_id FK "prihlaska (registration scope)"
+        int person_id FK "ucastnik z registration scope"
     }
     REGISTRATION {
         int id PK
         int event_id FK
-        int club_registration_id FK "NULL = bez kluboveho kontejneru"
+        int unit_registration_id FK "NULL = bez oddiloveho kontejneru"
         int person_id FK "ucastnik (prave jeden na prihlasku)"
         int submitted_by_account_id FK "kdo prihlasku podal; NULL = podano tokenem bez uctu"
         string contact_email "dorucovaci adresa prihlasky; povinna jen kdyz submitted_by_account_id IS NULL, jinak NULL a bere se z uctu"
-        string contact_email_confirmation_token "jednorazovy token jen pro akci mentor_recommendation"
+        string contact_email_confirmation_token UK "jednorazovy token jen pro akci mentor_recommendation"
         datetime contact_email_confirmed_at "NULL = kontakt registrujiciho dosud nepotvrzen"
-        int parent_registration_id FK "nadrazena prihlaska (NULL = hlavni); definuje club scope"
+        int parent_registration_id FK "nadrazena prihlaska (NULL = hlavni); definuje registration scope"
         int price_id FK "EVENT_PRICE platna k okamziku podani; zafixovana"
         decimal base_price "snapshot zakladni ceny pri podani"
-        string vs "variable symbol"
+        string vs UK "variable symbol; prefix 1 = prihlaska"
         string category "participant / volunteer / substitute"
         string state "New / PendingGuardian / PendingDocuments / PendingPayment / PartialPaid / Paid / Overpayment / Canceled / Expired"
         string guardian_email "e-mail zak. zastupce (nezletily bez rodice)"
         string guardian_approval_token
+        datetime guardian_token_resent_at "naposledy znovuposlano; NULL = nikdy"
         datetime guardian_approved_at "NULL = neschvaleno"
+        datetime guardian_rejected_at "zastupce prihlasku vyslovne odmitl; vylucne s guardian_approved_at"
+        string guardian_rejection_reason "volitelny duvod odmitnuti, ukaze se ucastnikovi"
         string token "sprava prihlasky bez uctu"
+        datetime token_resent_at "naposledy znovuposlano; NULL = nikdy"
         datetime created_at "podani prihlasky; vychozi bod relativni splatnosti"
+        datetime state_changed_at "cas posledniho prechodu stavu; cte report R8"
     }
     PAYMENT_ALLOCATION {
         int id PK
@@ -476,9 +493,21 @@ erDiagram
         int unit_member_fee_id FK "oddilovy clensky predpis; vylucne s ostatnimi cily"
         decimal amount "alokovana cast platby; zaporna = vratka"
         string matched_by "auto / manual"
-        string match_method "ss_vs_amount / ss_vs_partial / ss_vs_overpayment / vs_exact_name / ss_exact_name / vs_partial_name / vs_overpayment_name / member_fee_vs_exact / member_fee_vs_partial / manual / refund"
+        string match_method "ss_vs_amount / ss_vs_partial / ss_vs_overpayment / vs_exact_name / ss_exact_name / vs_exact / vs_partial_name / vs_overpayment_name / member_fee_vs_exact / member_fee_vs_partial / manual / refund"
         datetime matched_at
         datetime confirmation_sent_at "NULL = neodeslano"
+    }
+    REFUND_REQUEST {
+        int id PK
+        int registration_id FK "cil vratky; prave jedno s unit_member_fee_id"
+        int unit_member_fee_id FK "cil vratky; prave jedno s registration_id"
+        decimal amount "castka k vraceni; kladne cislo"
+        string state "pending / matched / canceled"
+        string reason "duvod - storno, preplatek, oprava"
+        int decided_by_account_id FK "ucetni nebo HVO, kdo vratku schvalil"
+        datetime decided_at
+        int allocation_id FK "zaporna PAYMENT_ALLOCATION, ktera vratku vyporadala; NULL = ceka"
+        datetime matched_at "NULL = ceka na zaporny bankovni pohyb"
     }
     BANK_ACCOUNT {
         int id PK
@@ -487,7 +516,8 @@ erDiagram
         string account_number
         string bank_code
         string provider "fio = synchronizace z API / manual = ruční evidence"
-        string api_token_enc "read-only token, sifrovany; NULL = bez synchronizace"
+        string api_token_enc "read-only token, sifrovany; vyplneny prave kdyz provider = fio"
+        int key_version "verze sifrovaciho klice pro rotaci"
         datetime last_sync_at "NULL = nesynchronizovano"
         string sync_state "ok / error"
     }
@@ -497,10 +527,10 @@ erDiagram
         string external_id UK "id pohybu z banky, jinak manual:<uuid> / stmt:<otisk radku>"
         string source "import / statement_import / manual_entry"
         int entered_by_user_id FK "kdo pohyb zapsal; NULL = automaticky import"
-        string ss
-        string vs
-        decimal amount
-        string sender_name
+        string ss "bez pocatecnich nul"
+        string vs "bez pocatecnich nul"
+        decimal amount "kladna = prichozi platba, zaporna = odchozi pohyb"
+        string sender_name "protistrana - u prichozi platby odesilatel, u odchozi prijemce"
         string sender_account
         string sender_bank_code
         string message
@@ -527,8 +557,8 @@ erDiagram
     }
     UNIT_MEMBER_FEE_RATE {
         int id PK
-        int unit_id FK
-        int year
+        int unit_id FK,UK
+        int year UK
         decimal local_amount "lokalni slozka clenskeho prispevku"
         date due_date
         int set_by_account_id FK
@@ -536,15 +566,15 @@ erDiagram
     }
     UNIT_MEMBER_FEE {
         int id PK
-        int unit_id FK
-        int person_id FK
+        int unit_id FK,UK
+        int person_id FK,UK
         int rate_id FK
-        int year
+        int year UK
         decimal du_amount "snapshot sazby DU; 0 pri existujicim clenstvi DU"
         decimal local_amount "snapshot lokalni sazby oddilu"
         decimal total_amount "du_amount + local_amount"
         date due_date "snapshot z UNIT_MEMBER_FEE_RATE"
-        string vs UK "variabilni symbol predpisu"
+        string vs UK "variabilni symbol predpisu; prefix 2"
         string state "PendingPayment / PartialPaid / Paid / Overpayment / Canceled"
         int created_by_account_id FK
         datetime created_at
@@ -553,7 +583,7 @@ erDiagram
         int id PK
         int unit_id FK "oddil, ktery davku podal = budouci evidencni oddil"
         int year
-        string vs UK "variabilni symbol davky"
+        string vs UK "variabilni symbol davky; prefix 3"
         decimal total_amount "pocet polozek x sazba; zamrzne pri uzamceni"
         string state "draft / locked / paid / canceled"
         datetime locked_at "vygenerovani QR; seznam osob se uz nemeni"
@@ -578,9 +608,9 @@ erDiagram
     }
     CUSTOM_FIELD {
         int id PK
-        int unit_id FK
-        int unit_patrol_id FK "druzina (volitelne)"
-        string name
+        int unit_id FK,UK
+        int unit_patrol_id FK,UK "druzina (volitelne)"
+        string name UK
         string field_type "text / number / date / boolean / choice"
         bool required
         string owner_access "none / view / edit (osoba nebo zastupce)"
@@ -588,14 +618,14 @@ erDiagram
     }
     CUSTOM_FIELD_VALUE {
         int id PK
-        int custom_field_id FK
-        int person_id FK
+        int custom_field_id FK,UK
+        int person_id FK,UK
         string value
     }
     CUSTOM_FIELD_OPTION {
         int id PK
-        int custom_field_id FK
-        string value
+        int custom_field_id FK,UK
+        string value UK
         string label
         int position
         bool active
@@ -649,6 +679,7 @@ erDiagram
         int id PK
         int registration_id FK
         string token
+        datetime token_resent_at "naposledy znovuposlano; NULL = nikdy"
         datetime offered_at
         datetime expires_at
         string state "offered / accepted / expired"
@@ -660,7 +691,8 @@ erDiagram
         int source_unit_id FK "oddil, z jehoz aktivni role HVO se odvodil kontakt; NULL = rucni kontakt u ucastnika bez oddilu"
         string contact_name "jen mentor; NULL u hlavniho vedouciho"
         string contact_email
-        string token "jednorazovy, nahodny a unikatni"
+        string token UK "jednorazovy, nahodny a unikatni"
+        datetime token_resent_at "naposledy znovuposlano; NULL = nikdy"
         string state "requested / confirmed / superseded"
         string reason_leader "povinne jen u head_leader; max 600 znaku"
         string reason_participant "povinne jen u head_leader; max 600 znaku"
@@ -679,7 +711,10 @@ erDiagram
         int unit_id FK
         int subject_account_id FK "povereny ucet v oddilu"
         string role "HVO / VO / RAD / other"
-        string file
+        blob content "LONGBLOB, sifrovany sken povereni"
+        string filename "puvodni nazev pro Content-Disposition"
+        string mime_type "overeny podle obsahu, ne podle pripony"
+        int key_version "verze sifrovaciho klice pro rotaci"
         string title "nazev nebo typ povereni"
         string state "pending / valid / expired / revoked"
         date valid_from
@@ -700,7 +735,7 @@ erDiagram
     UNIT_SETTING {
         int id PK
         int unit_id FK
-        string key "napr. reminder_frequency_days"
+        string key "napr. reminder_frequency_days, volunteer_long_term_hours"
         string value
     }
     UNIT_MAIL_SETTING {
@@ -709,6 +744,7 @@ erDiagram
         string from_email "odesilatel (volitelne)"
         string smtp_email "e-mail pro odchozi postu"
         string smtp_password_enc "sifrovane heslo (libsodium)"
+        int key_version "verze sifrovaciho klice pro rotaci"
     }
     GDPR_AUDIT {
         int id PK
@@ -725,8 +761,9 @@ erDiagram
         int entity_id "bez FK (polymorfni)"
         string action "create / update / delete / join / leave / approve / reject / cancel"
         int unit_id FK "izolace a mazani per oddil"
-        int actor_account_id FK "NULL = system nebo akter bez uctu"
-        string actor_email "akter bez uctu (token)"
+        string actor_type "account / token / system"
+        int actor_account_id FK "povinne jen pro actor_type = account"
+        string actor_email "volitelne pro actor_type = token"
         json detail "co se zmenilo / duvod"
         datetime created_at
     }
@@ -744,6 +781,7 @@ erDiagram
         int child_person_id FK
         string email
         string token
+        datetime token_resent_at "naposledy znovuposlano; NULL = nikdy"
         datetime expires
         int invited_by_account_id FK
         datetime accepted_at "NULL = nevyrizena"

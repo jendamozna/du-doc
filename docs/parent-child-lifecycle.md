@@ -18,12 +18,12 @@ Tento token slouží k založení účtu a propojení s dítětem. Není totožn
 
 | Stav                       | Význam                                                      | Dává práva | Terminální |
 | -------------------------- | ----------------------------------------------------------- | ---------- | ---------- |
-| `pending`                  | čeká na schválení (dítě už má jiného zákonného zástupce)    | ne         | ne         |
+| `pending`                  | čeká na rozhodnutí člověka — dítě už má jiného zákonného zástupce, nebo chybí `birth_date` | ne         | ne         |
 | `active`                   | platná vazba, zákonný zástupce má plná práva k dítěti       | ano        | ne         |
 | `readonly_after_adulthood` | dítě dosáhlo zletilosti, přístup zůstává jen pro čtení      | jen čtení  | ne         |
-| `cancelled`                | vazba zrušena zákonným zástupcem, HVO nebo zletilým dítětem | ne         | ano        |
+| `canceled`                | vazba zrušena zákonným zástupcem, HVO nebo zletilým dítětem | ne         | ano        |
 
-`cancelled` je **terminální** — obnovit vazbu nelze, vzniká nová (původní zůstává pro auditní stopu).
+`canceled` je **terminální** — obnovit vazbu nelze, vzniká nová (původní zůstává pro auditní stopu).
 
 ## Vznik vazby
 
@@ -45,27 +45,27 @@ stateDiagram-v2
     [*] --> active : přihláška s prohlášením (dítě bez zákonného zástupce)
 
     pending --> active : schválil stávající zákonný zástupce nebo HVO
-    pending --> cancelled : zamítnuto nebo lhůta uplynula
+    pending --> canceled : zamítnuto nebo lhůta uplynula
 
     active --> readonly_after_adulthood : dítě dosáhlo 18 let (job)
-    active --> cancelled : zákonný zástupce vystoupil / HVO na žádost
+    active --> canceled : zákonný zástupce vystoupil / HVO na žádost
 
-    readonly_after_adulthood --> cancelled : zletilý zrušil přístup zákonného zástupce
+    readonly_after_adulthood --> canceled : zletilý zrušil přístup zákonného zástupce
 
-    cancelled --> [*]
+    canceled --> [*]
 ```
 
 ## Přechody
 
 | Přechod                                | Spouštěč                                         | Guard                                                                      | Efekt                                                                   |
 | -------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| `→ pending`                            | přihláška, schválení zástupcem, pozvánka         | dítě je nezletilé a už má aspoň jednu vazbu v `active`                     | e-mail schvalovateli, nastavení lhůty                                   |
+| `→ pending`                            | přihláška, schválení zástupcem, pozvánka         | dítě už má aspoň jednu vazbu v `active`, **nebo** nemá `birth_date`        | e-mail schvalovateli, nastavení lhůty                                   |
 | `→ active` (přímo)                     | přihláška s prohlášením                          | dítě je nezletilé a **nemá** žádnou vazbu v `active`; prohlášení potvrzeno | `valid_from`, zápis prohlášení do auditního logu                        |
 | `pending → active`                     | odkaz v e-mailu / rozhraní                       | schvaluje stávající zákonný zástupce v `active`, nebo HVO oddílu dítěte    | `approved_by_account_id`, `valid_from`, notifikace žadateli             |
-| `pending → cancelled`                  | schvalovatel, nebo job po lhůtě                  | —                                                                          | `valid_to`, notifikace žadateli s důvodem                               |
+| `pending → canceled`                  | schvalovatel, nebo job po lhůtě                  | —                                                                          | `valid_to`, `EMAIL_PARENT_CHILD_REJECTED` žadateli s důvodem            |
 | `active → readonly_after_adulthood`    | job (denně)                                      | dítě dosáhlo 18 let                                                        | práva se omezí na čtení, notifikace oběma stranám                       |
-| `active → cancelled`                   | zákonný zástupce (vystoupení) nebo HVO na žádost | —                                                                          | `valid_to`, zápis do auditního logu, kontrola osiření dítěte (viz níže) |
-| `readonly_after_adulthood → cancelled` | zletilé dítě                                     | dítě má vlastní účet                                                       | `valid_to`, zákonný zástupce ztrácí i čtení                             |
+| `active → canceled`                   | zákonný zástupce (vystoupení) nebo HVO na žádost | —                                                                          | `valid_to`, zápis do auditního logu, kontrola osiření dítěte (viz níže) |
+| `readonly_after_adulthood → canceled` | zletilé dítě                                     | dítě má vlastní účet                                                       | `valid_to`, zákonný zástupce ztrácí i čtení                             |
 
 Zrušení se **vždy loguje** (README → **Auditní log**); u systémových přechodů (job) je aktérem systém.
 
@@ -84,10 +84,10 @@ Výjimka u kontaktního e-mailu existuje proto, aby šlo zletilému doručit vý
 
 - **Oba zákonní zástupci mají plná práva**, mezi vazbami není hierarchie; při souběžné úpravě platí poslední zápis.
 - **Vazba nevzniká k zletilé osobě.** Je-li osoba v okamžiku pokusu už zletilá, vazba se nezaloží vůbec — nelze obejít omezení tím, že se založí a hned překlopí do `readonly`.
-- **Chybí-li `birth_date`**, nelze zletilost vyhodnotit; systém datum vyžádá a vazba zůstává v `pending`.
+- **Chybí-li `birth_date`**, nelze zletilost vyhodnotit; systém datum vyžádá a vazba zůstává v `pending`. Schvalovatelem je v tomto případě **HVO oddílu dítěte** — stávající zákonný zástupce nemusí existovat, a přesto někdo rozhodnout musí. Je to druhý důvod, proč se vazba ocitne v `pending`; samostatný stav pro něj nevzniká, protože chování i cesty ven jsou totožné.
 - **Osiření dítěte:** zruší-li se poslední vazba v `active`, údaje a přihlášky nezletilého spravuje HVO oddílu, kde je dítě evidované, dokud se nepřipojí nový zástupce. Zrušení se tím **neblokuje** — nelze držet zákonného zástupce proti jeho vůli.
 - **Zrušení vazby nemění existující přihlášky ani platby.** Přihlášky zůstávají v platnosti a přechází pod správu HVO (nebo druhého zákonného zástupce); už provedené platby a alokace se nedotýkají.
-- **Zrušení nelze provést, dokud je vazba v `pending`** — nejdřív se musí rozhodnout o schválení; zamítnutí je samo přechodem do `cancelled`.
+- **Zrušení nelze provést, dokud je vazba v `pending`** — nejdřív se musí rozhodnout o schválení; zamítnutí je samo přechodem do `canceled`.
 - **Sloučení osob** ([person-merge.md](person-merge.md)) přenáší vazby pod sjednocenou osobu; duplicitní vazba (stejný zákonný zástupce i dítě) se sloučí do jedné.
 - `record_state` osoby (viz [person-lifecycle.md](person-lifecycle.md)) **vazbu neovlivňuje** — deaktivace osoby v oddílu vazbu neruší.
 

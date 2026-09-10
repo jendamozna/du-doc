@@ -10,7 +10,7 @@ Dokument řeší tři věci, které business popis nechává otevřené: **kdo c
 - Silný kandidát = shodné `birth_date` **a** shodné normalizované jméno i příjmení (bez diakritiky, malá písmena, ořezané mezery). Slabý kandidát = shodné `birth_date` a podobné příjmení, nebo shodné jméno i příjmení bez data narození.
 - Přezdívka (`nickname`) se do porovnání započítává jako alternativa křestního jména (Pepa / Josef), a to jen na straně návrhu — sama o sobě kandidáta nezakládá.
 - Kandidáti se hledají **napříč oddíly**; duplicity uvnitř jednoho oddílu vidí HVO přímo v seznamu osob.
-- Zamítnutá žádost (`state = 'rejected'`) funguje jako **trvalé potlačení dvojice** — stejná dvojice se už znovu nenabízí, dokud je ADM výslovně neodblokuje. Odblokování zapíše `suppression_lifted_at`, ADM, který jej provedl, a povinný důvod; vytvoří také záznam `AUDIT_LOG` typu `MERGE_REQUEST` s akcí `update`. Další nalezení kandidáta pak založí novou žádost, původní zamítnutá žádost zůstává v historii.
+- Zamítnutá žádost (`state = 'rejected'`) funguje jako **trvalé potlačení dvojice** — stejná dvojice se už znovu nenabízí, dokud je ADM výslovně neodblokuje. **Potlačení zakládá jen zamítnutí, o kterém někdo rozhodl**, ne propadnutí bez odezvy (viz **Schvalování**): mlčení není úsudek o totožnosti osob. Odblokování zapíše `suppression_lifted_at`, ADM, který jej provedl, a povinný důvod; vytvoří také záznam `AUDIT_LOG` typu `MERGE_REQUEST` s akcí `update`. Další nalezení kandidáta pak založí novou žádost, původní zamítnutá žádost zůstává v historii.
 
 ## Schvalování
 
@@ -21,7 +21,8 @@ Dokument řeší tři věci, které business popis nechává otevřené: **kdo c
 
 - Žádost je `pending`, dokud **všechny** strany nerozhodly. Souhlas všech → `ready`. Jediné zamítnutí → `rejected` (terminální).
 - Sloučení spouští **iniciátor** až ze stavu `ready` — mezi souhlasem a provedením se dělá volba konfliktních polí.
-- Nerozhodnutá žádost **propadá po 30 dnech** → `rejected` s důvodem „bez odezvy".
+- Nerozhodnutá žádost **propadá po 30 dnech** → `rejected` s důvodem „bez odezvy". **Propadnutí dvojici nepotlačuje** — na rozdíl od zamítnutí, o kterém někdo rozhodl. Detekce ji smí navrhnout znovu, nejdřív však 30 dní po propadnutí, aby se stejný návrh nevracel dokola. Dovolená, změna HVO nebo e-mail ve spamu by jinak natrvalo pohřbily nalezenou duplicitu a odblokovat by ji směl jen ADM.
+- **7 dní před propadnutím** dostanou strany, které dosud nerozhodly, připomínku `EMAIL_MERGE_REQUEST_REMINDER`; po propadnutí se `EMAIL_MERGE_REQUEST_EXPIRED` odešle **jen iniciátorovi** — ostatní mlčeli a další zpráva jim nic nepřinese ([notifications.md](notifications.md)).
 - Sloučení dětí **nespojuje účty zákonných zástupců**, jen osobu dítěte.
 - Schvalující HVO vidí náhled obou osob k porovnání, ale **nevidí citlivá data z cizího oddílu** — jen základní pole, která se slučují.
 
@@ -29,7 +30,7 @@ Dokument řeší tři věci, které business popis nechává otevřené: **kdo c
 stateDiagram-v2
     [*] --> pending : žádost o sloučení
     pending --> ready : všechny strany souhlasí
-    pending --> rejected : kdokoli zamítl / 30 dní bez odezvy
+    pending --> rejected : kdokoli zamítl (potlačí dvojici) / 30 dní bez odezvy (nepotlačí)
     ready --> completed : iniciátor potvrdil volby polí
     ready --> rejected : strana odvolala souhlas
     completed --> reverted : administrátor vrátil sloučení
@@ -54,14 +55,15 @@ stateDiagram-v2
 
 ## Přenos vazeb a kolize unikátů
 
-Vazby se **nevolí, přenášejí se všechny** na cílovou osobu — přihlášky, docházka, členství DU, vzdělání, dokumenty, alokace plateb, historie stavů. Kolize unikátních klíčů se řeší takto:
+Vazby se **nevolí, přenášejí se všechny** na cílovou osobu — přihlášky, docházka, členství DU, oddílové členské předpisy, vzdělání, dokumenty, alokace plateb, historie stavů. Kolize unikátních klíčů se řeší takto:
 
 | Entita                | Kolize                               | Řešení                                                                                                                                                                                                                  |
 | --------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `PERSON_UNIT`         | stejná osoba + oddíl                 | sloučí se: `membership_state` silnější (registrovaný > host), `record_state` aktivnější (aktivní > neaktivní > archivovaný), `valid_from` dřívější, `valid_to` pozdější (NULL vyhrává)                                  |
 | `PERSON_UNIT_HISTORY` | —                                    | záznamy obou os se spojí a seřadí podle času; nic se nezahazuje (čtou to reporty)                                                                                                                                       |
 | `DU_MEMBERSHIP`       | stejná osoba + rok                   | zůstává záznam cílové osoby; zdrojový se zahodí do snapshotu a HVO dostane poznámku, lišil-li se evidenční oddíl. Členství platí globálně, takže sloučením se žádné neztrácí — mění se jen to, který oddíl osobu vykáže |
-| `REGISTRATION`        | obě osoby na téže akci               | je-li jedna v terminálním stavu, zůstává druhá; **jsou-li obě aktivní, sloučení se zablokuje** a musí to nejdřív vyřešit vedoucí akce                                                                                   |
+| `REGISTRATION`        | obě osoby na téže akci               | je-li jedna v terminálním stavu, zůstává druhá; **jsou-li obě aktivní, sloučení se zablokuje** a musí to nejdřív vyřešit vedoucí přihlášky                                                                                   |
+| `UNIT_MEMBER_FEE`     | stejná osoba + oddíl + rok           | je-li jeden předpis uhrazený a druhý ne, zůstává uhrazený a neuhrazený se stornuje (`Canceled`); **jsou-li uhrazené oba, sloučení se zablokuje** a účetní musí nejdřív jeden vypořádat vratkou — dvě zaplacené částky nelze tiše sloučit do jedné               |
 | `ATTENDANCE_RECORD`   | stejná osoba + akce                  | zůstává záznam s nejvyšší skutečnou účastí: `on_time`, pak `late`, `excused_in_advance`, `absent`                                                                                                                       |
 | `PARENT_CHILD`        | stejná dvojice zákonný zástupce–dítě | zůstává jedna vazba, aktivní má přednost před zrušenou                                                                                                                                                                  |
 | `USER_ROLE`           | stejná role + oddíl                  | ponechá se jedna                                                                                                                                                                                                        |
@@ -97,7 +99,7 @@ Jiný mechanismus, snadno se plete se skutečným sloučením:
 
 - **Nemění žádná data ani vazby** — jen říká, že dvě osoby se pro účely počítání unikátních dětí mají počítat jako jedna.
 - Zakládá ho ústředí bez schvalování ostatními stranami, protože nikomu nemění záznamy.
-- Respektuje ho **jen report unikátních dětí** (R9 v [reports.md](reports.md)); všechny ostatní reporty počítají osoby podle `PERSON.id`.
+- Respektuje ho **jen report unikátních dětí** (R10 v [reports.md](reports.md)); všechny ostatní reporty počítají osoby podle `PERSON.id`.
 - Je kdykoli zrušitelné, protože nic nepřepsalo.
 
 ## Požadavky na datový model

@@ -70,7 +70,7 @@ Provozní přehled: jeden řádek na akci, s rozpadem účastníků podle typu.
 **Hrany:**
 
 - Osoba může mít víc rolí (rádce i dobrovolník) — kategorie se **nevylučují**, součet sloupců proto nemusí dát počet účastníků. Do UI patří poznámka.
-- Akce bez přihlášek (`club`, `one_off`) mají „přihlášeno" prázdné, ne nulu.
+- Akce bez přihlášek (`regular_meeting`, `one_off`) mají „přihlášeno" prázdné, ne nulu.
 
 ---
 
@@ -96,7 +96,7 @@ Vývoj velikosti oddílu. Metrika je **stav ke konci každého období**, ne př
 
 **Kód:** `attendance-events` · **Kdo:** VO, HVO, ADM
 
-Časová řada přes akce s přihláškami (`type NOT IN ('club', 'one_off')`), bucket podle `EVENT.starts_at`.
+Časová řada přes akce s přihláškami (`type NOT IN ('regular_meeting', 'one_off')`), bucket podle `EVENT.starts_at`.
 
 | Metrika              | Výpočet                                                                                |
 | -------------------- | -------------------------------------------------------------------------------------- |
@@ -113,9 +113,9 @@ Vývoj velikosti oddílu. Metrika je **stav ke konci každého období**, ne př
 
 ## R4 — Docházka pravidelných schůzek
 
-**Kód:** `clubs` · **Kdo:** RÁD, VO, HVO, ADM
+**Kód:** `meetings` · **Kdo:** RÁD, VO, HVO, ADM
 
-Sezónnost pravidelných schůzek — jen akce `type = 'club'`, bucket podle `EVENT.starts_at`.
+Sezónnost pravidelných schůzek — jen akce `type = 'regular_meeting'`, bucket podle `EVENT.starts_at`.
 
 | Metrika              | Výpočet                                                                     |
 | -------------------- | --------------------------------------------------------------------------- |
@@ -170,7 +170,7 @@ Sezónnost pravidelných schůzek — jen akce `type = 'club'`, bucket podle `EV
 **Kód:** `volunteers` · **Kdo:** VO, HVO, ADM
 
 - **Hodiny v období:** `SUM(ATTENDANCE_RECORD.volunteer_hours)` přes akce v koši.
-- **Klasifikace osoby:** součet hodin osoby **za kalendářní rok**; `< 50` = krátkodobý, `>= 50` = dlouhodobý dobrovolník. Hranice je konfigurovatelná v nastavení oddílu.
+- **Klasifikace osoby:** součet hodin osoby **za kalendářní rok**; `< 50` = krátkodobý, `>= 50` = dlouhodobý dobrovolník. Hranice je konfigurovatelná klíčem `volunteer_long_term_hours` v `UNIT_SETTING` (default 50); nové pole ve schématu nevyžaduje.
 - **Výstup:** hodiny na časové ose + počet krátkodobých/dlouhodobých k závěru každého roku + jmenný seznam s hodinami (jen pro scope volajícího).
 
 **Hrany:**
@@ -213,7 +213,7 @@ Bucket podle data akce (`EVENT.starts_at`), varianta „cash-flow" podle `BANK_T
 | inkasováno           | `SUM(PAYMENT_ALLOCATION.amount)` k těmto přihláškám                                                 |
 | pohledávky           | předepsáno − inkasováno, jen `state IN ('PendingPayment', 'PartialPaid')`                           |
 | přeplatky            | `SUM(alokace − cena)` u `state = 'Overpayment'`                                                     |
-| nespárované platby   | příchozí `BANK_TRANSACTION` bez alokace, se stářím (0–7 / 8–30 / 30+ dní)                           |
+| nespárované platby   | příchozí `BANK_TRANSACTION` bez alokace, mimo `ignored_at` a `voided_at`, se stářím (0–7 / 8–30 / 30+ dní) |
 | storna               | přihlášky `state = 'Canceled'`, počet + předepsaná částka + storno poplatek dle `CANCELLATION_RULE` |
 | zaplaceno včas/pozdě | podíl přihlášek, kde datum poslední alokace ≤ termín splatnosti (viz níže)                          |
 
@@ -225,7 +225,8 @@ Bucket podle data akce (`EVENT.starts_at`), varianta „cash-flow" podle `BANK_T
 - Přihláška podána později, než je splatnost akce (nebo méně než `payment_due_days` před začátkem), je splatná ihned a do „pozdě" spadne jen při úhradě po skončení dne podání.
 - U částečně zaplacených přihlášek rozhoduje **poslední** alokace, která dorovnala cenu; nedoplacená přihláška po splatnosti se počítá do pohledávek po splatnosti, ne do „pozdě zaplacených".
 - Odchozí transakce (`amount < 0`) se do inkasa nezapočítávají.
-- Vratky se evidují jako záporná alokace — do „inkasováno" vstupují se znaménkem, aby souhlasil zůstatek.- Report vrací rozpad podle `BANK_TRANSACTION.source`. U oddílu bez bankovního API zadává datum člověk a může být zpětné, takže metrika **zaplaceno včas/pozdě měří píli účetní, ne chování plátců** — pro `source != 'import'` se označí jako neurčitelná.
+- Vratky se evidují jako záporná alokace — do „inkasováno" vstupují se znaménkem, aby souhlasil zůstatek.
+- Report vrací rozpad podle `BANK_TRANSACTION.source`. U oddílu bez bankovního API zadává datum člověk a může být zpětné, takže metrika **zaplaceno včas/pozdě měří píli účetní, ne chování plátců** — pro `source != 'import'` se označí jako neurčitelná.
 - Stornované ruční zápisy (`voided_at`) se do reportu nepočítají.
 
 ---
@@ -260,20 +261,6 @@ Nejcitlivější report — vstupuje do vykazování ústředí, proto je defini
 
 - Osoba se v jednom období počítá jednou, i když byla na deseti akcích deseti oddílů.
 - Report se počítá **za kalendářní rok** (vykazovací období), i když UI dovolí jiný interval.
-
----
-
-## Požadavky na datový model
-
-Reporty výše lze postavit nad stávajícím modelem s těmito výjimkami:
-
-| Chybí                                     | Potřebuje report   | Návrh                                                                      |
-| ----------------------------------------- | ------------------ | -------------------------------------------------------------------------- |
-| čas vzniku přihlášky                      | R8 (splatnost)     | `REGISTRATION.created_at` (datetime) — výchozí bod relativní splatnosti    |
-| čas přechodu stavu přihlášky              | R8 (storna v čase) | `REGISTRATION.state_changed_at` nebo čtení z `AUDIT_LOG` (action `cancel`) |
-| hranice krátkodobý/dlouhodobý dobrovolník | R6                 | klíč v nastavení oddílu, default 50 hodin                                  |
-
-Bez těchto polí se příslušné metriky nevrací (ne odhadují) a UI je skryje.
 
 ---
 
