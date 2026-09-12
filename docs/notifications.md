@@ -75,12 +75,12 @@ Latte šablony jsou v adresáři [`emails/`](../emails/). Soubor se jmenuje shod
 
 ## Role a účty
 
-| Kód                             | Událost (spouštěč)                                             | Příjemce                         | Načasování                   | Opakování / poznámka                                                          | Zdroj                                      |
-| ------------------------------- | -------------------------------------------------------------- | -------------------------------- | ---------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------ |
-| `EMAIL_HVO_INVITE`              | Administrátor vytvoří účet HVO                                 | nový HVO                         | ihned                        | jednorázově                                                                   | [README.md](../README.md)                  |
-| `EMAIL_ROLE_INVITE`             | HVO vytvoří účet účetnímu/vedoucímu nebo odešle pozvánku Rádci | nový uživatel role; u Rádce dítě | ihned                        | jednorázově; role a případný účet Rádce vzniknou až přijetím pozvánky dítětem | [README.md](../README.md)                  |
-| `EMAIL_ACCOUNT_LOCKED`          | throttling — série neúspěšných přihlášení                      | vlastník účtu                    | ihned                        | jednorázově na zamknutí                                                       | [non-functional.md](non-functional.md)     |
-| `EMAIL_PERSON_INACTIVE_WARNING` | blížící se automatická deaktivace osoby (bez aktivity)         | osoba (má-li kontakt) a HVO      | 30 dní před deaktivací (job) | jednorázově                                                                   | [person-lifecycle.md](person-lifecycle.md) |
+| Kód                             | Událost (spouštěč)                                     | Příjemce                            | Načasování                   | Opakování / poznámka                                                                | Zdroj                                      |
+| ------------------------------- | ------------------------------------------------------ | ----------------------------------- | ---------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------ |
+| `EMAIL_HVO_INVITE`              | ADM vytvoří `ROLE_INVITATION` pro HVO                  | budoucí HVO                         | ihned                        | jednorázově; odkaz platí do `expires_at`, role vznikne až přijetím                  | [authorization.md](authorization.md)       |
+| `EMAIL_ROLE_INVITE`             | HVO vytvoří `ROLE_INVITATION` pro VO, ÚČE nebo RÁD     | budoucí uživatel role; u Rádce dítě | ihned                        | jednorázově; odkaz platí do `expires_at`, role a případný účet vzniknou až přijetím | [authorization.md](authorization.md)       |
+| `EMAIL_ACCOUNT_LOCKED`          | throttling — série neúspěšných přihlášení              | vlastník účtu                       | ihned                        | jednorázově na zamknutí                                                             | [non-functional.md](non-functional.md)     |
+| `EMAIL_PERSON_INACTIVE_WARNING` | blížící se automatická deaktivace osoby (bez aktivity) | osoba (má-li kontakt) a HVO         | 30 dní před deaktivací (job) | jednorázově                                                                         | [person-lifecycle.md](person-lifecycle.md) |
 
 ## Deduplikace a hlídky
 

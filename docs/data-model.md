@@ -35,6 +35,7 @@ erDiagram
     UNIT ||--o{ UNIT_PATROL : has
     UNIT ||--o{ PERSON_UNIT : tracks
     UNIT ||--o{ USER_ROLE : "scoped to"
+    UNIT ||--o{ ROLE_INVITATION : invites to role
     UNIT ||--o{ PERMISSION_DELEGATION : delegates
     UNIT ||--o{ CUSTOM_FIELD : defines
     UNIT ||--o{ LOCATION : defines
@@ -70,6 +71,7 @@ erDiagram
 
     ACCOUNT ||--o{ OAUTH_IDENTITY : has
     ACCOUNT ||--o{ USER_ROLE : has
+    ACCOUNT ||--o{ ROLE_INVITATION : accepts
 
     UNIT_PATROL ||--o{ UNIT_PATROL_MEMBER : contains
     UNIT_PATROL ||--o{ CUSTOM_FIELD : scopes
@@ -221,6 +223,22 @@ erDiagram
         int account_id FK,UK
         int unit_id FK,UK "role scope"
         string role UK "HVO / VO / RAD / ADM / UCE; RAD je role uctu, ne funkce ve druzine"
+    }
+    ROLE_INVITATION {
+        int id PK
+        int unit_id FK
+        string email "normalizovany e-mail pozvaneho"
+        string role "HVO / VO / RAD / UCE"
+        string token UK "jednorazovy, nahodny a unikatni"
+        datetime token_resent_at "naposledy znovuposlano; NULL = nikdy"
+        int invited_by_account_id FK "ADM pro HVO; HVO pro VO / RAD / UCE"
+        int accepted_by_account_id FK "NULL do prijeti"
+        string state "pending / accepted / revoked / expired"
+        datetime expires_at
+        datetime accepted_at "NULL do prijeti"
+        datetime revoked_at "NULL = neodvolana"
+        int revoked_by_account_id FK "NULL = neodvolana"
+        datetime created_at
     }
     PERMISSION_DELEGATION {
         int id PK

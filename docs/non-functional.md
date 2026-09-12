@@ -80,6 +80,7 @@ Systém ukládá nahrané soubory ve třech entitách: **dokumenty přihlášek*
 ## Tokeny a ochrana přístupu
 
 - Přihláška se dá spravovat bez účtu přes odkaz s tokenem (`REGISTRATION.token`) a stejným způsobem schvaluje zákonný zástupce. Token je náhodný (min. 128 bitů), vázaný na jednu přihlášku a **omezeně platný** — u schválení zástupcem lhůtou, u správy přihlášky koncem akce.
+- Pozvánka k roli (`ROLE_INVITATION.token`) je také náhodný jednorázový token o nejméně 128 bitech; platí jen ve stavu `pending` do `expires_at`. Přijetí, odvolání nebo expirace token okamžitě zneplatní.
 - Token opravňuje jen k operacím nad danou přihláškou; nikdy nezpřístupní seznam osob ani jiné akce.
 - Přihlašování má **throttling** podle účtu i IP; po sérii neúspěchů dočasné zamknutí a e-mail vlastníkovi účtu.
 - Ochrana proti výčtu účtů: chybová hláška u přihlášení i u obnovy hesla je vždy stejná bez ohledu na to, zda účet existuje.
@@ -94,7 +95,7 @@ Pro zástupce, náhradníky a hosty je e-mail celé UI ([notifications.md](notif
 - **Dvě vstupní cesty:** veřejný formulář bez přihlášení (viz výše) a tlačítko „poslat odkaz znovu" na detailu přihlášky pro vedoucího s `can_edit_registrations` a pro HVO. Druhá cesta je v praxi častější a jako autentizovaná nemá enumerační problém; adresa se ani tam nezadává, bere se z přihlášky.
 - **Throttling podle adresy i IP** a krátká prodleva mezi dvěma žádostmi (`resent_at`) — bez ní je z tlačítka nástroj na zahlcení cizí schránky.
 - **Zapisuje se do `AUDIT_LOG`** — jde o vydání nového přístupu k osobním údajům. `actor_type = 'token'` s `actor_email` u samoobslužné cesty, `account` u vedoucího ([audit-log.md](audit-log.md)).
-- **Neposílá se nová šablona** — odejde tentýž `EMAIL_*` jako poprvé (`EMAIL_GUARDIAN_REQUEST`, `EMAIL_REG_CONFIRM`, `EMAIL_SUBSTITUTE_OFFER` …). Katalog notifikací se tím nemění.
+- **Neposílá se nová šablona** — odejde tentýž `EMAIL_*` jako poprvé (`EMAIL_GUARDIAN_REQUEST`, `EMAIL_REG_CONFIRM`, `EMAIL_SUBSTITUTE_OFFER`, `EMAIL_HVO_INVITE`, `EMAIL_ROLE_INVITE` …). Katalog notifikací se tím nemění.
 - **`UNIT_REGISTRATION.share_token` je z toho vyňatý.** Není osobní — vedoucí ho má v rozhraní a rozesílá sám, takže znovuposlání nedává smysl a rotace by rozbila odkazy už rozeslané rodičům.
 
 ## Odchozí e-maily
@@ -107,25 +108,25 @@ Pro zástupce, náhradníky a hosty je e-mail celé UI ([notifications.md](notif
 
 ## Plánované úlohy
 
-| Úloha                            | Frekvence          | Poznámka                                                                                                                  |
-| -------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------- |
-| import bankovních transakcí      | dle nastavení účtu | idempotentní podle `external_id` ([fio-sync.md](fio-sync.md))                                                             |
-| párování nových transakcí        | po každém importu  | i po vzniku přihlášky ([payment-matching.md](payment-matching.md))                                                        |
-| expirace schválení zástupcem     | denně              | stav `PendingGuardian` po lhůtě (7 dní) → `Expired` ([registration-lifecycle.md](registration-lifecycle.md))                                                                               |
-| expirace schválení vazby zástupce | denně              | `PARENT_CHILD` v `pending` po lhůtě (14 dní) → `canceled` ([parent-child-lifecycle.md](parent-child-lifecycle.md)) |
-| překlopení vazby po zletilosti   | denně              | `active` → `readonly_after_adulthood` v den 18. narozenin ([parent-child-lifecycle.md](parent-child-lifecycle.md)) |
-| propadnutí nabídky náhradníkovi  | hodinově           | nabídka propadá, stav přihlášky se nemění                                                                                 |
-| výzvy a připomínky splatnosti    | denně              | termín podle nastavení akce                                                                                               |
-| vypršení nezaplacené přihlášky   | denně              | jen u akcí se zapnutým vypršením → `Expired` a uvolnění kapacity ([registration-lifecycle.md](registration-lifecycle.md)) |
-| propadnutí žádosti o sloučení    | denně              | `MERGE_REQUEST.expires_at` po 30 dnech bez odezvy; týž běh rozesílá připomínku 7 dní předem ([person-merge.md](person-merge.md)) |
-| připomínka závodníkům bez hlídky | denně              | N dní před akcí, přeskočí ty, kdo už dnes připomínku dostali ([race-patrols.md](race-patrols.md))                         |
-| připomínka chybějících dokumentů | denně              | podle nastavení oddílu, dokud nejsou všechny schváleny ([notifications.md](notifications.md)) |
-| odeslání naplánovaných pozvánek | hodinově           | `EVENT_INVITATION.scheduled_at` a `reminder_scheduled_at` ([notifications.md](notifications.md)) |
-| upomínky členských předpisů     | denně              | po splatnosti, jen u účtu s bankovním API ([payment-matching.md](payment-matching.md)) |
-| varování před deaktivací osoby  | denně              | 30 dní před automatickou deaktivací ([person-lifecycle.md](person-lifecycle.md)) |
-| retenční mazání a anonymizace    | denně              | podle tabulky lhůt v README → **Retence a GDPR**                                                                          |
-| vyřízení žádostí o výmaz (GDPR)  | denně              | s dokladem o výmazu                                                                                                       |
-| čištění auditního logu           | měsíčně            | podle retence v [audit-log.md](audit-log.md)                                                                              |
+| Úloha                             | Frekvence          | Poznámka                                                                                                                         |
+| --------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| import bankovních transakcí       | dle nastavení účtu | idempotentní podle `external_id` ([fio-sync.md](fio-sync.md))                                                                    |
+| párování nových transakcí         | po každém importu  | i po vzniku přihlášky ([payment-matching.md](payment-matching.md))                                                               |
+| expirace schválení zástupcem      | denně              | stav `PendingGuardian` po lhůtě (7 dní) → `Expired` ([registration-lifecycle.md](registration-lifecycle.md))                     |
+| expirace schválení vazby zástupce | denně              | `PARENT_CHILD` v `pending` po lhůtě (14 dní) → `canceled` ([parent-child-lifecycle.md](parent-child-lifecycle.md))               |
+| překlopení vazby po zletilosti    | denně              | `active` → `readonly_after_adulthood` v den 18. narozenin ([parent-child-lifecycle.md](parent-child-lifecycle.md))               |
+| propadnutí nabídky náhradníkovi   | hodinově           | nabídka propadá, stav přihlášky se nemění                                                                                        |
+| výzvy a připomínky splatnosti     | denně              | termín podle nastavení akce                                                                                                      |
+| vypršení nezaplacené přihlášky    | denně              | jen u akcí se zapnutým vypršením → `Expired` a uvolnění kapacity ([registration-lifecycle.md](registration-lifecycle.md))        |
+| propadnutí žádosti o sloučení     | denně              | `MERGE_REQUEST.expires_at` po 30 dnech bez odezvy; týž běh rozesílá připomínku 7 dní předem ([person-merge.md](person-merge.md)) |
+| připomínka závodníkům bez hlídky  | denně              | N dní před akcí, přeskočí ty, kdo už dnes připomínku dostali ([race-patrols.md](race-patrols.md))                                |
+| připomínka chybějících dokumentů  | denně              | podle nastavení oddílu, dokud nejsou všechny schváleny ([notifications.md](notifications.md))                                    |
+| odeslání naplánovaných pozvánek   | hodinově           | `EVENT_INVITATION.scheduled_at` a `reminder_scheduled_at` ([notifications.md](notifications.md))                                 |
+| upomínky členských předpisů       | denně              | po splatnosti, jen u účtu s bankovním API ([payment-matching.md](payment-matching.md))                                           |
+| varování před deaktivací osoby    | denně              | 30 dní před automatickou deaktivací ([person-lifecycle.md](person-lifecycle.md))                                                 |
+| retenční mazání a anonymizace     | denně              | podle tabulky lhůt v README → **Retence a GDPR**                                                                                 |
+| vyřízení žádostí o výmaz (GDPR)   | denně              | s dokladem o výmazu                                                                                                              |
+| čištění auditního logu            | měsíčně            | podle retence v [audit-log.md](audit-log.md)                                                                                     |
 
 - Všechny úlohy jsou **idempotentní** — opakovaný běh nesmí nic zdvojit ani smazat víc.
 - Každá úloha má **zámek proti souběhu** a eviduje běh (začátek, konec, počet zpracovaných záznamů, chyba). Rozsah zámku je ten nejužší, který dává smysl — u bankovního importu je to **jeden bankovní účet**, ne celá úloha, aby se oddíl se dvěma účty nesynchronizoval zbytečně sériově ([fio-sync.md](fio-sync.md) → **Souběh a rate limit**).

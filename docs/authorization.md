@@ -35,37 +35,37 @@ Legenda v maticích: **RW** = čtení i zápis · **R** = jen čtení · **A** =
 
 ## Akce a jejich konfigurace
 
-| Operace                                     | ADM              | HVO           | VO                  | RÁD                 | ÚČE | Zákonný zástupce / účastník |
-| ------------------------------------------- | ---------------- | ------------- | ------------------- | ------------------- | --- | --------------------------- |
-| Založit akci                                | RW (jen ústředí) | RW            | —                   | —                   | —   | —                           |
-| Upravit akci                                | —                | RW            | A `can_edit_event`  | A `can_edit_event`  | —   | —                           |
-| Číst detail akce                            | R                | R             | R (vlastní oddíl)   | R (vlastní oddíl)   | R (celý oddíl, bez ohledu na přiřazení)   | R (dle viditelnosti)        |
-| Nastavit ceny a storno pravidla             | —                | RW            | A `can_edit_prices` | A `can_edit_prices` | R (celý oddíl)   | —                           |
-| Nastavit výběrové číselníky a dokumenty     | —                | RW            | A `can_edit_event`  | A `can_edit_event`  | —   | —                           |
-| Pozvat členy oddílu a naplánovat připomínku | —                | RW            | A `can_edit_event`  | —                   | —   | —                           |
-| Spravovat tým akce (jen VO/RÁD)             | —                | RW            | —                   | —                   | —   | —                           |
-| Zrušit akci (hromadné storno)               | —                | RW            | A `can_edit_event`  | —                   | —   | —                           |
-| Spravovat šablony akcí                      | RW (systémové)   | RW (oddílové) | —                   | —                   | —   | —                           |
-| Založit oddílovou přihlášku                 | —                | RW            | RW (vlastní oddíl)  | —                   | —   | —                           |
-| Spravovat / uzavřít oddílovou přihlášku     | —                | RW            | RW (vlastní oddíl)  | —                   | —   | —                           |
-| Číst veřejný seznam oddílů                  | R                | R             | R                   | R                   | R   | R                           |
+| Operace                                     | ADM              | HVO           | VO                  | RÁD                 | ÚČE                                     | Zákonný zástupce / účastník |
+| ------------------------------------------- | ---------------- | ------------- | ------------------- | ------------------- | --------------------------------------- | --------------------------- |
+| Založit akci                                | RW (jen ústředí) | RW            | —                   | —                   | —                                       | —                           |
+| Upravit akci                                | —                | RW            | A `can_edit_event`  | A `can_edit_event`  | —                                       | —                           |
+| Číst detail akce                            | R                | R             | R (vlastní oddíl)   | R (vlastní oddíl)   | R (celý oddíl, bez ohledu na přiřazení) | R (dle viditelnosti)        |
+| Nastavit ceny a storno pravidla             | —                | RW            | A `can_edit_prices` | A `can_edit_prices` | R (celý oddíl)                          | —                           |
+| Nastavit výběrové číselníky a dokumenty     | —                | RW            | A `can_edit_event`  | A `can_edit_event`  | —                                       | —                           |
+| Pozvat členy oddílu a naplánovat připomínku | —                | RW            | A `can_edit_event`  | —                   | —                                       | —                           |
+| Spravovat tým akce (jen VO/RÁD)             | —                | RW            | —                   | —                   | —                                       | —                           |
+| Zrušit akci (hromadné storno)               | —                | RW            | A `can_edit_event`  | —                   | —                                       | —                           |
+| Spravovat šablony akcí                      | RW (systémové)   | RW (oddílové) | —                   | —                   | —                                       | —                           |
+| Založit oddílovou přihlášku                 | —                | RW            | RW (vlastní oddíl)  | —                   | —                                       | —                           |
+| Spravovat / uzavřít oddílovou přihlášku     | —                | RW            | RW (vlastní oddíl)  | —                   | —                                       | —                           |
+| Číst veřejný seznam oddílů                  | R                | R             | R                   | R                   | R                                       | R                           |
 
 ## Přihlášky
 
-| Operace                                    | ADM | HVO | VO                                             | RÁD                                                   | ÚČE                       | Zákonný zástupce / vlastník           |
-| ------------------------------------------ | --- | --- | ---------------------------------------------- | ----------------------------------------------------- | ------------------------- | ------------------------------------- |
-| Číst přihlášky akce                        | R   | R   | **R (vlastní oddíl, bez platebních atributů)** | **R (vlastní oddíl, bez platebních atributů)**        | **R (celý oddíl)**        | R (vlastní / svých dětí)              |
-| Číst stav a částky úhrady přihlášek akce   | R   | R   | R (`event_leader`)                             | **R (`event_leader`; předepsáno / uhrazeno / zbývá)** | R (celý oddíl)            | R (vlastní / svých dětí)              |
-| Upravit přihlášku                          | —   | RW  | A `can_edit_registrations`                     | A `can_edit_registrations`                            | **jen platební atributy** | RW (vlastní / svých dětí)             |
-| Podat přihlášku                            | —   | RW  | A `can_edit_registrations`                     | **RW (jen sám za sebe, bez schválení zástupcem)**     | —                         | RW                                    |
-| Připojit dítě k vybranému oddílu           | —   | RW  | RW (vlastní oddíl)                             | —                                                     | —                         | RW (vlastní / svých dětí)             |
-| Stornovat přihlášku                        | —   | RW  | A `can_edit_registrations`                     | —                                                     | —                         | RW (vlastní / svých dětí)             |
-| Posoudit dokument (schválit / zamítnout)   | —   | RW  | A `can_edit_registrations`                     | —                                                     | —                         | —                                     |
+| Operace                                    | ADM                      | HVO | VO                                             | RÁD                                                   | ÚČE                       | Zákonný zástupce / vlastník           |
+| ------------------------------------------ | ------------------------ | --- | ---------------------------------------------- | ----------------------------------------------------- | ------------------------- | ------------------------------------- |
+| Číst přihlášky akce                        | R                        | R   | **R (vlastní oddíl, bez platebních atributů)** | **R (vlastní oddíl, bez platebních atributů)**        | **R (celý oddíl)**        | R (vlastní / svých dětí)              |
+| Číst stav a částky úhrady přihlášek akce   | R                        | R   | R (`event_leader`)                             | **R (`event_leader`; předepsáno / uhrazeno / zbývá)** | R (celý oddíl)            | R (vlastní / svých dětí)              |
+| Upravit přihlášku                          | —                        | RW  | A `can_edit_registrations`                     | A `can_edit_registrations`                            | **jen platební atributy** | RW (vlastní / svých dětí)             |
+| Podat přihlášku                            | —                        | RW  | A `can_edit_registrations`                     | **RW (jen sám za sebe, bez schválení zástupcem)**     | —                         | RW                                    |
+| Připojit dítě k vybranému oddílu           | —                        | RW  | RW (vlastní oddíl)                             | —                                                     | —                         | RW (vlastní / svých dětí)             |
+| Stornovat přihlášku                        | —                        | RW  | A `can_edit_registrations`                     | —                                                     | —                         | RW (vlastní / svých dětí)             |
+| Posoudit dokument (schválit / zamítnout)   | —                        | RW  | A `can_edit_registrations`                     | —                                                     | —                         | —                                     |
 | Číst obsah nahraného dokumentu             | **R (jen akce ústředí)** | R   | R (přiřazené akce)                             | **R (přiřazené akce, v rozsahu Rádce)**               | —                         | R (vlastní)                           |
-| Spravovat trvalé dokumenty osoby           | —   | RW  | —                                              | —                                                     | —                         | RW (vlastní / dítě při aktivní vazbě) |
-| Použít platný trvalý dokument v přihlášce  | —   | RW  | A `can_edit_registrations`                     | —                                                     | —                         | RW (vlastní / dítě při aktivní vazbě) |
-| Vybrat náhradníka                          | —   | RW  | A `can_edit_registrations`                     | —                                                     | —                         | —                                     |
-| Přiřadit číselník s `assigned_by = leader` | —   | RW  | A `can_edit_registrations`                     | A `can_edit_registrations`                            | —                         | —                                     |
+| Spravovat trvalé dokumenty osoby           | —                        | RW  | —                                              | —                                                     | —                         | RW (vlastní / dítě při aktivní vazbě) |
+| Použít platný trvalý dokument v přihlášce  | —                        | RW  | A `can_edit_registrations`                     | —                                                     | —                         | RW (vlastní / dítě při aktivní vazbě) |
+| Vybrat náhradníka                          | —                        | RW  | A `can_edit_registrations`                     | —                                                     | —                         | —                                     |
+| Přiřadit číselník s `assigned_by = leader` | —                        | RW  | A `can_edit_registrations`                     | A `can_edit_registrations`                            | —                         | —                                     |
 
 **ADM nečte obsah nahraných dokumentů mimo akce ústředí.** Plošné čtení napříč oddíly (viz **Agenda ústředí**) se na obsah souborů nevztahuje: žádná operace ADM ho nevyžaduje — sloučení osob se rozhoduje nad poli osoby a nad seznamem kolidujících vazeb, ne nad obsahem lékařského potvrzení dítěte z cizího oddílu. V rozsahu akcí ústředí ADM dokumenty čte jako kterýkoli pořadatel. Výjimkou mimo tento rozsah jsou pouze kvalifikační podklady (viz **Vzdělávání a kvalifikace**), a to v rozsahu nutném k ověření kurzu.
 
@@ -111,6 +111,12 @@ Oddílový členský předpis je finanční agenda oddílu. HVO nastavuje lokál
 
 Zápis docházky je **samostatné oprávnění** — může ho mít i Rádce, který nemá přístup k platbám (README → **Docházka**).
 
+### Pozvánky na role
+
+`ROLE_INVITATION` je evidovaná pozvánka k roli v konkrétním oddílu. ADM smí vytvořit, znovu odeslat a odvolat pozvánku na HVO; HVO smí totéž pro VO, RÁD a ÚČE vlastního oddílu. Pozvánka je ve stavu `pending`, dokud ji pozvaný nepřijme, není odvolána nebo nevyprší. Přijetím vznikne `USER_ROLE`; pozvánka se uzavře jako `accepted` a zaznamená se účet, který ji přijal. Změna stavu i vydání nebo rotace tokenu se zapisují do `AUDIT_LOG`.
+
+Pozvánka sama nezakládá žádná oprávnění. Přijmout ji lze pouze s platným jednorázovým tokenem; účet se hledá podle normalizovaného `login_email`, a existuje-li, role se přidá tomuto účtu. Teprve není-li účet nalezen, pozvaný dokončí jeho založení a pak pozvánku přijme.
+
 ## Chytré sloupce (pomocná evidence)
 
 Přístup neurčuje role přímo, ale dvě úrovně přístupu na `CUSTOM_FIELD`:
@@ -155,6 +161,7 @@ ADM může číst osobní údaje a přihlášky napříč všemi oddíly, včetn
 | Operace                                      | ADM | HVO                   | Ostatní |
 | -------------------------------------------- | --- | --------------------- | ------- |
 | Spravovat oddíly, přiřazovat HVO             | RW  | —                     | —       |
+| Spravovat pozvánky na HVO                    | RW  | —                     | —       |
 | Definovat regiony, přiřazovat oddíly         | RW  | —                     | —       |
 | Řídit deduplikaci a schvalovat sloučení      | RW  | RW (svého oddílu)     | —       |
 | Zrušit potlačení zamítnuté dvojice           | RW  | —                     | —       |
