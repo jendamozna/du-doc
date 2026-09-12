@@ -6,7 +6,7 @@ Formální model `PARENT_CHILD` ([README.md](../README.md) → **Zákonný zást
 
 Zákonné zastoupení se **nepřiděluje jako role** — postavení zákonného zástupce plyne výhradně z existence vazby ve stavu `active`. Rozsah práv je proto vždy **per dítě**, ne globální, a nemůže se rozejít se skutečným stavem vazby.
 
-Vazba je **asymetrická dvojice osob** (`parent_person_id`, `child_person_id`), ne vazba mezi účty — dítě zpravidla účet nemá. Zákonný zástupce účet mít musí, protože jinak nemá jak práva vykonávat (výjimkou je schválení přihlášky odkazem z e-mailu, které účet nevyžaduje).
+Vazba je **asymetrická dvojice osob** (`parent_person_id`, `child_person_id`), ne vazba mezi účty — dítě zpravidla účet nemá. Zákonný zástupce účet mít musí, protože jinak nemá jak práva vykonávat (výjimkou je schválení přihlášky odkazem z e-mailu, které účet nevyžaduje). Pole `relationship_type` popisuje vztah zástupce k dítěti: `mother`, `father`, `guardian` nebo `other`; nemění stav vazby ani rozsah odvozených oprávnění.
 
 ## Založení účtu zákonného zástupce
 
@@ -16,12 +16,12 @@ Tento token slouží k založení účtu a propojení s dítětem. Není totožn
 
 ## Stavy
 
-| Stav                       | Význam                                                      | Dává práva | Terminální |
-| -------------------------- | ----------------------------------------------------------- | ---------- | ---------- |
+| Stav                       | Význam                                                                                     | Dává práva | Terminální |
+| -------------------------- | ------------------------------------------------------------------------------------------ | ---------- | ---------- |
 | `pending`                  | čeká na rozhodnutí člověka — dítě už má jiného zákonného zástupce, nebo chybí `birth_date` | ne         | ne         |
-| `active`                   | platná vazba, zákonný zástupce má plná práva k dítěti       | ano        | ne         |
-| `readonly_after_adulthood` | dítě dosáhlo zletilosti, přístup zůstává jen pro čtení      | jen čtení  | ne         |
-| `canceled`                | vazba zrušena zákonným zástupcem, HVO nebo zletilým dítětem | ne         | ano        |
+| `active`                   | platná vazba, zákonný zástupce má plná práva k dítěti                                      | ano        | ne         |
+| `readonly_after_adulthood` | dítě dosáhlo zletilosti, přístup zůstává jen pro čtení                                     | jen čtení  | ne         |
+| `canceled`                 | vazba zrušena zákonným zástupcem, HVO nebo zletilým dítětem                                | ne         | ano        |
 
 `canceled` je **terminální** — obnovit vazbu nelze, vzniká nová (původní zůstává pro auditní stopu).
 
@@ -57,13 +57,13 @@ stateDiagram-v2
 
 ## Přechody
 
-| Přechod                                | Spouštěč                                         | Guard                                                                      | Efekt                                                                   |
-| -------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| `→ pending`                            | přihláška, schválení zástupcem, pozvánka         | dítě už má aspoň jednu vazbu v `active`, **nebo** nemá `birth_date`        | e-mail schvalovateli, nastavení lhůty                                   |
-| `→ active` (přímo)                     | přihláška s prohlášením                          | dítě je nezletilé a **nemá** žádnou vazbu v `active`; prohlášení potvrzeno | `valid_from`, zápis prohlášení do auditního logu                        |
-| `pending → active`                     | odkaz v e-mailu / rozhraní                       | schvaluje stávající zákonný zástupce v `active`, nebo HVO oddílu dítěte    | `approved_by_account_id`, `valid_from`, notifikace žadateli             |
+| Přechod                               | Spouštěč                                         | Guard                                                                      | Efekt                                                                   |
+| ------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `→ pending`                           | přihláška, schválení zástupcem, pozvánka         | dítě už má aspoň jednu vazbu v `active`, **nebo** nemá `birth_date`        | e-mail schvalovateli, nastavení lhůty                                   |
+| `→ active` (přímo)                    | přihláška s prohlášením                          | dítě je nezletilé a **nemá** žádnou vazbu v `active`; prohlášení potvrzeno | `valid_from`, zápis prohlášení do auditního logu                        |
+| `pending → active`                    | odkaz v e-mailu / rozhraní                       | schvaluje stávající zákonný zástupce v `active`, nebo HVO oddílu dítěte    | `approved_by_account_id`, `valid_from`, notifikace žadateli             |
 | `pending → canceled`                  | schvalovatel, nebo job po lhůtě                  | —                                                                          | `valid_to`, `EMAIL_PARENT_CHILD_REJECTED` žadateli s důvodem            |
-| `active → readonly_after_adulthood`    | job (denně)                                      | dítě dosáhlo 18 let                                                        | práva se omezí na čtení, notifikace oběma stranám                       |
+| `active → readonly_after_adulthood`   | job (denně)                                      | dítě dosáhlo 18 let                                                        | práva se omezí na čtení, notifikace oběma stranám                       |
 | `active → canceled`                   | zákonný zástupce (vystoupení) nebo HVO na žádost | —                                                                          | `valid_to`, zápis do auditního logu, kontrola osiření dítěte (viz níže) |
 | `readonly_after_adulthood → canceled` | zletilé dítě                                     | dítě má vlastní účet                                                       | `valid_to`, zákonný zástupce ztrácí i čtení                             |
 

@@ -238,6 +238,7 @@ erDiagram
         int id PK
         int parent_person_id FK
         int child_person_id FK
+        string relationship_type "mother / father / guardian / other"
         string state "pending / active / canceled / readonly_after_adulthood"
         int approved_by_account_id FK "NULL, dokud stav pending; existujici rodic nebo HVO"
         datetime valid_from
