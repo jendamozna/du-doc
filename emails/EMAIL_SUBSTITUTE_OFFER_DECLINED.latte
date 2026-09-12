@@ -1,0 +1,8 @@
+{layout 'layout.latte'}
+
+{block content}
+<p>Dobrý den,</p>
+<p>Náhradník <strong>{$registration['participantName']}</strong> odmítl nabídku místa na akci <strong>{$event['name']}</strong>.</p>
+<p>Můžete vybrat dalšího náhradníka.</p>
+<p style="text-align: center;"><a href="{$registrationUrl}" class="button">Vybrat náhradníka</a></p>
+{/block}

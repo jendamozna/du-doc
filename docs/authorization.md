@@ -61,11 +61,13 @@ Legenda v maticích: **RW** = čtení i zápis · **R** = jen čtení · **A** =
 | Připojit dítě k vybranému oddílu           | —   | RW  | RW (vlastní oddíl)                             | —                                                     | —                         | RW (vlastní / svých dětí)             |
 | Stornovat přihlášku                        | —   | RW  | A `can_edit_registrations`                     | —                                                     | —                         | RW (vlastní / svých dětí)             |
 | Posoudit dokument (schválit / zamítnout)   | —   | RW  | A `can_edit_registrations`                     | —                                                     | —                         | —                                     |
-| Číst obsah nahraného dokumentu             | R   | R   | R (přiřazené akce)                             | **R (přiřazené akce, v rozsahu Rádce)**               | —                         | R (vlastní)                           |
+| Číst obsah nahraného dokumentu             | **R (jen akce ústředí)** | R   | R (přiřazené akce)                             | **R (přiřazené akce, v rozsahu Rádce)**               | —                         | R (vlastní)                           |
 | Spravovat trvalé dokumenty osoby           | —   | RW  | —                                              | —                                                     | —                         | RW (vlastní / dítě při aktivní vazbě) |
 | Použít platný trvalý dokument v přihlášce  | —   | RW  | A `can_edit_registrations`                     | —                                                     | —                         | RW (vlastní / dítě při aktivní vazbě) |
 | Vybrat náhradníka                          | —   | RW  | A `can_edit_registrations`                     | —                                                     | —                         | —                                     |
 | Přiřadit číselník s `assigned_by = leader` | —   | RW  | A `can_edit_registrations`                     | A `can_edit_registrations`                            | —                         | —                                     |
+
+**ADM nečte obsah nahraných dokumentů mimo akce ústředí.** Plošné čtení napříč oddíly (viz **Agenda ústředí**) se na obsah souborů nevztahuje: žádná operace ADM ho nevyžaduje — sloučení osob se rozhoduje nad poli osoby a nad seznamem kolidujících vazeb, ne nad obsahem lékařského potvrzení dítěte z cizího oddílu. V rozsahu akcí ústředí ADM dokumenty čte jako kterýkoli pořadatel. Výjimkou mimo tento rozsah jsou pouze kvalifikační podklady (viz **Vzdělávání a kvalifikace**), a to v rozsahu nutném k ověření kurzu.
 
 Účetní má **širší čtení** (celý oddíl bez ohledu na přiřazení k akci), ale **užší zápis** než vedoucí — párování je operace nad bankovním účtem oddílu a jedna platba může pokrýt přihlášky z více akcí, proto se k akcím nepřiřazuje (README → **Účetní oddílu**).
 
@@ -148,6 +150,8 @@ Pravidla pro `advisor_access`:
 
 ADM může číst osobní údaje a přihlášky napříč všemi oddíly, včetně údajů potřebných pro podporu a kontrolu systému. Toto oprávnění je pouze čtecí; změny provádí ADM jen tam, kde je to výslovně uvedeno v matici. Na archivované osoby se vztahuje zákaz čtení po anonymizaci.
 
+**Čtení napříč oddíly nezahrnuje obsah souborů.** Vztahuje se na pole osoby, její vazby a stav přihlášek — tedy na to, co potřebují jmenovité operace ADM (deduplikace a sloučení, převod evidenčního oddílu členství, reporty). Obsah nahraných dokumentů z něj je vyňatý a ADM ho čte jen v rozsahu **akcí ústředí**, kde je pořadatelem; mimo něj pouze kvalifikační podklady v rozsahu nutném k ověření kurzu (viz **Vzdělávání a kvalifikace**). Zdravotní údaje (`PERSON_SENSITIVE_DATA`) se řídí vlastním pravidlem v sekci **Citlivá data**, které matice přebíjí.
+
 | Operace                                      | ADM | HVO                   | Ostatní |
 | -------------------------------------------- | --- | --------------------- | ------- |
 | Spravovat oddíly, přiřazovat HVO             | RW  | —                     | —       |
@@ -225,6 +229,7 @@ Zdravotní údaje, alergie, léky a stravovací omezení (`PERSON_SENSITIVE_DATA
 
 - **Rádce je vidí** v rámci svého rozsahu — svá družina a akce, ke kterým je přiřazený. K práci rádce jsou nezbytné (README → **Rádce**). Mimo svůj rozsah je nevidí.
 - **Účetní je nevidí** — platební agenda je nepotřebuje. Účetní současně nevidí datum narození, adresu, telefon ani zdravotní pojišťovnu osoby.
+- **ADM je nevidí mimo akce ústředí** — plošné čtení napříč oddíly se na ně nevztahuje, stejně jako na obsah dokumentů. V rozsahu akcí ústředí je čte jako kterýkoli pořadatel, protože bez alergií a léků nelze celostátní akci odjet.
 - Data jsou **izolovaná per oddíl** — oddíl A nevidí citlivá data téže osoby zapsaná v oddílu B.
 - **Žádný report nevrací citlivé údaje**, bez ohledu na roli volajícího ([reports.md](reports.md)).
 

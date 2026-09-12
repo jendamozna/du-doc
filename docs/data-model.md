@@ -683,7 +683,7 @@ erDiagram
         datetime token_resent_at "naposledy znovuposlano; NULL = nikdy"
         datetime offered_at
         datetime expires_at
-        string state "offered / accepted / expired"
+        string state "offered / accepted / declined / expired"
     }
     RECOMMENDATION {
         int id PK
