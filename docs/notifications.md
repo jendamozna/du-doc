@@ -99,3 +99,89 @@ Latte šablony jsou v adresáři [`emails/`](../emails/). Soubor se jmenuje shod
 | `EMAIL_UNDELIVERABLE_ALERT` | trvale neodeslaný e-mail po vyčerpání pokusů | HVO oddílu, k němuž zpráva patří; u zpráv ústředí ADM | po posledním neúspěšném pokusu | jednorázově; **alert se nikdy neposílá na adresu, která právě selhala** — je-li nedoručitelný příjemce sám HVO, jde upozornění ADM a vždy i do UI, aby řetěz neskončil u téže rozbité adresy | [non-functional.md](non-functional.md) |
 
 Interní upozornění bez e-mailu (jen UI/log): zrušení regionu s aktivními oddíly upozorní ADM v rozhraní ([region-lifecycle.md](region-lifecycle.md)); nemá smysl posílat e-mail administrátorovi, který operaci sám právě provedl.
+
+## Propojení s UX vrstvou
+
+Katalog výše říká **kdy** a **komu**; tato sekce propojuje každou notifikaci s UX vrstvou — **předmět**, **CTA**, **cílovou obrazovku** a **odesílatele**. Čtyři pravidla:
+
+- **Tělo se zde neduplikuje.** Obsah zprávy je autoritativně v odpovídající šabloně [`emails/`](../emails/) (soubor `EMAIL_*.latte` shodný s kódem, viz **Šablony v repozitáři**). Sloupec **CTA** přebírá text tlačítka `class="button"` přímo ze šablony; informační e-maily tlačítko nemají a mají v CTA „—".
+- **Předmět** = kontext + uvedený krátký popis (viz **Předměty**), např. `Letní tábor - přihláška přijata`. Sloupec uvádí jen popisnou část.
+- **Cílová obrazovka** je route, na kterou míří CTA, s odkazem na obrazovkovou specifikaci ([ux-obrazovky-verejny.md](ux-obrazovky-verejny.md) A, [ux-obrazovky-oddil.md](ux-obrazovky-oddil.md) B, [ux-obrazovky-ustredi.md](ux-obrazovky-ustredi.md) C, [ux-obrazovky-self.md](ux-obrazovky-self.md) D). Tokenové vstupní body shrnuje [ux-navigace.md](ux-navigace.md) → § 3. Sekce **Notifikace** u jednotlivých obrazovek v těchto souborech tvoří protistranu tohoto mapování — obě strany musí zůstat konzistentní.
+- **Odesílatel** je subjekt, jehož jménem systém e-mail posílá (kontext pro předmět, patičku a případné reply-to); technicky odchází vždy z fronty platformy s podpisem „tým vedoucích DU" ([non-functional.md](non-functional.md) → Odchozí e-maily). Hodnoty: **oddíl** (pořadatel akce nebo domovský oddíl), **ústředí** (akce a agendy ústředí), **platforma DU** (účty, vazby zástupce–dítě, sloučení, systém).
+
+### Přihlášky a zákonný zástupce
+
+| Kód                                 | Předmět (krátký popis)        | CTA                          | Cílová obrazovka                                                           | Odesílatel |
+| ----------------------------------- | ----------------------------- | ---------------------------- | -------------------------------------------------------------------------- | ---------- |
+| `EMAIL_REG_CONFIRM`                 | přihláška přijata             | Spravovat přihlášku          | `/stav/:token` — [A-06](ux-obrazovky-verejny.md)                           | oddíl      |
+| `EMAIL_REG_CONTACT_CONFIRM`         | potvrďte kontaktní e-mail     | Potvrdit e-mail              | potvrzení kontaktu (token) → `/stav/:token`, [§ 3](ux-navigace.md)         | oddíl      |
+| `EMAIL_GUARDIAN_REQUEST`            | schvalte přihlášku dítěte     | Potvrzení a správa přihlášky | `/schvaleni/:token` — [A-05](ux-obrazovky-verejny.md)                      | oddíl      |
+| `EMAIL_REG_CONFIRM_MINOR`           | žádost o schválení odeslána   | — (informační)               | — (informační)                                                             | oddíl      |
+| `EMAIL_SUBREGISTRATION_ADDED`       | přidána přihláška do oddílové | — (informační)               | — (informační)                                                             | ústředí    |
+| `EMAIL_REGISTRATION_UPDATED`        | změna přihlášky               | — (informační)               | — (informační)                                                             | ústředí    |
+| `EMAIL_REGISTRATION_CANCELED`       | přihláška stornována          | Zobrazit registraci          | `/stav/:token` — [A-06](ux-obrazovky-verejny.md)                           | oddíl      |
+| `EMAIL_REGISTRATION_EXPIRED`        | přihláška propadla            | — (informační)               | — (informační)                                                             | oddíl      |
+| `EMAIL_REGISTRATION_INVOICE_NOTE`   | poznámka k faktuře            | — (informační)               | `/oddil/akce/:id/prihlaska/:pid` — [B-06](ux-obrazovky-oddil.md)           | oddíl      |
+| `EMAIL_GUARDIAN_REJECTED`           | zástupce přihlášku neschválil | — (informační)               | `/akce/:slug` — [A-02](ux-obrazovky-verejny.md)                            | oddíl      |
+| `EMAIL_GUARDIAN_EXPIRED`            | lhůta pro schválení uplynula  | — (informační)               | — (informační)                                                             | oddíl      |
+| `EMAIL_DOCUMENT_REJECTED`           | dokument zamítnut             | Spravovat přihlášku          | `/stav/:token` — [A-06](ux-obrazovky-verejny.md)                           | oddíl      |
+| `EMAIL_DOCUMENT_REMINDER`           | doplňte dokumenty             | Doplnit dokumenty            | `/stav/:token` — [A-06](ux-obrazovky-verejny.md)                           | oddíl      |
+| `EMAIL_SUBSTITUTE_OFFER`            | nabídka uvolněného místa      | Přijmout nabídku             | `/nabidka/:token` — [A-07](ux-obrazovky-verejny.md)                        | oddíl      |
+| `EMAIL_SUBSTITUTE_OFFER_DECLINED`   | náhradník odmítl              | Vybrat náhradníka            | `/oddil/akce/:id` (náhradníci) — [B-08](ux-obrazovky-oddil.md)             | oddíl      |
+| `EMAIL_EVENT_CANCELED`              | akce zrušena                  | — (informační)               | — (informační)                                                             | oddíl      |
+| `EMAIL_MENTOR_REQUEST`              | žádost o roli mentora         | Přijímám roli mentora        | potvrzení mentora (token), [§ 3](ux-navigace.md)                           | oddíl      |
+| `EMAIL_MENTOR_CONFIRMATION`         | role mentora potvrzena        | — (informační)               | — (informační)                                                             | oddíl      |
+| `EMAIL_RECOMMENDATION_REQUEST`      | žádost o doporučení           | Vyplnit doporučení           | formulář doporučení (token), [§ 3](ux-navigace.md)                         | oddíl      |
+| `EMAIL_RECOMMENDATION_CONFIRMATION` | doporučení odesláno           | — (informační)               | — (informační)                                                             | oddíl      |
+| `EMAIL_EVENT_INVITATION`            | pozvánka na akci              | Přihlásit se / Omluvit se    | `/akce/:slug/prihlaska` — [A-03](ux-obrazovky-verejny.md) / omluva (token) | oddíl      |
+| `EMAIL_EVENT_INVITATION_REMINDER`   | připomínka pozvánky           | Přihlásit se / Omluvit se    | `/akce/:slug/prihlaska` — [A-03](ux-obrazovky-verejny.md) / omluva (token) | oddíl      |
+
+### Platby a účetnictví
+
+| Kód                                  | Předmět (krátký popis)         | CTA                 | Cílová obrazovka                                                                                             | Odesílatel     |
+| ------------------------------------ | ------------------------------ | ------------------- | ------------------------------------------------------------------------------------------------------------ | -------------- |
+| `EMAIL_PAYMENT_REMINDER`             | připomínka platby              | Zobrazit registraci | `/stav/:token` — [A-06](ux-obrazovky-verejny.md)                                                             | oddíl          |
+| `EMAIL_PAYMENT_CONFIRMATION`         | platba přijata                 | — (informační)      | `/stav/:token` — [A-06](ux-obrazovky-verejny.md) / `/muj-ucet/prihlasky/:pid` — [D-02](ux-obrazovky-self.md) | oddíl          |
+| `EMAIL_MEMBER_FEE_REQUEST`           | členský příspěvek — předpis    | — (QR v těle)       | `/muj-ucet/prihlasky` — [D-01](ux-obrazovky-self.md)                                                         | oddíl          |
+| `EMAIL_MEMBER_FEE_CONFIRMATION`      | členský příspěvek uhrazen      | — (informační)      | — (informační)                                                                                               | oddíl          |
+| `EMAIL_MEMBER_FEE_REMINDER`          | připomínka členského příspěvku | — (informační)      | — (informační)                                                                                               | oddíl          |
+| `EMAIL_FIO_SYNC_FAILURE`             | selhání synchronizace banky    | — (informační)      | `/oddil/platby` — [B-10](ux-obrazovky-oddil.md)                                                              | oddíl (systém) |
+| `EMAIL_DU_FEE_BATCH_QR`              | QR k dávce příspěvků DU        | — (QR v těle)       | `/oddil/platby` — [B-10](ux-obrazovky-oddil.md)                                                              | ústředí        |
+| `EMAIL_DU_FEE_BATCH_PAID`            | dávka příspěvků uhrazena       | — (informační)      | — (informační)                                                                                               | ústředí        |
+| `EMAIL_PAYMENT_RECONCILIATION_ALERT` | nespárovaná platba             | — (informační)      | `/oddil/platby` — [B-10](ux-obrazovky-oddil.md)                                                              | oddíl (systém) |
+
+### Zákonný zástupce ↔ dítě
+
+| Kód                                   | Předmět (krátký popis)    | CTA               | Cílová obrazovka                                           | Odesílatel   |
+| ------------------------------------- | ------------------------- | ----------------- | ---------------------------------------------------------- | ------------ |
+| `EMAIL_SECOND_GUARDIAN_INVITE`        | pozvánka druhému zástupci | Přijmout pozvánku | `/pozvanka/:token` — [D-05](ux-obrazovky-self.md)          | platforma DU |
+| `EMAIL_PARENT_CHILD_PENDING_APPROVAL` | žádost o vazbu zástupce   | Posoudit žádost   | `/muj-ucet/deti/:id` — [D-04](ux-obrazovky-self.md)        | platforma DU |
+| `EMAIL_PARENT_CHILD_REJECTED`         | vazba zamítnuta           | — (informační)    | — (informační)                                             | platforma DU |
+| `EMAIL_PARENT_ACCOUNT_INVITE`         | založte si účet           | Založit účet      | pozvánka účtu (token) → `/muj-ucet`, [§ 3](ux-navigace.md) | platforma DU |
+| `EMAIL_PARENT_CHILD_ADULTHOOD`        | dítě dosáhlo zletilosti   | — (informační)    | `/muj-ucet/deti/:id` — [D-04](ux-obrazovky-self.md)        | platforma DU |
+| `EMAIL_ACCOUNT_CLAIM_INVITE`          | převezměte svůj účet      | Převzít účet      | převzetí účtu (token) → `/muj-ucet`, [§ 3](ux-navigace.md) | platforma DU |
+
+### Role a účty
+
+| Kód                             | Předmět (krátký popis)      | CTA               | Cílová obrazovka                                        | Odesílatel   |
+| ------------------------------- | --------------------------- | ----------------- | ------------------------------------------------------- | ------------ |
+| `EMAIL_HVO_INVITE`              | pozvánka hlavního vedoucího | Přijmout pozvánku | pozvánka role (token) → `/oddil`, [§ 3](ux-navigace.md) | ústředí      |
+| `EMAIL_ROLE_INVITE`             | pozvánka do týmu oddílu     | Přijmout pozvánku | pozvánka role (token) → `/oddil`, [§ 3](ux-navigace.md) | oddíl        |
+| `EMAIL_ACCOUNT_LOCKED`          | účet dočasně uzamčen        | — (informační)    | `/muj-ucet/ucet` — [D-07](ux-obrazovky-self.md)         | platforma DU |
+| `EMAIL_PERSON_INACTIVE_WARNING` | blížící se deaktivace       | — (informační)    | — (informační)                                          | oddíl        |
+
+### Deduplikace a hlídky
+
+| Kód                            | Předmět (krátký popis)        | CTA                 | Cílová obrazovka                                                                                                      | Odesílatel   |
+| ------------------------------ | ----------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------ |
+| `EMAIL_MERGE_REQUEST`          | žádost o sloučení osob        | Posoudit žádost     | `/ustredi/slucovani/:id` — [C-05](ux-obrazovky-ustredi.md) / `/muj-ucet/ucet/slouceni` — [D-08](ux-obrazovky-self.md) | platforma DU |
+| `EMAIL_MERGE_REQUEST_REMINDER` | připomínka žádosti o sloučení | Posoudit žádost     | `/ustredi/slucovani/:id` — [C-05](ux-obrazovky-ustredi.md) / `/muj-ucet/ucet/slouceni` — [D-08](ux-obrazovky-self.md) | platforma DU |
+| `EMAIL_MERGE_REQUEST_EXPIRED`  | žádost o sloučení propadla    | Zobrazit žádost     | `/ustredi/slucovani/:id` — [C-05](ux-obrazovky-ustredi.md) / `/muj-ucet/ucet/slouceni` — [D-08](ux-obrazovky-self.md) | platforma DU |
+| `EMAIL_PATROL_REMINDER`        | závodník bez hlídky           | Spravovat hlídky    | `/oddil/akce/:id` (hlídky) — [B-08](ux-obrazovky-oddil.md)                                                            | oddíl        |
+| `EMAIL_PATROL_DISSOLVED`       | hlídka rozpuštěna             | Spravovat přihlášku | `/stav/:token` — [A-06](ux-obrazovky-verejny.md)                                                                      | oddíl        |
+
+### Systém a organizace
+
+| Kód                         | Předmět (krátký popis) | CTA            | Cílová obrazovka                                                                   | Odesílatel   |
+| --------------------------- | ---------------------- | -------------- | ---------------------------------------------------------------------------------- | ------------ |
+| `EMAIL_UNDELIVERABLE_ALERT` | nedoručený e-mail      | — (informační) | UI upozornění HVO oddílu / ADM (bez samostatné route; viz **Systém a organizace**) | platforma DU |

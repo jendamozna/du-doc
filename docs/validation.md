@@ -10,22 +10,107 @@ Doplněk k [data-model.md](data-model.md), který popisuje **co je platná hodno
 - U normalizovaných hodnot se před validací odstraní okolní mezery; mezery uvnitř hodnoty se odstraňují nebo zachovávají podle pravidla konkrétního údaje. Heslo je výjimka: okolní i vnitřní mezery mohou být součástí přístupové fráze a nesmí se tiše měnit.
 - Pravidla v tomto dokumentu jsou závazná pro serverovou validaci; klientská validace je pouze pomocná.
 
+## UI texty validačních chyb
+
+Kanonický katalog textů sdílených mezi frontendem a backendem. Zásady:
+
+- **Backend vrací stabilní kód, ne hotový text** — např. `event.capacity.too_low`, případně s parametry (`{count}`, `{amount}`, `{event}`, `{year}`, `{unit}`). Kód je smluvní rozhraní, text je prezentace.
+- **Text z tohoto katalogu je kanonický** pro klientskou validaci, serverové odpovědi i e-maily; kdo text vykresluje, doplní parametry do placeholderů. Umožňuje to pozdější lokalizaci i změnu prezentačního kontextu bez zásahu do logiky.
+- **Text říká, co udělat**, ne co je špatně (princip [ux-texty-stavy.md](ux-texty-stavy.md) § 6). Kde a jak se text zobrazí (pod polem, v dialogu, jako snackbar) řeší [ux-texty-stavy.md](ux-texty-stavy.md) § 6.1–6.6; zde je jen zdroj slov.
+- Řádek označený **(stav, ne chyba)** se neprezentuje jako chyba formuláře, ale jako informační stav obrazovky.
+
+**Formáty a pole**
+
+| Kód                     | Podmínka                                      | Kanonický text                                                     |
+| ----------------------- | --------------------------------------------- | ------------------------------------------------------------------ |
+| `field.required`        | povinné pole prázdné                          | „Vyplňte toto pole.“                                               |
+| `email.invalid`         | e-mail neprojde formátem                      | „Zadejte e-mail ve tvaru jmeno@domena.cz.“                         |
+| `ico.invalid`           | IČO není 8 číslic s platnou kontrolní číslicí | „Zadejte IČO jako 8 číslic.“                                       |
+| `postal_code.invalid`   | PSČ není 5 číslic                             | „Zadejte PSČ ve tvaru 123 45.“                                     |
+| `amount.invalid`        | částka není platné číslo                      | „Zadejte částku v korunách.“                                       |
+| `document.file.invalid` | soubor mimo povolený typ nebo velikost        | „Nahrajte soubor typu PDF, JPG, PNG nebo HEIC do velikosti 10 MB.“ |
+| `password.too_short`    | heslo kratší než 8 znaků                      | „Heslo musí mít alespoň 8 znaků.“                                  |
+| `password.mismatch`     | nová hesla se neshodují                       | „Hesla se neshodují.“                                              |
+
+**Osoba a vazby**
+
+| Kód                                 | Podmínka                                                     | Kanonický text                                                        |
+| ----------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------- |
+| `person.first_name.not_whitelisted` | jméno mimo `NAME_WHITELIST` (varování, **neblokuje**)        | „Jméno není v seznamu českých jmen — výjimku potvrdí vedoucí oddílu.“ |
+| `person.birth_date.readonly`        | datum narození mění jen vedoucí                              | „Změnu data narození vyřídí vedoucí oddílu.“                          |
+| `person.birth_date.out_of_range`    | datum v budoucnosti nebo starší než 90 let                   | „Zkontrolujte datum narození.“                                        |
+| `du_membership.duplicate`           | členství `person_id + year` už existuje **(stav, ne chyba)** | „Členství pro rok {year} už založil oddíl {unit}.“                    |
+| `guardian_invite.confirm_required`  | nezaškrtnuté potvrzení zástupce                              | „Bez potvrzení nelze pozvánku přijmout.“                              |
+
+**Oddíl, region a číselníky ústředí**
+
+| Kód                           | Podmínka                                        | Kanonický text                                                             |
+| ----------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------- |
+| `unit.type.required`          | nevybraný typ oddílu                            | „Vyberte typ oddílu.“                                                      |
+| `unit.name.collective_has_du` | typ `collective` a název obsahuje „DU“          | „Název kolektivního člena nesmí obsahovat „DU“.“                           |
+| `region.name.duplicate`       | název regionu není unikátní                     | „Region s tímto názvem už existuje.“                                       |
+| `region.merge.min_sources`    | méně než dva zdroje nebo prázdný název nástupce | „Vyberte alespoň dva regiony a zadejte název nového.“                      |
+| `name_whitelist.duplicate`    | jméno (bez diakritiky a velikosti) už v seznamu | „Toto jméno už v seznamu je.“                                              |
+| `course.validity.invalid`     | platnost není kladný celý počet měsíců          | „Zadejte platnost v celých měsících, nebo nechte prázdné pro trvalý kurz.“ |
+
+**Akce a ceny**
+
+| Kód                                  | Podmínka                                         | Kanonický text                                               |
+| ------------------------------------ | ------------------------------------------------ | ------------------------------------------------------------ |
+| `event.template.required`            | akce zakládána bez šablony                       | „Vyberte šablonu akce.“                                      |
+| `event.registration_window.invalid`  | `registration_from >= registration_to`           | „Konec přihlašování musí být po jeho začátku.“               |
+| `event.dates.invalid`                | `starts_at >= ends_at`                           | „Konec akce musí být po jejím začátku.“                      |
+| `event.capacity.too_low`             | kapacita pod počtem započítaných přihlášek       | „Kapacitu nelze snížit pod aktuálně obsazený počet {count}.“ |
+| `event.paid_without_bank_account`    | publikace placené akce bez bankovního účtu       | „Placenou akci nelze publikovat bez bankovního účtu.“        |
+| `event.base_price.missing`           | placená akce bez `non_DU` ceny na celé okno      | „Doplňte základní cenu pro celé období přihlašování.“        |
+| `event_field.before_event.has_price` | položka `before_event` s nenulovým příplatkem    | „Volba dokončovaná před akcí nemůže měnit cenu.“             |
+| `event_field.capacity.too_low`       | limit položky pod počtem existujících voleb      | „Limit nelze snížit pod {count} již zvolených míst.“         |
+| `event.price.change_note`            | změna ceny publikované akce **(stav, ne chyba)** | „Změna ceny se projeví jen u nových přihlášek.“              |
+
+**Přihláška a dokumenty**
+
+| Kód                                    | Podmínka                                           | Kanonický text                                                      |
+| -------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------- |
+| `registration.window_closed`           | podání mimo přihlašovací okno                      | „Přihlašování není otevřené.“                                       |
+| `registration.missing_birth_date`      | nelze vyhodnotit bránu zástupce                    | „Bránu zákonného zástupce nelze vyhodnotit — chybí datum narození.“ |
+| `registration.guardian_email.required` | nezletilý bez aktivní vazby a bez `guardian_email` | „Zadejte e-mail zákonného zástupce.“                                |
+| `document.reject_reason.required`      | zamítnutí dokumentu bez důvodu                     | „Vyberte důvod zamítnutí nebo napište vlastní.“                     |
+
+**Platby**
+
+| Kód                                       | Podmínka                                  | Kanonický text                                       |
+| ----------------------------------------- | ----------------------------------------- | ---------------------------------------------------- |
+| `payment.allocation.exceeds_transaction`  | součet alokací převyšuje částku transakce | „Rozdělená částka nesmí překročit částku transakce.“ |
+| `payment.refund.exceeds_paid`             | vratka převyšuje uhrazenou částku         | „Vrácená částka je vyšší než dosud uhrazená částka.“ |
+| `payment.overpayment.resolution_required` | přeplatek čeká na rozhodnutí              | „Vyberte, jak naložit s přeplatkem {amount} Kč.“     |
+
+**Role, struktura a účet**
+
+| Kód                              | Podmínka                                      | Kanonický text                                                                                      |
+| -------------------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `unit_patrol.leader.exists`      | družina už má vedoucího                       | „Družina už vedoucího má. Nejprve změňte nebo odeberte stávajícího.“                                |
+| `role.remove_last_hvo`           | odebrání posledního HVO oddílu                | „Posledního hlavního vedoucího oddílu nelze odebrat.“                                               |
+| `account.last_login_method`      | odpojení poslední přihlašovací metody         | „Jediný způsob přihlášení nelze odpojit — nejdřív nastavte heslo nebo připojte jiný účet.“          |
+| `merge.conflict.choice_required` | konflikt sloučení bez rozhodnuté volby A/B    | „Rozhodněte, která hodnota se přenese.“                                                             |
+| `merge.blocking_collision`       | obě osoby mají aktivní přihlášku na téže akci | „Sloučení nelze provést: obě osoby mají aktivní přihlášku na akci {event}. Vyřeší ji vedoucí akce.“ |
+| `merge.revert.admin_only`        | pokus o revert mimo ADM                       | „Sloučení může vrátit jen administrátor ústředí.“                                                   |
+
 ## Formáty
 
-| Údaj              | Pravidlo                                                                                                                                                                                                                                                                                               | Zdroj                                             |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- |
-| Částka            | desetinné číslo v CZK, **nezaokrouhluje se**; porovnává se přesně (rozdíl 1 Kč = nedoplatek/přeplatek)                                                                                                                                                                                                 | [README.md](../README.md) → Modul párování plateb |
-| Datum a čas       | ukládá se v UTC, zobrazuje v `Europe/Prague`; čistě datumové údaje se nepřepočítávají                                                                                                                                                                                                                  | [non-functional.md](non-functional.md)            |
-| E-mail            | Po odstranění okolních mezer nejvýše 254 znaků, syntakticky platný podle běžného e-mailového parseru; celá adresa se ukládá malými písmeny, DNS se neověřuje. `ACCOUNT.login_email` je po normalizaci unikátní a `PERSON.email` unikátní není                                                          | —                                                 |
-| IČO               | Po odstranění okolních mezer přesně 8 ASCII číslic včetně kontrolní číslice: první 7 číslic se násobí vahami 8 až 2, součet se modulo 11 převede na poslední číslici (`0` pro zbytek 0 nebo 1, jinak `11 - zbytek`); povinné u typu `branch` a `collective`, prázdné u `hq_ico`                        | [README.md](../README.md) → Oddíl                 |
-| Telefon           | Po odstranění okolních mezer volitelný kontaktní telefon; vstup může obsahovat mezery, závorky a spojovníky, ale ukládá se normalizovaný v E.164 (`+` a 8–15 číslic). Devítimístné české číslo bez předvolby se uloží s `+420`; jiné národní formáty se bez předvolby země nepřijímají                 | [data-model.md](data-model.md)                    |
-| Křestní jméno     | proti centrálnímu systémovému číselníku `NAME_WHITELIST`, který spravuje ADM; neshoda se dá povolit výjimkou `NAME_EXCEPTION` v rámci oddílu schválenou HVO                                                                                                                                            | [README.md](../README.md) → Deduplikace           |
-| Příjmení          | **neověřuje se** proti žádnému seznamu                                                                                                                                                                                                                                                                 | [README.md](../README.md) → Deduplikace           |
-| Adresa            | strukturovaná pole `PERSON.street`, `PERSON.house_number`, `PERSON.postal_code`, `PERSON.city` a `PERSON.country`; `country` se ukládá jako kód ISO 3166-1 alpha-2. Jednotlivá pole jsou volitelná podle šablony akce, ale pokud je adresa povinná, musí být vyplněna minimálně `city` a `postal_code` | [data-model.md](data-model.md)                    |
-| GPS souřadnice    | `lat` ∈ ⟨−90; 90⟩, `lng` ∈ ⟨−180; 180⟩                                                                                                                                                                                                                                                                 | [data-model.md](data-model.md) → LOCATION         |
-| Variabilní symbol | číselný, generuje systém při vzniku přihlášky; neposkytuje ho uživatel                                                                                                                                                                                                                                 | [payment-matching.md](payment-matching.md)        |
-| Specifický symbol | číselný, zadává vedoucí u akce                                                                                                                                                                                                                                                                         | [README.md](../README.md) → Konfigurace akce      |
-| Soubor dokumentu  | max **10 MB**, typ PDF/JPG/PNG/HEIC ověřený podle **obsahu, ne přípony**                                                                                                                                                                                                                               | [non-functional.md](non-functional.md)            |
+| Údaj              | Pravidlo                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Zdroj                                             |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Částka            | desetinné číslo v CZK, **nezaokrouhluje se**; porovnává se přesně (rozdíl 1 Kč = nedoplatek/přeplatek)                                                                                                                                                                                                                                                                                                                                                    | [README.md](../README.md) → Modul párování plateb |
+| Datum a čas       | ukládá se v UTC, zobrazuje v `Europe/Prague`; čistě datumové údaje se nepřepočítávají                                                                                                                                                                                                                                                                                                                                                                     | [non-functional.md](non-functional.md)            |
+| E-mail            | Po odstranění okolních mezer nejvýše 254 znaků, syntakticky platný podle běžného e-mailového parseru; celá adresa se ukládá malými písmeny, DNS se neověřuje. `ACCOUNT.login_email` je po normalizaci unikátní a `PERSON.email` unikátní není                                                                                                                                                                                                             | —                                                 |
+| IČO               | Po odstranění okolních mezer přesně 8 ASCII číslic včetně kontrolní číslice: první 7 číslic se násobí vahami 8 až 2, součet se modulo 11 převede na poslední číslici (`0` pro zbytek 0 nebo 1, jinak `11 - zbytek`); povinné u typu `branch` a `collective`, prázdné u `hq_ico`                                                                                                                                                                           | [README.md](../README.md) → Oddíl                 |
+| Telefon           | Po odstranění okolních mezer volitelný kontaktní telefon; vstup může obsahovat mezery, závorky a spojovníky, ale ukládá se normalizovaný v E.164 (`+` a 8–15 číslic). Devítimístné české číslo bez předvolby se uloží s `+420`; jiné národní formáty se bez předvolby země nepřijímají. **UI nesmí vynucovat přesný tvar zápisu** — uživatel smí psát mezery, závorky i pomlazky libovolně, normalizace na E.164 proběhne až na serveru                   | [data-model.md](data-model.md)                    |
+| Křestní jméno     | proti centrálnímu systémovému číselníku `NAME_WHITELIST`, který spravuje ADM; neshoda se dá povolit výjimkou `NAME_EXCEPTION` v rámci oddílu schválenou HVO                                                                                                                                                                                                                                                                                               | [README.md](../README.md) → Deduplikace           |
+| Příjmení          | **neověřuje se** proti žádnému seznamu                                                                                                                                                                                                                                                                                                                                                                                                                    | [README.md](../README.md) → Deduplikace           |
+| Adresa            | strukturovaná pole `PERSON.street`, `PERSON.house_number`, `PERSON.postal_code`, `PERSON.city` a `PERSON.country`; `country` se ukládá jako kód ISO 3166-1 alpha-2. Jednotlivá pole jsou volitelná podle šablony akce, ale pokud je adresa povinná, musí být vyplněna minimálně `city` a `postal_code`. `postal_code` je 5 číslic, po odstranění mezer; **UI přijímá zápis s mezerou i bez ní** (`123 45` i `12345`) a mezeru sám nevynucuje ani neodmítá | [data-model.md](data-model.md)                    |
+| GPS souřadnice    | `lat` ∈ ⟨−90; 90⟩, `lng` ∈ ⟨−180; 180⟩                                                                                                                                                                                                                                                                                                                                                                                                                    | [data-model.md](data-model.md) → LOCATION         |
+| Variabilní symbol | číselný, generuje systém při vzniku přihlášky; neposkytuje ho uživatel                                                                                                                                                                                                                                                                                                                                                                                    | [payment-matching.md](payment-matching.md)        |
+| Specifický symbol | číselný, zadává vedoucí u akce                                                                                                                                                                                                                                                                                                                                                                                                                            | [README.md](../README.md) → Konfigurace akce      |
+| Soubor dokumentu  | max **10 MB**, typ PDF/JPG/PNG/HEIC ověřený podle **obsahu, ne přípony**                                                                                                                                                                                                                                                                                                                                                                                  | [non-functional.md](non-functional.md)            |
 
 ### UX pomoc pro jméno
 
@@ -103,6 +188,7 @@ Ostatní pole (`nickname`, `insurance_company` a jednotlivá pole adresy) jsou p
 - Pokud pro požadovaný typ neexistuje platný osobní dokument, nebo jeho platnost skončí před `EVENT.ends_at`, systém zobrazí při podání přihlášky varování aktivnímu zákonnému zástupci nezletilého účastníka, případně zletilému účastníkovi. Varování nenahrazuje povinnost dokumentu: dokud není dokument nahrán a schválen nebo automaticky přiřazen, přihláška zůstává ve stavu čekání na dokumenty.
 - `REGISTRATION_DOCUMENT` může mít vyplněné právě jedno z `person_document_id` a `content`: odkaz na trvalý dokument, nebo nově nahranou kopii. Při použití trvalého dokumentu se soubor nekopíruje do přihlášky; zachová se odkaz a výsledek posouzení.
 - Aktivní zákonný zástupce smí dokument dítěte nahrát, obnovit a vybrat pro jeho přihlášku. Operace se zapíše s účtem zákonného zástupce jako aktérem; po zletilosti lze dokument použít, ale zákonný zástupce jej už nesmí měnit.
+- Jeden `EVENT_DOCUMENT` se plní právě jedním souborem v `REGISTRATION_DOCUMENT` (nebo jedním odkazem na trvalý dokument osoby). Vícestránkový doklad se modeluje jako více požadavků akce, například „Průkazka pojišťovny — přední strana“ a „Průkazka pojišťovny — zadní strana“, aby měla každá strana vlastní stav posouzení. Uživatel se proto vede k nahrání fotografií jednotlivých stran zvlášť; skládání do PDF není požadavek systému.
 
 ### Oddílové členské příspěvky
 
