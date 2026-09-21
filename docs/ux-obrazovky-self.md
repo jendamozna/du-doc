@@ -161,7 +161,7 @@ Detailní specifikace obrazovek sekce **Můj účet** (`/muj-ucet/...`). Navigac
 
 **Obsah a pole:**
 
-1. **Přihlášení:** přihlašovací e-mail — jen ke čtení, podtext „Změnu e-mailu vyřídí podpora.“ Tlačítko „Změnit heslo“ → dialog: staré heslo*, nové heslo*. Úspěch: snackbar „Heslo změněno“.
+1. **Přihlášení:** přihlašovací e-mail — jen ke čtení, podtext „Změnu e-mailu vyříčí podpora.“ Tlačítko „Změnit heslo“ → dialog: staré heslo*, nové heslo*, nové heslo znovu\* (shoda se validuje). Úspěch: snackbar „Heslo změněno“.
 2. **Propojené účty:** řádek za každou OAuth metodu (propojen / nepropojen) s akcí „Odpojit“ / „Propojit“. **Pravidlo poslední cesty:** odpojit lze, jen zbývá-li jiný způsob přihlášení — u poslední metody je tlačítko zamčené (disabled + ikona `lock`) s vysvětlením „Jediný způsob přihlášení nelze odpojit — nejdřív nastavte heslo nebo připojte jiný účet.“ Poznámka: „Propojení přes e-mail se nabízí až po přihlášení heslem — automatické propojení by umožnilo převzetí účtu.“
 3. **Sloučení duplicit:** karta s obsahem dle stavu — při nalezeném kandidátovi nabídka „Nejste to vy? V [oddíl] je evidována [jméno] se shodným datem narození.“ + tlačítko „Zobrazit návrh“ → D-08. Po odmítnutí/dokončení prázdný stav níže.
 
@@ -176,7 +176,7 @@ Detailní specifikace obrazovek sekce **Můj účet** (`/muj-ucet/...`). Navigac
 
 **Mobil/desktop:** podpora správců hesel (autocomplete atributy); přepínače a tlačítka se 44px cíli.
 
-**Notifikace:** změna hesla → `EMAIL_ACCOUNT_LOCKED`/potvrzení dle [notifications.md](notifications.md).
+**Notifikace:** potvrzení dle [notifications.md](notifications.md).
 
 ## 9. D-08 · Žádost o sloučení duplicit — `/muj-ucet/ucet/slouceni`
 

@@ -15,7 +15,7 @@ Implementační detail k [README.md](../README.md) → **Hlídky na závodních 
 ## Výpočet věku
 
 - Referenční datum řídí konfigurační volba akce `age_at_year_end`:
-  - zapnuto (výchozí) — věk ke **konci aktuálního roku**: `věk = rok(31. 12. letošního roku) − rok(datum narození)`,
+  - zapnuto (výchozí) — věk ke **konci aktuálního roku**: `věk = rok(31. 12. roku, ve kterém začíná akce) − rok(datum narození)`,
   - vypnuto — věk **k datu konání akce**.
 - Rozdíl se počítá v letech (date diff). Chybí-li datum narození, člena nelze plně ověřit a kontrola konzistence to hlásí.
 

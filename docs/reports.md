@@ -8,13 +8,13 @@ Rozpis reportů popsaných v [../README.md](../README.md) do podoby, ze které l
 
 ### Rozsah dat (scope)
 
-| Role                         | Vidí                                         |
-| ---------------------------- | -------------------------------------------- |
-| Rádce (vedoucí družiny, RAD) | jen osoby své družiny (`UNIT_PATROL_MEMBER`) |
-| Vedoucí oddílu (VO)          | svůj oddíl                                   |
-| Hlavní vedoucí (HVO)         | svůj oddíl                                   |
-| Účetní oddílu (UCE)          | jen report Platby, svůj oddíl                |
-| Administrátor (ADM)          | vše (napříč oddíly, s dimenzí region)        |
+| Role                 | Vidí                                                                                     |
+| -------------------- | ---------------------------------------------------------------------------------------- |
+| Rádce (RÁD)          | jen osoby svých družin (`UNIT_PATROL_MEMBER`); bez příslušnosti k družině reporty nevidí |
+| Vedoucí oddílu (VO)  | svůj oddíl                                                                               |
+| Hlavní vedoucí (HVO) | svůj oddíl                                                                               |
+| Účetní oddílu (UCE)  | jen report Platby, svůj oddíl                                                            |
+| Administrátor (ADM)  | vše (napříč oddíly, s dimenzí region)                                                    |
 
 Scope se vždy aplikuje jako filtr `unit_id` odvozený z `USER_ROLE`, ne z parametru requestu — parametr `unit_id` se validuje proti povoleným oddílům volajícího.
 
@@ -137,11 +137,11 @@ Sezónnost pravidelných schůzek — jen akce `type = 'regular_meeting'`, bucke
 
 Časová řada skutečné účasti na proběhlých akcích. Report podporuje tři úrovně pohledu, které používají stejnou definici docházky:
 
-| Úroveň      | Výstup                                                             | Rozsah                                                                          |
-| ----------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
-| jednotlivec | osoba × časový koš: přítomen, nepřítomen, bez záznamu, míra účasti | RÁD jen osoby své družiny; VO/HVO osoby svého oddílu; ADM podle zvoleného scope |
-| družina     | družina × časový koš: unikátní přítomní, očekávaní, míra účasti    | družiny ve scope volajícího                                                     |
-| oddíl       | oddíl × časový koš: unikátní přítomní, očekávaní, míra účasti      | oddíly ve scope volajícího                                                      |
+| Úroveň      | Výstup                                                             | Rozsah                                                                                                                     |
+| ----------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| jednotlivec | osoba × časový koš: přítomen, nepřítomen, bez záznamu, míra účasti | RÁD jen osoby svých družin, a pouze pokud je alespoň v jedné družině; VO/HVO osoby svého oddílu; ADM podle zvoleného scope |
+| družina     | družina × časový koš: unikátní přítomní, očekávaní, míra účasti    | družiny ve scope volajícího                                                                                                |
+| oddíl       | oddíl × časový koš: unikátní přítomní, očekávaní, míra účasti      | oddíly ve scope volajícího                                                                                                 |
 
 **Parametr `level`:** `person` | `patrol` | `unit`; výchozí je `unit`. Detail jednotlivce je jmenný jen pro neanonymizované osoby. Agregované řádky mohou zahrnout anonymizované osoby, aby historické součty zůstaly správné.
 
@@ -203,7 +203,7 @@ Zdrojem jsou přechody v `PERSON_UNIT_HISTORY` (proto se tato historie nesmí sl
 
 ## R8 — Platby
 
-**Kód:** `payments` · **Kdo:** UCE, HVO, ADM
+**Kód:** `payments` · **Kdo:** UCE, VO, HVO, ADM
 
 Bucket podle data akce (`EVENT.starts_at`), varianta „cash-flow" podle `BANK_TRANSACTION.date`.
 
@@ -267,5 +267,5 @@ Nejcitlivější report — vstupuje do vykazování ústředí, proto je defini
 ## Co reporty záměrně neřeší
 
 - **Žádný report nevrací citlivé údaje** (zdravotní informace, dokumenty, adresy) — ani v detailním rozpadu.
-- **Žádná predikce.** Reporty popisují minulost; odhady a doporučení patří do [../AI_support.md](../AI_support.md).
+- **Žádná predikce.** Reporty popisují minulost; odhady a doporučení nejsou součástí specifikace.
 - **Žádné vlastní sestavy uživatele** v první fázi — sada reportů je pevná, rozšiřuje se vývojem.

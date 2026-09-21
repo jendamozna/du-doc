@@ -10,7 +10,7 @@ Implementační detail k modulu párování plateb ([README.md](../README.md) �
   - součet = cena → `Paid`,
   - součet > cena → `Overpayment`.
 - Cena přihlášky = **základní cena zafixovaná při podání** (`REGISTRATION.base_price`, odvozená z `EVENT_PRICE` platné k `created_at` a typu účastníka — určení typu a fallback při chybějící ceně viz [validation.md](validation.md) → **Ceny a storna**) + součet **zafixovaných** příplatků aktuálně zvolených položek číselníků (`REGISTRATION_FIELD_VALUE.price_modifier`, viz [event-fields.md](event-fields.md)). Pozdější změna ceníku (`EVENT_PRICE` ani `EVENT_FIELD_OPTION.price_modifier`) ani vznik členství DU už podanou přihlášku nepřeceňuje — cenu může změnit jen vedoucí ručně, nebo změna samotné volby položky.
-- **Splatnost je vlastnost akce** a zadává se jedním ze dvou způsobů: relativně (`EVENT.payment_due_days`, např. 14 dní od podání přihlášky), nebo absolutně (`EVENT.payment_due_date`, pevné datum pro celou akci). Vyplňuje se právě jedno z polí; výchozí hodnota přichází ze šablony akce, fallback je 14 dní. Termín přihlášky se pak počítá:
+- **Splatnost je vlastnost akce** a zadává se jedním ze dvou způsobů: relativně (`EVENT.payment_due_days`, např. 14 dní od podání přihlášky), nebo absolutně (`EVENT.payment_due_date`, pevné datum pro celou akci). Vyplněno musí být právě jedno z polí, nikdy obojí ani žádné ([validation.md](validation.md) → **Akce**). Nezvolí-li zakladatel akce žádnou hodnotu, formulář předvyplní `payment_due_days = 14` (ze šablony, nebo jako systémový výchozí) — jde o výchozí hodnotu **při vytvoření**, ne o dopočet za prázdné pole za běhu. Termín přihlášky se pak počítá:
   - relativně → `MIN(REGISTRATION.created_at + payment_due_days, EVENT.starts_at)`,
   - absolutně → `payment_due_date` (u přihlášek podávaných po tomto datu platí splatnost ihned).
     Stejný výpočet používají výzvy k platbě, připomínky i report Platby ([reports.md](reports.md)).
@@ -36,20 +36,20 @@ Předpis se vytváří jen pro aktivního registrovaného člena oddílu. Zaplat
 
 Pravidla tvoří **seřazený seznam**. Vyhodnocují se shora dolů a vyhrává první, které vrátí právě jednoho kandidáta:
 
-| Hodnota               | Shoda                                                                                      | Alokace     |
-| --------------------- | ------------------------------------------------------------------------------------------ | ----------- |
-| `ss_vs_amount`        | SS, VS i částka                                                                            | automaticky |
-| `ss_vs_partial`       | SS, VS a částečná úhrada                                                                   | automaticky |
-| `ss_vs_overpayment`   | SS, VS a přeplatek                                                                         | automaticky |
-| `vs_exact_name`       | VS, částka a jméno odesílatele = vlastník přihlášky nebo poznámka platby = název akce      | automaticky |
-| `ss_exact_name`       | SS, částka a jméno odesílatele = vlastník přihlášky                                        | automaticky |
-| `vs_exact`            | VS, částka                                                                                 | automaticky |
-| `vs_partial_name`     | VS, částečná úhrada a shoda jména odesílatele / poznámky platby                            | návrh       |
-| `vs_overpayment_name` | VS, přeplatek a shoda jména odesílatele / poznámky platby                                  | návrh       |
-| `member_fee_vs_exact` | VS oddílového členského předpisu a přesná částka                                           | automaticky |
-| `member_fee_vs_partial` | VS oddílového členského předpisu a částečná úhrada                                       | automaticky |
-| `manual`              | ruční rozdělení účetní                                                                     |             |
-| `refund`              | automatické spárování záporné bankovní transakce s evidovaným přeplatkem — záporná alokace | automaticky |
+| Hodnota                 | Shoda                                                                                      | Alokace     |
+| ----------------------- | ------------------------------------------------------------------------------------------ | ----------- |
+| `ss_vs_amount`          | SS, VS i částka                                                                            | automaticky |
+| `ss_vs_partial`         | SS, VS a částečná úhrada                                                                   | automaticky |
+| `ss_vs_overpayment`     | SS, VS a přeplatek                                                                         | automaticky |
+| `vs_exact_name`         | VS, částka a jméno odesílatele = vlastník přihlášky nebo poznámka platby = název akce      | automaticky |
+| `ss_exact_name`         | SS, částka a jméno odesílatele = vlastník přihlášky                                        | automaticky |
+| `vs_exact`              | VS, částka                                                                                 | automaticky |
+| `vs_partial_name`       | VS, částečná úhrada a shoda jména odesílatele / poznámky platby                            | návrh       |
+| `vs_overpayment_name`   | VS, přeplatek a shoda jména odesílatele / poznámky platby                                  | návrh       |
+| `member_fee_vs_exact`   | VS oddílového členského předpisu a přesná částka                                           | automaticky |
+| `member_fee_vs_partial` | VS oddílového členského předpisu a částečná úhrada                                         | automaticky |
+| `manual`                | ruční rozdělení účetní                                                                     |             |
+| `refund`                | automatické spárování záporné bankovní transakce s evidovaným přeplatkem — záporná alokace | automaticky |
 
 - SS identifikuje akci, VS platební cíl.
 - **VS má vyhrazený prefix podle typu cíle** — `1…` přihláška, `2…` oddílový členský předpis, `3…` dávka příspěvků DU. `REGISTRATION.vs`, `UNIT_MEMBER_FEE.vs` a `DU_FEE_BATCH.vs` jsou tři nezávislé unikáty, každý jednoznačný jen ve své tabulce; párovač ale hledá napříč všemi třemi, takže bez prefixu by shodný VS předpisu a přihlášky vyrobil dva kandidáty tam, kde má být jeden. Prefix je levnější než společná tabulka VS a párovač z něj rovnou pozná, kam se dívat.

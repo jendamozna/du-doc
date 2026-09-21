@@ -272,14 +272,18 @@ erDiagram
         int unit_patrol_id FK
         int person_id FK
         string role "leader / deputy / member; nejvyse jeden leader a jeden deputy v druzine"
+        date valid_from
+        date valid_to "NULL = aktivni clenstvi"
+        int assigned_by_account_id FK "kdo clenstvi zalozil"
+        int removed_by_account_id FK "kdo clenstvi ukoncil; NULL dokud je aktivni"
     }
     EVENT {
         int id PK
         int unit_id FK
         int bank_account_id FK
-        int region_id_snapshot FK "region pri zalozeni akce"
+        int region_id_snapshot FK "region pri prvni publikaci akce"
         int location_id FK "misto konani (volitelne)"
-        int action_template_id FK "sablona (snapshot)"
+        int action_template_id FK "sablona"
         string status "draft / published / hidden / canceled; zivotni cyklus"
         string name
         string ss "specific symbol"
@@ -325,7 +329,7 @@ erDiagram
         int id PK
         int event_id FK
         string membership_type "DU / non_DU / external / volunteer / leader / leader_child / sponsor; non_DU = zaklad, ostatni jsou odchylky; external = osoba bez vazby na jakykoli oddil"
-        decimal amount "kladna = prijem, zaporna = odchozi vratka"
+        decimal amount "cena za ucastnika v tomto obdobi platnosti; vzdy nezaporna"
         date valid_from
         date valid_to
     }
@@ -422,7 +426,7 @@ erDiagram
         date valid_to "NULL = bez casoveho omezeni"
         int uploaded_by_account_id FK "osoba nebo aktivni zakonny zastupce"
         datetime uploaded_at
-        int reviewed_by_account_id FK "vedouci s opravnenim nebo ADM"
+        int reviewed_by_account_id FK "Vedoucí oprávněný v kontextu přihlášky; ADM pouze v rozsahu akce ústředí."
         datetime reviewed_at
         datetime revoked_at "NULL = neodvolano"
     }
@@ -465,12 +469,12 @@ erDiagram
         string instructor "lektor"
         int min_age
         string requirements "potreby"
-        int capacity "max ucastniku na beh"
     }
     WORKSHOP_OFFERING {
         int id PK
         int workshop_block_id FK "casovy blok"
         int workshop_id FK "workshop / seminar"
+        int capacity "max ucastniku na tento beh"
     }
     WORKSHOP_REGISTRATION {
         int id PK
@@ -490,6 +494,7 @@ erDiagram
         int parent_registration_id FK "nadrazena prihlaska (NULL = hlavni); definuje registration scope"
         int price_id FK "EVENT_PRICE platna k okamziku podani; zafixovana"
         decimal base_price "snapshot zakladni ceny pri podani"
+        string price_membership_type "snapshot EVENT_PRICE.membership_type pri podani; typ ucastnika"
         string vs UK "variable symbol; prefix 1 = prihlaska"
         string category "participant / volunteer / substitute"
         string state "New / PendingGuardian / PendingDocuments / PendingPayment / PartialPaid / Paid / Overpayment / Canceled / Expired"
@@ -537,15 +542,19 @@ erDiagram
         string provider "fio = synchronizace z API / manual = ruční evidence"
         string api_token_enc "read-only token, sifrovany; vyplneny prave kdyz provider = fio"
         int key_version "verze sifrovaciho klice pro rotaci"
+        int sync_interval_minutes "perioda stahovani; vychozi 60"
+        datetime token_set_at "den vlozeni tokenu; NULL = provider manual"
         datetime last_sync_at "NULL = nesynchronizovano"
         string sync_state "ok / error"
+        string sync_error "text posledni chyby; NULL = bez chyby"
     }
     BANK_TRANSACTION {
         int id PK
-        int bank_account_id FK,UK "unikat: ucet + external_id"
-        string external_id UK "id pohybu z banky, jinak manual:<uuid> / stmt:<otisk radku>"
+        int bank_account_id FK
+        string external_id "id pohybu z banky, jinak manual:<uuid> / stmt:<otisk radku>"
+        UNIQUE (bank_account_id, external_id)
         string source "import / statement_import / manual_entry"
-        int entered_by_user_id FK "kdo pohyb zapsal; NULL = automaticky import"
+        int entered_by_account_id FK "kdo pohyb zapsal; NULL = automaticky import"
         string ss "bez pocatecnich nul"
         string vs "bez pocatecnich nul"
         decimal amount "kladna = prichozi platba, zaporna = odchozi pohyb"
@@ -824,7 +833,7 @@ erDiagram
         int target_person_id FK "vysledna osoba"
         int initiator_account_id FK
         int keep_account_id FK "ktery ucet zustava"
-        string state "pending / ready / rejected / completed / reverted"
+        string state "pending / ready / rejected / completed / reverted / expired"
         datetime created_at
         datetime expires_at "propadnuti zadosti bez odezvy"
         datetime completed_at

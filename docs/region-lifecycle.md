@@ -13,10 +13,10 @@ Regiony se **nikdy nemažou** — historie příslušností na ně odkazuje a re
 
 ## Stavy regionu
 
-| Stav        | Význam                                                     | Lze do něj přiřadit oddíl | Terminální |
-| ----------- | ---------------------------------------------------------- | ------------------------- | ---------- |
-| `active`    | běžný, funkční region                                      | ano                       | ne         |
-| `merged`    | sloučen do nástupnického regionu (`merged_into_region_id`) | ne                        | ano        |
+| Stav       | Význam                                                     | Lze do něj přiřadit oddíl | Terminální |
+| ---------- | ---------------------------------------------------------- | ------------------------- | ---------- |
+| `active`   | běžný, funkční region                                      | ano                       | ne         |
+| `merged`   | sloučen do nástupnického regionu (`merged_into_region_id`) | ne                        | ano        |
 | `canceled` | zrušen (rozpuštěn) nebo rozdělen                           | ne                        | ano        |
 
 Oba koncové stavy jsou **terminální** — region se z nich nevrací. Rozdíl je ve směru, kterým se stopa drží: `merged` nese odkaz na svého nástupce (`merged_into_region_id`), zatímco u rozdělení odkazují **nástupci na předchůdce** (`split_from_region_id` na každém z nově vzniklých regionů). Sloučení má jednoho nástupce, rozdělení jich má víc — proto se u něj vazba obrací místo zavádění vazební tabulky. Zrušení bez nástupce nemá ani jedno.
@@ -39,14 +39,14 @@ stateDiagram-v2
 
 Všechny operace smí provést **jen ADM** ([README.md](../README.md) → **Administrátor**). Každá se zapisuje do auditního logu.
 
-| Operace                   | Efekt na `REGION`                                                   | Efekt na `UNIT_REGION`                                                                  |
-| ------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| **Vznik**                 | nový záznam ve stavu `active`, `valid_from` = dnes                  | žádný                                                                                   |
-| **Přiřazení oddílu**      | žádný                                                               | nový řádek s `valid_from`, `valid_to = NULL`                                            |
-| **Přesun oddílu**         | žádný                                                               | stávající řádek dostane `valid_to`, založí se nový do cílového regionu se stejným datem |
-| **Sloučení (A + B → C)**  | A i B → `merged` s `merged_into_region_id = C`; C musí být `active` | všem oddílům z A i B se uzavře příslušnost a otevře nová na C ke stejnému datu          |
-| **Rozdělení (C → A + B)** | vzniknou nové regiony `active` se `split_from_region_id = C`; C → `canceled` | oddílům se uzavře příslušnost na C a otevře nová na cílový region              |
-| **Zrušení**               | → `canceled`                                                       | všem oddílům se uzavře příslušnost; zůstávají bez regionu, dokud je ADM nepřiřadí jinam |
+| Operace                   | Efekt na `REGION`                                                            | Efekt na `UNIT_REGION`                                                                  |
+| ------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| **Vznik**                 | nový záznam ve stavu `active`, `valid_from` = dnes                           | žádný                                                                                   |
+| **Přiřazení oddílu**      | žádný                                                                        | nový řádek s `valid_from`, `valid_to = NULL`                                            |
+| **Přesun oddílu**         | žádný                                                                        | stávající řádek dostane `valid_to`, založí se nový do cílového regionu se stejným datem |
+| **Sloučení (A + B → C)**  | A i B → `merged` s `merged_into_region_id = C`; C musí být `active`          | všem oddílům z A i B se uzavře příslušnost a otevře nová na C ke stejnému datu          |
+| **Rozdělení (C → A + B)** | vzniknou nové regiony `active` se `split_from_region_id = C`; C → `canceled` | oddílům se uzavře příslušnost na C a otevře nová na cílový region                       |
+| **Zrušení**               | → `canceled`                                                                 | všem oddílům se uzavře příslušnost; zůstávají bez regionu, dokud je ADM nepřiřadí jinam |
 
 ## Guardy
 
@@ -67,11 +67,12 @@ Všechny operace smí provést **jen ADM** ([README.md](../README.md) → **Admi
 
 ## Snapshot na akci
 
-Region se do reportů nebere dotazem „kam oddíl patří teď", ale ze **snapshotu uloženého na akci v okamžiku jejího vzniku** (`EVENT.region_id_snapshot`):
+Region se do reportů nebere dotazem „kam oddíl patří teď", ale ze **snapshotu uloženého na akci v okamžiku její první publikace** (`EVENT.region_id_snapshot`). Snapshot se váže na publikaci, ne na založení konceptu — koncept může vzniknout dlouho předtím, než se region k akci reálně určí, a mezitím se oddíl mohl přesunout jinam.
 
-- Snapshot se určí z `UNIT_REGION` platné k datu vzniku akce.
+- Snapshot se určí z `UNIT_REGION` platné k datu první publikace akce (přechod `draft` → `published`); do té doby `region_id_snapshot` zůstává `NULL`.
+- Opětovná publikace po dočasném skrytí (`hidden`) snapshot **znovu nepořizuje** — platí ten z první publikace.
 - **Pozdější přesun oddílu ani sloučení regionu už existující akce a reporty nemění** — historické výkazy zůstávají stabilní.
 - Nové akce počítají podle aktuálního zařazení.
-- Je-li oddíl v okamžiku vzniku akce bez regionu, snapshot je prázdný a akce se v regionální agregaci neobjeví.
+- Je-li oddíl v okamžiku publikace akce bez regionu, snapshot je prázdný a akce se v regionální agregaci neobjeví.
 - Ukazuje-li snapshot na region, který je dnes `merged`, reporty ho zobrazí pod původním názvem; přes `merged_into_region_id` lze dohledat nástupce, ale agregace ho **nepřepočítává** (viz [reports.md](reports.md)).
 - Totéž platí u rozděleného regionu — zobrazí se pod původním názvem a nástupce lze dohledat opačným směrem, dotazem na regiony se `split_from_region_id` rovným snapshotu. Agregace se ani zde nepřepočítává; historický výkaz zůstává tak, jak byl pořízen.

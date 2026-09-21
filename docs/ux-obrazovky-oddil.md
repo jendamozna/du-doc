@@ -10,7 +10,7 @@ Detailní specifikace obrazovek oddílové administrace (`/oddil/...`). Navigaci
 
 **Zásady (vynucuj v UI):**
 
-1. **Oprávnění k zápisu se přidělují per akce** přes `EVENT_ASSIGNMENT` — VO/RÁD vidí a mění přihlášky jen tam, kde jsou přiřazení; základní čtení detailu akce a seznamu přihlášených plyne z role ve vlastním oddílu ([authorization.md](authorization.md)).
+1. **HVO má oprávnění přímo z role. VO a RÁD získávají zvýšená zápisová oprávnění přes `EVENT_ASSIGNMENT`** — vidí a mění přihlášky jen tam, kde jsou přiřazeni; základní čtení detailu akce a seznamu přihlášených jim plyne přímo z role ve vlastním oddílu ([authorization.md](authorization.md)).
 2. **Stav přihlášky se nikdy nenastavuje ručně** — vedoucí mění fakta (schválí dokument, alokuje platbu, vybere náhradníka) a stav přepočítá `evaluate()`. V UI není žádný ovladač „nastavit stav“.
 3. **Platební atributy se maskují dle role** — RÁD mimo funkci Vedoucího akce nevidí částky; ÚČE vidí platby celého oddílu, ale k akcím se nepřiřazuje.
 4. **Chování bez oprávnění** (skrytí prvku mimo rozsah role, maskování údaje `———`, 403 při přímém vstupu na nepovolenou URL) dle [ux-navigace.md](ux-navigace.md#5-společná-pravidla-oprávnění) § 5.
@@ -94,12 +94,13 @@ Detailní specifikace obrazovek oddílové administrace (`/oddil/...`). Navigaci
 - ④ Výběrové číselníky (`EVENT_FIELD`): u každé položky kapacita a fáze (`on_submit` / `before_event`); položka s `required_phase = before_event` musí mít nulový příplatek (guard v UI).
 - ⑤ Povinné dokumenty: typ, formáty a limit velikosti + přepínač „umožnit trvalý dokument osoby“.
 - ⑥ Storno pravidla: termínovaná procenta; `percent` ∈ ⟨0; 100⟩.
-- ⑦ Publikace: přepínač koncept ↔ publikováno; **placenou akci nelze publikovat bez bankovního účtu**.
+- ⑦ Publikace: stav akce **koncept / publikováno / skryto / zrušeno** ([README.md](../README.md) → **Konfigurace akce**); „Skrýt" dočasně stáhne publikovanou akci (nepřijímá nové přihlášky ani neposílá pozvánky, ale zůstává odlišná od konceptu i od zrušení), „Publikovat" ji vrátí zpět. **Placenou akci nelze publikovat bez bankovního účtu.**
 
 **Stavy:**
 
 - **Prázdný:** nová akce z konceptu má sekce předvyplněné ze šablony; číselníky lze mít prázdné.
 - **Úspěch:** po uložení snackbar „Uloženo“ + poznámka u ceníku „Změna ceny nepřecení už podané přihlášky.“ ([validation.md](validation.md)).
+- **Uzamčeno:** řádek ceníku použitý alespoň jednou přihláškou a položka číselníku s existující volbou jsou needitovatelné a nejdou smazat (`event_price.locked`, `event_field_option.locked`); nová sazba se zakládá jako nový řádek/položka ([validation.md](validation.md)).
 - **Chyba (validace):** inline pod polem; publikace bez účtu → banner v `error-container`.
 - **Bez práva (VO/RÁD bez `can_edit_event`):** sekce jen ke čtení, tlačítka „Uložit“ skrytá.
 
@@ -200,15 +201,15 @@ Detailní specifikace obrazovek oddílové administrace (`/oddil/...`). Navigaci
 
 **Mobil/desktop:** seznamy v jednom sloupci; hlídky jako karty s kapitánem nahoře.
 
-**Notifikace:** nabídka → e-mail náhradníkovi; při vypršení `EMAIL_SUBSTITUTE_OFFER_DECLINED` ([notifications.md](notifications.md)).
+**Notifikace:** nabídka → e-mail náhradníkovi; při odmítnutí `EMAIL_SUBSTITUTE_OFFER_DECLINED` ([notifications.md](notifications.md)).
 
 ## 10. B-09 · Tab Docházka — `/oddil/akce/:id?tab=dochazka`
 
 **Účel a publikum:** zapsat, kdo dorazil — na tábořišti, na telefonu, jednou rukou. Jediná výhradně mobilní obrazovka plochy B.
 
-**Layout a komponenty:** seznam účastníků (nebo členů družiny) s velkými přepínači **Přítomen / Nepřítomen / (nezapsáno)**; segmented button pro filtr podle družiny; sticky souhrn „Přítomno N / M“.
+**Layout a komponenty:** seznam účastníků (nebo členů družiny) s velkými přepínači **Přítomen / Pozdě / Nepřítomen / Omluven předem**; zvolí-li vedoucí „Nepřítomen“, zobrazí se povinný výběr důvodu; segmented button pro filtr podle družiny; sticky souhrn „Přítomno N / M“.
 
-**Obsah a pole:** každý řádek jméno, družina, třístavový přepínač (výchozí „nezapsáno“ — šedý). Nezapsaný ≠ nepřítomný; nejvýše jeden záznam na osobu a akci.
+**Obsah a pole:** každý řádek jméno, družina, čtyřstavový přepínač (výchozí „nezapsáno“ — šedý) a u volby „Nepřítomen“ povinný výběr důvodu ([data-model.md](data-model.md) → `ATTENDANCE_RECORD.absence_reason`). Nezapsaný není žádný ze čtyř stavů; nejvýše jeden záznam na osobu a akci.
 
 **Stavy:**
 
@@ -230,7 +231,7 @@ Detailní specifikace obrazovek oddílové administrace (`/oddil/...`). Navigaci
 
 **Layout a komponenty:** dvoupanel (desktop): vlevo fronta transakcí, vpravo detail vybrané transakce s návrhy párování; filter chips `Nespárované` (výchozí) · `Spárované` · `Přeplatky` · `Vratky`. Tlačítka „Nahrát výpis“ a „Zapsat platbu ručně“. Sekce „Přeplatky k rozhodnutí“.
 
-**Obsah a pole:** fronta nespárovaných s návrhy dle pravidel párování ([payment-matching.md](payment-matching.md), párování je přesné bez tolerance); přeplatky se třemi akcemi: **Vrátit** (záporná alokace `refund`) · **Převést na jinou přihlášku** téže osoby · **Ponechat jako dar**. Spárované ke čtení s metodou párování a cílovou přihláškou.
+**Obsah a pole:** fronta nespárovaných s návrhy dle pravidel párování ([payment-matching.md](payment-matching.md), párování je přesné bez tolerance); přeplatky se dvěma akcemi: **Vrátit** (záporná alokace `refund`) · **Převést na jinou přihlášku** téže osoby. Spárované ke čtení s metodou párování a cílovou přihláškou.
 
 **Stavy:**
 
@@ -299,7 +300,7 @@ Detailní specifikace obrazovek oddílové administrace (`/oddil/...`). Navigaci
 
 **Layout a komponenty:** vlevo výběr reportů (M3 list, kód + název), vpravo plocha reportu: parametry · graf · tabulka · tlačítko „Export CSV“. Scope je vlastní oddíl ([reports.md](reports.md), [authorization.md](authorization.md) → Reporty).
 
-**Obsah a pole:** výběr dle role (R1 Akce a docházka · R2 Členové v čase · R3 Účast na akcích · R4 Docházka schůzek · R6 Dobrovolnické hodiny · R8 Platby). ÚČE vidí jen R8; RÁD jen osoby své družiny; VO/HVO celý oddíl. Parametry: období od–do (výchozí 12 měsíců) · granularita · typ akce. Pod výsledkem metadata generování.
+**Obsah a pole:** výběr dle role (R1 Akce a docházka · R2 Členové v čase · R3 Účast na akcích · R4 Docházka schůzek · R6 Dobrovolnické hodiny · R8 Platby). ÚČE vidí jen R8; RÁD jen osoby svých družin a bez příslušnosti k družině reporty nevidí; VO/HVO celý oddíl. Parametry: období od–do (výchozí 12 měsíců) · granularita · typ akce. Pod výsledkem metadata generování.
 
 **Stavy:**
 
@@ -343,4 +344,4 @@ Detailní specifikace obrazovek oddílové administrace (`/oddil/...`). Navigaci
 
 **Mobil/desktop:** sekce jako karty; správa rolí jako tabulka → karty.
 
-**Notifikace:** pozvánka na roli → `EMAIL_ROLE_INVITE`; odebrání role → notifikace dotčenému účtu ([notifications.md](notifications.md)).
+**Notifikace:** pozvánka na roli → `EMAIL_ROLE_INVITE`.

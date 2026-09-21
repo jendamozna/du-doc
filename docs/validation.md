@@ -55,17 +55,19 @@ Kanonický katalog textů sdílených mezi frontendem a backendem. Zásady:
 
 **Akce a ceny**
 
-| Kód                                  | Podmínka                                         | Kanonický text                                               |
-| ------------------------------------ | ------------------------------------------------ | ------------------------------------------------------------ |
-| `event.template.required`            | akce zakládána bez šablony                       | „Vyberte šablonu akce.“                                      |
-| `event.registration_window.invalid`  | `registration_from >= registration_to`           | „Konec přihlašování musí být po jeho začátku.“               |
-| `event.dates.invalid`                | `starts_at >= ends_at`                           | „Konec akce musí být po jejím začátku.“                      |
-| `event.capacity.too_low`             | kapacita pod počtem započítaných přihlášek       | „Kapacitu nelze snížit pod aktuálně obsazený počet {count}.“ |
-| `event.paid_without_bank_account`    | publikace placené akce bez bankovního účtu       | „Placenou akci nelze publikovat bez bankovního účtu.“        |
-| `event.base_price.missing`           | placená akce bez `non_DU` ceny na celé okno      | „Doplňte základní cenu pro celé období přihlašování.“        |
-| `event_field.before_event.has_price` | položka `before_event` s nenulovým příplatkem    | „Volba dokončovaná před akcí nemůže měnit cenu.“             |
-| `event_field.capacity.too_low`       | limit položky pod počtem existujících voleb      | „Limit nelze snížit pod {count} již zvolených míst.“         |
-| `event.price.change_note`            | změna ceny publikované akce **(stav, ne chyba)** | „Změna ceny se projeví jen u nových přihlášek.“              |
+| Kód                                  | Podmínka                                                              | Kanonický text                                                                                       |
+| ------------------------------------ | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `event.template.required`            | akce zakládána bez šablony                                            | „Vyberte šablonu akce.“                                                                              |
+| `event.registration_window.invalid`  | `registration_from >= registration_to`                                | „Konec přihlašování musí být po jeho začátku.“                                                       |
+| `event.dates.invalid`                | `starts_at >= ends_at`                                                | „Konec akce musí být po jejím začátku.“                                                              |
+| `event.capacity.too_low`             | kapacita pod počtem započítaných přihlášek                            | „Kapacitu nelze snížit pod aktuálně obsazený počet {count}.“                                         |
+| `event.paid_without_bank_account`    | publikace placené akce bez bankovního účtu                            | „Placenou akci nelze publikovat bez bankovního účtu.“                                                |
+| `event.base_price.missing`           | placená akce bez `non_DU` ceny na celé okno                           | „Doplňte základní cenu pro celé období přihlašování.“                                                |
+| `event_field.before_event.has_price` | položka `before_event` s nenulovým příplatkem                         | „Volba dokončovaná před akcí nemůže měnit cenu.“                                                     |
+| `event_field.capacity.too_low`       | limit položky pod počtem existujících voleb                           | „Limit nelze snížit pod {count} již zvolených míst.“                                                 |
+| `event_price.locked`                 | úprava nebo smazání `EVENT_PRICE` použitého alespoň jednou přihláškou | „Tuto cenu už použila alespoň jedna přihláška, nelze ji upravit ani smazat. Založte novou platnost.“ |
+| `event_field_option.locked`          | úprava nebo smazání položky číselníku s existující volbou             | „Tuto položku už někdo zvolil, nelze ji upravit ani smazat. Založte novou položku.“                  |
+| `event.price.change_note`            | změna ceny publikované akce **(stav, ne chyba)**                      | „Změna ceny se projeví jen u nových přihlášek.“                                                      |
 
 **Přihláška a dokumenty**
 
@@ -274,6 +276,7 @@ Ostatní pole (`nickname`, `insurance_company` a jednotlivá pole adresy) jsou p
 ### Ceny a storna
 
 - `EVENT_PRICE`: intervaly platnosti pro **tutéž** `membership_type` se nesmí překrývat.
+- **Použitý řádek `EVENT_PRICE` nelze upravit ani smazat.** Ukazuje-li na něj `price_id` alespoň jedné přihlášky, je uzamčen jako historický záznam; nová sazba pro další zájemce se zavádí přidáním nového řádku s navazující platností, ne editací starého.
 - **`non_DU` je základní cena akce.** Placená akce musí mít při publikaci platnou cenu `non_DU` pokrývající **celé přihlašovací okno**; guard platí obousměrně stejně jako u bankovního účtu (viz **Akce**). Ostatní typy jsou odchylky od základu, ne samostatné ceníky.
 - **Chybějící cena typu se řeší fallbackem, ne odmítnutím přihlášky.** „Chybí" znamená **neexistuje řádek platný k `REGISTRATION.created_at`** — ne pouze „řádek není"; pokrývá to i akci, kde jedna platnost skončí a další nenaváže. Odmítnout přihlášku by trestalo účastníka za konfigurační chybu pořadatele, a to ve chvíli, kdy s tím nemůže nic udělat.
   - `DU`, `leader`, `leader_child`, `sponsor`, `external` → použije se `non_DU`. Nevyplněná odchylka znamená „žádná odchylka".
@@ -291,18 +294,20 @@ Ostatní pole (`nickname`, `insurance_company` a jednotlivá pole adresy) jsou p
 **Krok 5 rozlišuje člena kteréhokoli oddílu v databázi od člověka úplně mimo.** Má smysl hlavně u akcí ústředí, kam se přes veřejný portál hlásí i lidé bez vazby na jakýkoli oddíl; oddíl si takovou cenu zavést může, ale u vlastních akcí ji nevyužije, protože jeho účastníci vazbu mají. Dvě upřesnění, bez kterých pravidlo neplatí:
 
 - Rozhoduje vazba na **jakýkoli** oddíl, ne na pořádající, a stačí **nearchivovaná** — `guest` i `inactive` člen je pořád člen oddílu v databázi. `external` je jen ten, kdo v evidenci není vůbec.
+- **`external` nemůže být `DU`.** Má-li osoba `DU_MEMBERSHIP` pro rok akce, vyhraje krok 4 bez ohledu na vazbu `PERSON_UNIT`; `external` se vyhodnotí až pro osobu bez takového členství.
 - Vyhodnocuje se stav **před** vznikem přihlášky. Podání přihlášky totiž může založit vazbu na pořádající oddíl a `inactive` osobu rovnou reaktivuje ([person-lifecycle.md](person-lifecycle.md)) — kdyby se typ určoval až po zápisu, žádný účastník by nikdy `external` nevyšel.
 
 - **`sponsor` se nikdy neodvozuje.** Není to vlastnost osoby, ale rozhodnutí pořadatele — nastaví ho jen vedoucí s `can_edit_prices` přepsáním `price_id` (viz pravidlo o fixaci níže).
 - Typ i cena se **zafixují při podání**; dodatečně doplněný řádek `EVENT_PRICE` už podanou přihlášku nepřecení, k tomu slouží ruční úprava vedoucím.
 - `REGISTRATION.base_price` a `price_id` se určí **při podání** z ceníku platného k `created_at` a od té chvíle se samy nemění — přepsat je smí jen vedoucí s `can_edit_prices` (loguje se). Změna `EVENT_PRICE` ani nové `DU_MEMBERSHIP` už podanou přihlášku nepřeceňuje.
-- `REGISTRATION_FIELD_VALUE.price_modifier` se stejně jako `base_price` zafixuje **při volbě** z aktuální hodnoty `EVENT_FIELD_OPTION.price_modifier` a od té chvíle se sám nemění. Pozdější úprava `price_modifier` číselníkové položky platí jen pro volby učiněné od okamžiku úpravy, ne zpětně; nová cena přihlášky se přepočte jen tehdy, změní-li účastník samotnou volbu (viz [event-fields.md](event-fields.md)).
+- `REGISTRATION_FIELD_VALUE.price_modifier` se stejně jako `base_price` zafixuje **při volbě** z aktuální hodnoty `EVENT_FIELD_OPTION.price_modifier` a od té chvíle se sám nemění; nová cena přihlášky se přepočte jen tehdy, změní-li účastník samotnou volbu (viz [event-fields.md](event-fields.md)).
 - `CANCELLATION_RULE.percent` ∈ ⟨0; 100⟩.
 - **Výsledná cena může být záporná?** Ne — součet základní ceny a příplatků (`price_modifier` může být záporný) se ošetří na minimum 0.
 
 ### Výběrové číselníky
 
 - `EVENT_FIELD_OPTION.capacity ≥ 1` nebo `NULL` (bez limitu). **Kapacitu položky nelze snížit pod počet `REGISTRATION_FIELD_VALUE`, které se do ní už počítají** — existující volby se tím neruší; nový limit platí jen pro další zájemce, dokud se místo neuvolní (stornem nebo změnou volby).
+- **Použitou položku číselníku nelze smazat ani upravit její `price_modifier`.** Ukazuje-li na ni `REGISTRATION_FIELD_VALUE` alespoň jedné přihlášky, je uzamčena; nová sazba pro další zájemce se zavádí jako nová položka, ne úpravou použité.
 - `EVENT_FIELD.max_select ≥ 1` nebo `NULL` (bez limitu); `0` a záporné hodnoty jsou neplatné — číselník, který nejde vůbec vyplnit, se vyjadřuje podmínkou `condition`, ne nulovým limitem.
 - Počet voleb v jednovýběrovém číselníku je 1; ve vícevýběrovém nejvýše `max_select`.
 - Volbu nelze uložit, je-li položka **plná** — kontrola kapacity musí být atomická, jinak dvě souběžné přihlášky obsadí totéž lůžko.
@@ -388,5 +393,5 @@ Pravidla složení (počty členů, věkové limity, právě jeden kapitán) jso
 ### Workshopy
 
 - Účastník má v jednom `WORKSHOP_BLOCK` nejvýše **jeden** běh.
-- `WORKSHOP.capacity` platí na běh (`WORKSHOP_OFFERING`), ne na workshop jako celek.
+- `WORKSHOP_OFFERING.capacity` platí na konkrétní běh, ne na workshop jako celek.
 - Bloky téže akce se nesmí časově překrývat.

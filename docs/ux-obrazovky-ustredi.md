@@ -12,7 +12,7 @@ Detailní specifikace obrazovek administrace ústředí (`/ustredi/...`). Naviga
 
 1. **Kandidáti na sloučení se jen navrhují, nikdy neslučují automaticky** — sloučení vzniká zdola (uživatel/rodič) a schvalují je dotčené strany; ústředí dohlíží, povoluje potlačené dvojice a jako jediné smí sloučení vrátit ([person-merge.md](person-merge.md)).
 2. **Regiony se nemažou** — jen se označí jako _sloučený_ / _zrušený_, historie se nepřepisuje ([region-lifecycle.md](region-lifecycle.md)).
-3. **Reporty jsou jen ke čtení** a region akce je **snapshot z okamžiku jejího vzniku** ([reports.md](reports.md)).
+3. **Reporty jsou jen ke čtení** a region akce je **snapshot z okamžiku první publikace** ([reports.md](reports.md)).
 4. **Reportovací sloučení ≠ skutečné sloučení osob** — nemění žádná data, počítá se jen v reportu Unikátní děti (R10).
 5. **ADM je napříč oddíly čtenář** — nevidí obsah dokumentů ani citlivá/zdravotní data mimo celostátní akce ústředí ([authorization.md](authorization.md)).
 
@@ -76,7 +76,7 @@ Detailní specifikace obrazovek administrace ústředí (`/ustredi/...`). Naviga
 - Karty: název, stav (aktivní / sloučený → nástupce / zrušený), počet oddílů. Přepínač „Zobrazit i sloučené a zrušené“.
 - Oddíly bez regionu + akce „Zařadit do regionu“; ústředí se tu nezobrazuje.
 - Detail: aktuální oddíly s akcí „Přesunout do jiného regionu“; časová osa příslušností — oddíl · od–do · kam odešel. Sloučený region jen ke čtení + odkaz na nástupce.
-- **Sloučení regionů:** dvoukrokový dialog — výběr ≥ 2 zdrojů, název **nového** nástupnického regionu, náhled dotčených oddílů a stálá vysvětlivka: „Historické reporty se nemění — region akce je snapshot z okamžiku jejího vzniku.“
+- **Sloučení regionů:** dvoukrokový dialog — výběr ≥ 2 zdrojů, název **nového** nástupnického regionu, náhled dotčených oddílů a stálá vysvětlivka: „Historické reporty se nemění — region akce je snapshot z okamžiku její první publikace.“
 
 **Stavy:**
 

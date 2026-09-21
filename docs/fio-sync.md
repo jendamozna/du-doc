@@ -17,7 +17,7 @@ Synchronizace je **volitelná vrstva**. Oddíl bez bankovního API plní `BANK_T
 - Ukládá se šifrovaný (`api_token_enc`, stejný mechanismus jako u `smtp_password_enc`); nikde se nezobrazuje ani nevypisuje do logů a chybových hlášek.
 - **O zapnutí synchronizace rozhoduje `provider`, token je jeho pověření.** Invariant platí obou směrech: `provider = 'fio'` vyžaduje vyplněný token, `provider = 'manual'` token i synchronizační pole vylučuje ([validation.md](validation.md) → **Platby**). „Odebrat token" proto není samostatný úkon — **vypnout synchronizaci znamená přepnout `provider` na `manual`**, což token smaže v téže operaci; zapnout znamená přepnout na `fio` a zároveň token zadat. Jediný přepínač, atomicky. Bez toho by šel sestavit stav `provider = 'fio'` bez tokenu, kdy se nic nestahuje, ale upomínky plateb běží dál ([notifications.md](notifications.md) → `EMAIL_PAYMENT_REMINDER`) — systém by urgoval platby, o kterých se nikdy nedozví, že dorazily.
 - **`provider` je režim, `sync_state` je zdraví** — dvě různé otázky. Vypršelý či odvolaný token na straně banky je `sync_state = 'error'`, **ne** přepnutí na `manual`: účet zůstává `fio`, joby dál zkoušejí, odejde alert a upomínky běží dál, protože jde o opravitelný výpadek, ne o změnu režimu. Přepsání tokenu (rotace) je běžná změna uvnitř `provider = 'fio'`.
-- Změnu `provider` provádí účetní nebo HVO. Mění tok peněz a maže pověření, proto se **zapisuje do `AUDIT_LOG`** ([audit-log.md](audit-log.md) → **Bankovní účet a synchronizace**). Přepnutí `fio → manual` se **neblokuje** ani u účtu s nespárovanými transakcemi — párování na režimu nezávisí ([payment-matching.md](payment-matching.md) → **Oddíl bez bankovního API**) a účetní může mít pádný důvod, třeba zrušení API na straně banky. Stažené transakce zůstávají; jejich původ drží `BANK_TRANSACTION.source`, takže po vyprázdnění `last_sync_at` se historie neztrácí.
+- Změnu `provider` provádí HVO. Mění tok peněz a maže pověření, proto se **zapisuje do `AUDIT_LOG`** ([audit-log.md](audit-log.md) → **Bankovní účet a synchronizace**). Přepnutí `fio → manual` se **neblokuje** ani u účtu s nespárovanými transakcemi — párování na režimu nezávisí ([payment-matching.md](payment-matching.md) → **Oddíl bez bankovního API**) a účetní může mít pádný důvod, třeba zrušení API na straně banky. Stažené transakce zůstávají; jejich původ drží `BANK_TRANSACTION.source`, takže po vyprázdnění `last_sync_at` se historie neztrácí.
 
 ## Přírůstkové stahování
 
@@ -51,32 +51,20 @@ Fio omezuje volání tokenem (řádově jedno za 30 s). Plánovaný job i ručn�
 - Během trvání problému se upozornění odešle nejvýše **jednou za 24 hodin**. Podmínku vyhodnotí evidence odeslaných e-mailů ([non-functional.md](non-functional.md) → **Odchozí e-maily**) — poslední `EMAIL_FIO_SYNC_FAILURE` pro daný účet; žádné pole na `BANK_ACCOUNT` k tomu netřeba. Po úspěšném běhu a novém dosažení prahu vznikne nový alert.
 - Běhy synchronizace se **nezapisují do `AUDIT_LOG`** — automatické stažení není lidské rozhodnutí ([audit-log.md](audit-log.md) → **Ruční evidence plateb**). Jeho stopu drží `last_sync_at`, `sync_state`, `sync_error` a `external_id` stažených pohybů.
 
-## Doplňková pole `BANK_ACCOUNT`
-
-Nad rámec polí uvedených v [datovém modelu](data-model.md) si integrace drží:
-
-| Pole                    | Význam                                        |
-| ----------------------- | --------------------------------------------- |
-| `sync_interval_minutes` | perioda stahování                             |
-| `token_set_at`          | den vložení tokenu — `date_from` prvního běhu |
-| `sync_error`            | text poslední chyby                           |
-
-`provider`, `api_token_enc`, `last_sync_at` a `sync_state` jsou naopak součástí [datového modelu](data-model.md) — jejich význam se definuje tam, ne zde.
-
 ## Mapování polí Fio → `BANK_TRANSACTION`
 
-| Fio                   | Pole                                  | Poznámka                                     |
-| --------------------- | ------------------------------------- | -------------------------------------------- |
-| ID pohybu             | `external_id`                         |                                              |
-| Datum                 | `date`                                |                                              |
-| Objem                 | `amount`                              | kladné = příchozí, záporné = odchozí         |
-| Protiúčet / kód banky | `sender_account` / `sender_bank_code` | protistrana bez ohledu na směr pohybu        |
-| Název protiúčtu       | `sender_name`                         | totéž — u vratky jde o příjemce              |
+| Fio                   | Pole                                  | Poznámka                                       |
+| --------------------- | ------------------------------------- | ---------------------------------------------- |
+| ID pohybu             | `external_id`                         |                                                |
+| Datum                 | `date`                                |                                                |
+| Objem                 | `amount`                              | kladné = příchozí, záporné = odchozí           |
+| Protiúčet / kód banky | `sender_account` / `sender_bank_code` | protistrana bez ohledu na směr pohybu          |
+| Název protiúčtu       | `sender_name`                         | totéž — u vratky jde o příjemce                |
 | VS / SS               | `vs` / `ss`                           | ukládá se bez počátečních nul (viz **Rozsah**) |
-| Zpráva pro příjemce   | `message`                             |                                              |
-| Typ pohybu            | `transaction_type`                    |                                              |
-| —                     | `bank_account_id`                     | účet, za který job běží                      |
-| —                     | `source`                              | konstanta `import`                           |
-| —                     | `imported_at`                         | čas zpracování jobem                         |
+| Zpráva pro příjemce   | `message`                             |                                                |
+| Typ pohybu            | `transaction_type`                    |                                                |
+| —                     | `bank_account_id`                     | účet, za který job běží                        |
+| —                     | `source`                              | konstanta `import`                             |
+| —                     | `imported_at`                         | čas zpracování jobem                           |
 
 Prefix `sender_` je historický — sloupce drží **protistranu**, tedy u příchozí platby odesílatele a u odchozí vratky příjemce.

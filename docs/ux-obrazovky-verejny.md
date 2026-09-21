@@ -28,7 +28,7 @@ Detailní specifikace obrazovek veřejného portálu a tokenových stránek. Nav
 
 **Interakce a validace:** celá karta je dotyková plocha; bez hledání a stránkování (malý počet akcí).
 
-**Oprávnění:** veřejné, bez omezení ([ux-navigace.md](ux-navigace.md) § 5.1).
+**Oprávnění:** veřejné, bez omezení ([ux-navigace.md](ux-navigace.md) § 2.1).
 
 **Mobil/desktop:** mobil karty přes celou šířku, filter chips ve vodorovném scrollu; desktop mřížka.
 
@@ -58,7 +58,7 @@ Detailní specifikace obrazovek veřejného portálu a tokenových stránek. Nav
 
 **Interakce a validace:** CTA vede na `/akce/:slug/prihlaska` (u plné akce s příznakem náhradníka). Sdílení kopíruje URL detailu + snackbar „Odkaz zkopírován“.
 
-**Oprávnění:** veřejná akce vždy; neveřejná jen přes platný `share_slug`, jinak 404 ([ux-navigace.md](ux-navigace.md) § 5.1).
+**Oprávnění:** veřejná akce vždy; neveřejná jen přes platný `share_slug`, jinak 404 ([ux-navigace.md](ux-navigace.md) § 2.1).
 
 **Mobil/desktop:** ceník scrolluje ve vlastním kontejneru; sticky CTA vždy viditelné.
 
@@ -73,7 +73,7 @@ Detailní specifikace obrazovek veřejného portálu a tokenových stránek. Nav
 **Obsah a pole:**
 
 - Společné: **kontaktní e-mail** (`REGISTRATION.contact_email`) — na něj chodí potvrzení a tokenový odkaz. U plné akce je nad souhrnem výrazně uvedeno: „Místo není jisté. Uvolní-li se, vedoucí vybere náhradníka a pošleme vám nabídku na 48 hodin.“
-- Per účastník: jméno* · příjmení* · **datum narození\*** · **typ účastníka\*** (dle ceníku) · volitelné číselníky akce s příplatkem v popisku · **e-mail zákonného zástupce\*** jen když z data narození plyne nezletilost, s textem „Zástupce musí přihlášku potvrdit e-mailem. Do potvrzení není místo rezervované.“
+- Per účastník: jméno* · příjmení* · **datum narození\*** · volitelné číselníky akce s příplatkem v popisku · **e-mail zákonného zástupce\*** jen když z data narození plyne nezletilost, s textem „Zástupce musí přihlášku potvrdit e-mailem. Do potvrzení není místo rezervované.“ **Typ účastníka se nezadává** — systém ho odvodí podle pořadí pravidel ([validation.md](validation.md#ceny-a-storna): role v pořádajícím oddílu, vazba na vedoucího, DU členství, vazba na oddíl) a rovnou dopočítá výslednou cenu; formulář ho zobrazí jen jako výsledek v souhrnu ceny, nikdy jako volbu k výběru.
 - Cena účastníka se přepočítává živě při každé volbě.
 
 **Stavy:**
@@ -89,7 +89,7 @@ Detailní specifikace obrazovek veřejného portálu a tokenových stránek. Nav
 
 **Mobil/desktop:** správné klávesnice a autofill; na mobilu otevřený vždy jen jeden blok účastníka.
 
-**Notifikace:** po odeslání `EMAIL_REG_CONFIRM` (potvrzení), u nezletilého `EMAIL_REG_CONFIRM_MINOR` zástupci ([notifications.md](notifications.md)).
+**Notifikace:** po odeslání `EMAIL_REG_CONFIRM` (potvrzení); u nezletilého bez zákonného zástupce navíc zákonnému zástupci `EMAIL_GUARDIAN_REQUEST`; nezletilému `EMAIL_REG_CONFIRM_MINOR`, má-li doručovací kontakt ([notifications.md](notifications.md)).
 
 ## 5. A-04 · Potvrzení po odeslání — `/akce/:slug/potvrzeni`
 
@@ -133,7 +133,7 @@ Detailní specifikace obrazovek veřejného portálu a tokenových stránek. Nav
 
 **Interakce a validace:** dvě akce — schválení na jeden klik, zamítnutí přes potvrzovací krok s volitelným důvodem (guard proti omylu). Obojí lze jen ve stavu `PendingGuardian` a v rámci lhůty; po kterékoli akci se token zneplatní a tlačítka zmizí.
 
-**Oprávnění:** výhradně držitel schvalovacího tokenu; token opravňuje jen ke schválení nebo zamítnutí jedné přihlášky ([ux-navigace.md](ux-navigace.md) § 5.1).
+**Oprávnění:** výhradně držitel schvalovacího tokenu; token opravňuje jen ke schválení nebo zamítnutí jedné přihlášky ([ux-navigace.md](ux-navigace.md) § 2.1).
 
 **Mobil/desktop:** celý obsah na jednu obrazovku bez scrollu.
 
@@ -143,7 +143,7 @@ Detailní specifikace obrazovek veřejného portálu a tokenových stránek. Nav
 
 **Účel a publikum:** jedna stránka, která vždy odpoví: jaký je stav, která brána blokuje a co je další krok. Centrální obrazovka plochy A; **tatáž sdílená komponenta** jako `/muj-ucet/prihlasky/:pid` a admin detail přihlášky ([ux-texty-stavy.md](ux-texty-stavy.md)).
 
-**Layout a komponenty:** hlavička (jméno účastníka, akce, termín, stavový chip); checklist bran (zástupce → dokumenty → platba); karty **Účastníci** (jen u vícečlenné přihlášky), **Dokumenty**, **Platba**, **Akce s přihláškou**.
+**Layout a komponenty:** hlavička (jméno účastníka, akce, termín, stavový chip); checklist bran (zástupce → dokumenty → platba) u běžící přihlášky; u náhradníka pouze informace, že se dokumenty a platba odemknou po přijetí nabídky místa; karty **Účastníci** (jen u vícečlenné přihlášky), **Dokumenty**, **Platba**, **Akce s přihláškou**.
 
 **Obsah a pole:**
 
@@ -152,7 +152,7 @@ Detailní specifikace obrazovek veřejného portálu a tokenových stránek. Nav
 - **Platba:** cena s rozpadem, přijaté platby, „Zbývá zaplatit“, splatnost, **QR na zbývající částku** + údaje (účet, částka, VS, SS, zpráva) s kopírováním po řádcích. Upozornění „Plaťte přesnou částku — platby se párují na korunu přesně“ ([payment-matching.md](payment-matching.md)).
 - **Akce s přihláškou:** „Přidat dalšího účastníka“ (→ formulář A-03 pro tutéž akci) · „Stornovat přihlášku“ → dialog storna s náhledem poplatku k dnešku, textem o nevratnosti a povinným potvrzením.
 
-**Stavy:** obrazovka zvládá všech devět stavů životního cyklu ([ux-texty-stavy.md](ux-texty-stavy.md) § 1): `Paid`, `PendingGuardian` (dokumenty a platba zamčené), `PendingDocuments`, `PendingPayment`, `PartialPaid`, `Overpayment`, `Canceled`/`Expired` (jen ke čtení + „Přihlásit znovu“, dokud je okno otevřené), náhradník (brány viditelné, ale zamčené). Prázdné/načítací/chybové vzory dle [ux-texty-stavy.md](ux-texty-stavy.md) § 4–5.
+**Stavy:** obrazovka zvládá všech devět stavů životního cyklu ([ux-texty-stavy.md](ux-texty-stavy.md) § 1): `Paid`, `PendingGuardian` (dokumenty a platba zamčené), `PendingDocuments`, `PendingPayment`, `PartialPaid`, `Overpayment`, `Canceled`/`Expired` (jen ke čtení + „Přihlásit znovu“, dokud je okno otevřené), náhradník (dokumenty a platba se zobrazí jako odemknutelné až po přijetí nabídky). Prázdné/načítací/chybové vzory dle [ux-texty-stavy.md](ux-texty-stavy.md) § 4–5.
 
 **Interakce a validace:** každá mutace → snackbar + `evaluate()` + překreslení chipu a checklistu. Zamítnutí dokumentu vrací přihlášku do `PendingDocuments` i ze `Paid`; obrazovka to vysvětlí „Platba se nikam neztratila, jen je znovu potřeba dokument.“
 

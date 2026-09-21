@@ -59,7 +59,7 @@ flowchart TD
 - **Vedoucí družiny** je funkce osoby v teamu, ne role oddílu. HVO jí může pověřit člena týmu s rolí VO nebo RÁD.
 - **Zákonný zástupce není role** — postavení zákonného zástupce se **odvozuje z aktivní vazby zákonný zástupce ↔ dítě**. Rozsah práv je vždy **per dítě**, ne globální; role se proto nepřiděluje ani neodebírá a nemůže se rozejít se skutečným stavem vazby (zrušení, přechod do režimu jen pro čtení po zletilosti dítěte).
 - VO a RÁD nemají pevná globální práva, oprávnění se přidělují u akce / v rámci družin.
-- **Vedoucí akce** je funkce osoby v teamu, ne role oddílu. HVO jí může pověřit člena týmu s rolí VO nebo RÁD; vedoucí akce pak u přihlášek své akce vidí konkrétní předepsanou, uhrazenou a zbývající částku. Nevidí bankovní transakce ani platební údaje mimo svou akci.
+- **Vedoucí akce** je funkce osoby v teamu, ne role oddílu. HVO jí může pověřit člena týmu s rolí VO nebo RÁD; vedoucí akce s rolí VO tím nad rámec svého běžného rozsahu navíc vidí konkrétní předepsanou, uhrazenou a zbývající částku u přihlášek své akce. U role RÁD funkce žádný rozsah nerozšiřuje — příznak uhrazeno/neuhrazeno vidí ve svém běžném rozsahu (družina nebo aktivní přiřazení) stejně jako bez této funkce ([docs/authorization.md](docs/authorization.md) → **Finanční údaje**). Nevidí bankovní transakce ani platební údaje mimo svou akci.
 - Úplnou matici oprávnění (akce × role × scope) viz [docs/authorization.md](docs/authorization.md).
 
 #### Účetní oddílu
@@ -92,12 +92,12 @@ flowchart TD
 
 #### Rádce
 
-- člen oddílu ve věku nejméně 15 let s vyplněným e-mailem a vazbou na zákonného zástupce
+- člen oddílu ve věku nejméně 15 let s vyplněným e-mailem; je-li nezletilý, vyžaduje se navíc vazba na zákonného zástupce. Rádce nemá horní věkovou hranici — u zletilého kandidáta s dřívější vazbou (`readonly_after_adulthood`) tato vazba dál stačí, u kandidáta bez jakékoli vazby se od zletilosti nevyžaduje.
 - **Vznik role:** HVO odešle dítěti pozvánku; role i případný účet vzniknou až jejím přijetím dítětem.
 - **Rádce právně odpovídá za své činy v systému.** V auditním logu je aktérem vždy Rádce, ne jeho zákonný zástupce.
 - **Na akce svého oddílu se přihlašuje sám** — na rozdíl od ostatních nezletilých účastníků může RÁD podat vlastní přihlášku bez schválení zákonným zástupcem. Jedná se o výjimku z pravidla schvalování zákonným zástupcem pouze pro vlastní účast na akcích svého oddílu.
 - **Vidí údaje dětí, které k práci rádce potřebuje** — kontakty, informace o dítěti i **zdravotní údaje (alergie, diety, ADHD apod.)**, a to jen v rámci svých přiřazených družin a zdravotních údajů účastníků akcí, ke kterým je přiřazený. RÁD bez přiřazené družiny stále vidí základní detail akcí svého oddílu a seznam přihlášených, ale toto základní čtení samo o sobě nezpřístupňuje zdravotní údaje, dokumenty ani platební atributy.
-- Nevidí částky ani platební detaily; může vidět pouze stav úhrady (uhrazeno / neuhrazeno).
+- **K platebním údajům přístup nemá** — ani u akcí, ke kterým je přiřazený, ani sjednocením s jinou rolí, ani jako **Vedoucí akce** (viz výše): v rozsahu své družiny nebo aktivního přiřazení vidí u přihlášky jen provozní příznak uhrazeno/neuhrazeno (funkce Vedoucí akce tento rozsah nerozšiřuje), nikdy předepsanou ani zbývající částku, slevy, storno poplatky, přeplatky, vratky, bankovní účet ani jednotlivé transakce ([docs/authorization.md](docs/authorization.md) → **Finanční údaje**).
 - Může otevřít obsah nahraných dokumentů k přihláškám v rozsahu svých přiřazených akcí a družiny.
 - Zapisuje docházku a vyplňuje chytré sloupce (pomocnou evidenci) — v rozsahu, který je u sloupce nastavený (viz **Pomocná evidence**).
 - V jedné družině může působit více osob s rolí RÁD.
@@ -116,13 +116,13 @@ flowchart TD
 - Po dosažení zletilosti se zastoupení zákonnými zástupci přepne do režimu jen pro čtení. Výjimkou je doplnění kontaktního e-mailu dítěte, pokud chybí — slouží k doručení výzvy k převzetí účtu. Zletilý člen může přístup zákonným zástupcům kdykoli zcela zrušit.
 - Vazbu může zrušit sám zákonný zástupce (vystoupení), případně HVO na žádost; zrušení se loguje. Zůstane-li nezletilé dítě bez navázaného zákonného zástupce, jeho údaje a přihlášky spravuje HVO, dokud se nepřipojí nový zákonný zástupce.
 - Oba zákonní zástupci mají plná práva, platí poslední zápis.
-- Druhého zákonného zástupce přidává stávající zákonný zástupce nebo HVO pozvánkou (e-mailem). Vazba vznikne přijetím pozvánky druhým zákonní zástupcim. Nemá-li dítě žádného navázaného zákonní zástupci, schvaluje připojení HVO, kde je dítě evidováno.
+- Druhého zákonného zástupce přidává stávající zákonný zástupce nebo HVO pozvánkou (e-mailem). Vazba vznikne přijetím pozvánky druhým zákonným zástupcem. Nemá-li dítě žádného navázaného zákonného zástupce, schvaluje připojení HVO, kde je dítě evidováno.
 - Přesná pravidla přechodů, guardy a práva podle stavu viz [docs/parent-child-lifecycle.md](docs/parent-child-lifecycle.md).
 
 ### Osoba vs. uživatelský účet
 
 - Oddělujeme dvě entity:
-  - **Osoba** = datový subjekt / účastník; může existovat bez přihlášení (host, nezletilé dítě spravované zákonní zástupcim)
+  - **Osoba** = datový subjekt / účastník; může existovat bez přihlášení (host, nezletilé dítě spravované zákonným zástupcem)
   - **Účet (uživatel)** = přihlašovací identita (heslo / OAuth), navázaná právě na jednu osobu
 - Jedna osoba má nejvýše jeden účet
 - **Údaje osoby**: jméno, příjmení, přezdívka, tituly před a za jménem, pohlaví, datum narození, kontaktní e-mail, adresa trvalého bydliště a zdravotní pojišťovna. Vyplňují se podle potřeby akce (např. tituly a adresa u akcí s certifikátem); cokoli nad tento rámec patří do **chytrých sloupců** oddílu.
@@ -174,7 +174,7 @@ flowchart TD
 
 - Systém ověřuje správnost českých **křestních jmen** podle seznamu (spravovaného administrátorem), nabízí možnost přidání výjimky HVO v rámci oddílu. Příjmení se proti seznamu neověřují.
 - Osobě s účtem se zobrazí možný kandidát na propojení (z jiného oddílu). Účet zadá Žádost o sloučení. Systém rozešle emailem žádost - iniciátorovi, HVO druhého oddílu a případně i účtu kandidáta na propojení. Po odsouhlasení všemi stranami (HVO se zobrazí pro porovnání náhled obou osob) může uživatel pokračovat se spojením: Záznamy obou osob se spojí do jedné osoby, konflikt základních polí se řeší volbou A/B, účet se naváže na sjednocenou osobu, pokud obě osoby mají účet, pak druhý účet se zruší (uživatel vybere), citlivá data zůstávají per oddíl, OAuth identity se přenesou pod ponechaný účet.
-- Podobně se zpracuje duplicitní dítě, které se zobrazí zákonnými zástupci s tím, že další strana je zákonný zástupce dítěte kandidáta a výsledek nespojí účty zákonných zástupců do jednoho, jen osobu dítěte. Nemá-li dítě žádného navázaného zákonní zástupci, schvaluje připojení HVO, kde je dítě evidováno.
+- Podobně se zpracuje duplicitní dítě, které se zobrazí zákonnými zástupci s tím, že další strana je zákonný zástupce dítěte kandidáta a výsledek nespojí účty zákonných zástupců do jednoho, jen osobu dítěte. Nemá-li dítě žádného navázaného zákonného zástupce, schvaluje připojení HVO, kde je dítě evidováno.
 - Systém loguje, kdo kdy které osoby spojil, je možné zrušit merge pro nápravu chybného spojení.
 - Konflikt se řeší **pole po poli** — je-li jedna strana prázdná, vyhrává vyplněná hodnota; liší-li se, musí člověk vybrat. Nabízí se jen výběr z obou hodnot, ne ruční přepsání, aby šlo sloučení věrně vrátit zpět.
 - **Zrušení sloučení vrátí jen to, co v okamžiku sloučení existovalo.** Záznamy vzniklé až potom (nová přihláška, platba, členství) zůstanou u sjednocené osoby; systém je vypíše před potvrzením, ne až po něm.
@@ -186,7 +186,6 @@ flowchart TD
 - **Členství je globální vůči osobě a roku** — osoba má nejvýše jedno členství DU za kalendářní rok v celém systému, bez ohledu na to, v kolika oddílech je evidovaná.
 - Součástí záznamu je **evidenční oddíl**, který členství založil. Slouží k dohledatelnosti a k výkaznictví (report se ptá, který oddíl člena vykázá), **neomezuje ale platnost členství**.
 - **Platné členství DU se uznává ve všech oddílech, kde je osoba evidovaná** — cena pro členy DU i podmínky způsobilosti platí i na akcích jiného oddílu než toho evidenčního. Přesun osoby mezi oddíly v průběhu roku členství nezaniká ani nezakládá nové.
-- Osoba se může stát členem DU od ledna následujícího roku po zaplacení příspěvku do listopadu.
 - **Oddíl může vybírat členský příspěvek přes registrační systém** přímo od svých registrovaných členů nebo jejich zákonných zástupců. HVO pro rok nastaví lokální složku příspěvku; systém členovi vystaví jeden předpis a platební QR kód na účet oddílu.
 - **Předpis oddílového členského příspěvku se skládá ze dvou složek:** příspěvek DU podle celostátní sazby a lokální příspěvek na provoz oddílu. Částky se ukládají jako neměnný snapshot, aby pozdější změna sazby nepřepsala již vystavené nebo uhrazené předpisy. Má-li osoba už pro daný rok platné členství DU z jiného oddílu, předpis obsahuje jen lokální složku.
 - **Úhrada od člena nejprve kryje složku DU, potom lokální složku.** HVO může do dávky pro ústředí zařadit pouze osobu, pro niž oddíl vybral celou složku DU; lokální část zůstává oddílu. Systém pak z těchto osob spočítá částku a vygeneruje **jeden QR kód pro hromadnou platbu** na účet ústředí.
@@ -211,7 +210,7 @@ flowchart TD
   - **Sloučení (A + B → C)** – zdrojové regiony se označí jako _sloučené_ s odkazem na nástupnický region; všem oddílům z A i B se uzavře příslušnost a otevře nová na C.
   - **Rozdělení** – opačná operace ke sloučení.
 - Regiony se **nemažou**, jen označí stavem _sloučený / zrušený_ — kvůli zachování historie.
-- **Reporty (snapshot):** region oddílu/akce se zaznamenává jako **snapshot na akci v okamžiku jejího vzniku**. Pozdější přesun oddílu nebo sloučení regionu **nemění už existující reporty**; nové akce počítají podle aktuálního zařazení. _Modul reporty ústředí_ tím získá dimenzi „region".- Stavy regionu, guardy operací a invarianty verzované příslušnosti viz [docs/region-lifecycle.md](docs/region-lifecycle.md).
+- **Reporty (snapshot):** region oddílu/akce se zaznamenává jako **snapshot na akci v okamžiku její první publikace** (`draft` → `published`), ne při založení konceptu. Pozdější přesun oddílu nebo sloučení regionu **nemění už existující reporty**; nové akce počítají podle aktuálního zařazení. _Modul reporty ústředí_ tím získá dimenzi „region".- Stavy regionu, guardy operací a invarianty verzované příslušnosti viz [docs/region-lifecycle.md](docs/region-lifecycle.md).
 
 ### Oddíl
 
@@ -235,7 +234,7 @@ flowchart TD
 
 ### Konfigurace akce
 
-- Hlavní vedoucí vytváří akce
+- Akce vytváří HVO nebo VO s aktivní oddílovou delegací create_event.
 - **Při založení akce, nebo při její úpravě s oprávněním `can_edit_event`, HVO nebo Vedoucí vyplňuje:**
   - stav akce,
   - název a typ akce,
@@ -263,7 +262,7 @@ flowchart TD
 - **Přihláška oddílu na akci ústředí:** organizátor může u libovolné akce ústředí s přihláškami zapnout režim přihlášky oddílů (`unit_registration_enabled`); nejde o samostatný typ akce. HVO nebo VO založí za svůj oddíl jednu `UNIT_REGISTRATION` a získá sdílený odkaz, který předá zákonným zástupcům. Zástupce přes odkaz přidá své dítě a dokončí jeho běžnou `REGISTRATION`; vedoucí může předem založit základní záznam a dítě nebo jeho zástupce jej následně doplní a potvrdí. Oddílová přihláška nemá vlastní cenu, platbu ani místo v kapacitě — každé dítě má vlastní stav, dokumenty, cenu a platbu a do kapacity se započítává samostatně po potvrzení. Vedoucí ji může spravovat a uzavřít do konce přihlašování; uzavření zabrání dalšímu přidávání, existující individuální přihlášky tím nestornuje. Režim neobchází schválení zákonného zástupce.
 - **Veřejný seznam oddílů:** u publikované akce se stavem `published`, viditelností `public` a zapnutým režimem přihlášek oddílů portál zobrazí jen názvy otevřených oddílových přihlášek. Účastník nebo jeho zákonný zástupce vybere oddíl a přihlášku dokončí v běžném toku; vzniká individuální `REGISTRATION` pod vybraným oddílem. Veřejný seznam nezobrazuje vedoucího, seznam účastníků ani jejich počet.
 - **Základní čtení akce:** každý aktivní **Vedoucí (VO)** a **Rádce (RÁD)** vidí v rámci svého oddílu detail akce a seznam přihlášených, i když k akci není přiřazený a nezúčastní se její organizace. Základní čtení neobsahuje platební atributy, zdravotní údaje ani obsah nahraných dokumentů.
-- **Tým akce:** tvoří jej jen konkrétní **Vedoucí (VO)** a **Rádci (RÁD)** přiřazení k akci. HVO může jednomu či více členům týmu určit roli **Vedoucí akce**. Každému členu týmu nastaví rozsah oprávnění — úprava akce, úprava přihlášek, úprava cen a storen, zápis docházky. Vedoucí akce navíc vidí předepsanou, uhrazenou a zbývající částku u přihlášek své akce. Eviduje se, kdo a kdy přiřazení založil. **Účetní oddílu se do týmu akce nezařazuje** — má oprávnění pro celý oddíl (viz **Účetní oddílu**).
+- **Tým akce:** tvoří jej jen konkrétní **Vedoucí (VO)** a **Rádci (RÁD)** přiřazení k akci. HVO může jednomu či více členům týmu určit roli **Vedoucí akce**. Každému členu týmu nastaví rozsah oprávnění — úprava akce, úprava přihlášek, úprava cen a storen, zápis docházky. Vedoucí akce s rolí VO navíc vidí předepsanou, uhrazenou a zbývající částku u přihlášek své akce; s rolí RÁD funkce nic nerozšiřuje — vidí jen provozní příznak uhrazeno/neuhrazeno ve svém běžném rozsahu (družina nebo aktivní přiřazení). Eviduje se, kdo a kdy přiřazení založil. **Účetní oddílu se do týmu akce nezařazuje** — má oprávnění pro celý oddíl (viz **Účetní oddílu**).
 - **Přiřazení je verzované a nemaže se** — odebrání přístupu záznam jen uzavře (kdo a kdy odebral), změna rozsahu oprávnění uzavře starý a založí nový. I po letech tak lze zjistit, **kdo měl k akci a jejím přihláškám přístup a v jakém období**. Retenci určuje vlastní řádek v tabulce **Retence a GDPR** (10 let), ne 3letá lhůta auditního logu.
 - Každá akce může být svazána s maximálně jedním bankovním účtem. **Placenou akci nelze publikovat bez něj** — jinak by výzva k platbě odešla bez čísla účtu. Akce zdarma účet nepotřebuje; stačí účet oddílu bez bankovního API. Má-li oddíl jediný účet, předvyplní se; nemá-li žádný, je nutné ho nejdřív založit.
 - Každá akce může mít místo konání vybrané z lokací oddílu (GPS)
@@ -283,7 +282,7 @@ Obecný, znovupoužitelný mechanismus: vedoucí u libovolné akce nadefinuje **
 - Položku může zvolit buď **nejvýše jeden účastník** (např. konkrétní lůžko), nebo **více účastníků** — pak počet omezuje **kapacita položky** (např. ubytovací kapacita budovy). Po naplnění se položka přestane nabízet.
 - Číselník může být **jednovýběrový** (typ ubytování) i **vícevýběrový** (výběr jídel).
 - **Podmínka způsobilosti** (např. věk, členství DU, role) číselník skryje těm, kdo ji nesplňují.
-- **Povinný číselník** má určeno, kdy nejpozději musí účastník volbu provést: při odeslání přihlášky (výchozí), před výzvou k platbě, nebo před konáním akce. U **náhradníka** se povinný výběr (stejně jako dokumenty) vynucuje až po přijetí nabídky z náhradnického místa.
+- **Povinný číselník** má určeno, kdy nejpozději musí účastník volbu provést: při odeslání přihlášky (výchozí), nebo kdykoli před konáním akce. U **náhradníka** se povinný výběr (stejně jako dokumenty) vynucuje až po přijetí nabídky z náhradnického místa.
 - Položka může mít **cenový příplatek** (i nulový nebo záporný): **výsledná cena = základní cena podle typu účastníka + součet příplatků zvolených položek.**
 - Číselník vyplňuje buď **účastník** sám při přihlášení, nebo ho **vedoucí** přiřazuje ručně mimo samoobslužný výběr (např. dodatečné přidělení konkrétního místa).
 
@@ -327,7 +326,6 @@ Tím se stejným modelem pokryje **ubytování** (jednovýběrový číselník b
 - **výchozí hodnoty** cen podle typu účastníka, splatnosti, storno termínů, kapacity a počtu náhradníků, podpory dobrovolníků, referenčního data pro výpočet věku (**věk ke konci roku** vs. k datu akce).
 
 - **Rozsah šablony:** systémové šablony spravuje ADM (ústředí) a jsou dostupné všem oddílům; oddíl si může nad jejich rámec založit vlastní (unit-scoped) šablony.
-- Šablony jsou vstupem pro AI návrh nové akce (viz [AI_support.md](AI_support.md)) — předvyplní název, termíny a storno podle typu.
 
 #### Hlídky na závodních akcích (Stezka)
 
@@ -338,12 +336,12 @@ Akce typu **Stezka** umožní z přihlášených osob sestavit **hlídky** (dru�
 - **Výpočet věku:** volba akce určuje, zda se věk počítá **ke konci roku** (výchozí), nebo **k datu konání akce**. Chybí-li datum narození, člena nelze plně ověřit a kontrola složení to hlásí.
 - **Kategorie a pravidla složení:**
 
-| Kategorie         | Počet členů | Způsobilost                  | Věková pravidla                                    |
-| ----------------- | ----------- | ---------------------------- | -------------------------------------------------- |
-| **Stezka**        | přesně 3    | každý závodník               | nejstarší ≤ 16; součet věků ≤ 42                   |
-| **Pěšinka**       | přesně 3    | každý závodník               | nejstarší ≤ 12                                     |
-| **Šerpa s dětmi** | 3–4         | závodník / šerpa / dítě < 16 | právě 1 doprovod ≥ 16; 1–3 děti (věk < 4 nebo > 8) |
-| **Pocestní**      | 2–3         | každý závodník               | nejmladší ≥ 9                                      |
+| Kategorie         | Počet členů | Způsobilost                  | Věková pravidla                                     |
+| ----------------- | ----------- | ---------------------------- | --------------------------------------------------- |
+| **Stezka**        | přesně 3    | každý závodník               | nejstarší ≤ 16; součet věků ≤ 42                    |
+| **Pěšinka**       | přesně 3    | každý závodník               | nejstarší ≤ 12                                      |
+| **Šerpa s dětmi** | 3–4         | závodník / šerpa / dítě < 16 | právě 1 doprovod ≥ 16; 1–3 děti (věk od 4 do 8 let) |
+| **Pocestní**      | 2–3         | každý závodník               | nejmladší ≥ 9                                       |
 
 - **Kontrola konzistence:** poruší-li hlídka pravidla složení po změně údajů některého člena (věk, příznak závodníka, kategorie), **hlídka se rozpustí** — všichni členové se odpojí, hlídka zanikne a vlastník je informován s důvodem.
 - **Připomínka:** N dní před akcí systém upozorní vedoucí na závodníky bez hlídky.
@@ -363,7 +361,7 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 
 - Účastník, který nemá účet, získá přihláškou odkaz, kterým si může účet založit (po založení se účet propojí s existující osobou) a spravovat své přihlášky (storno, měnit nebo přidávat další účastníky)
 - **Mentor a doporučení:** tento proces se použije výhradně u akce typu **Mentor a doporučení**. Při podání se pro každého účastníka volitelně vyplní jméno a e-mail mentora. Nemá-li účastník žádnou aktivní vazbu `PERSON_UNIT`, **povinně** se vyplní e-mail hlavního vedoucího. Má-li jednu aktivní vazbu na oddíl, systém e-mail hlavního vedoucího odvodí z aktivní role HVO tohoto oddílu; při více aktivních vazbách registrující vybere oddíl, od něhož doporučení vyžádá. E-mail HVO se v tomto případě ručně nezadává. Po úspěšném vytvoření přihlášky a potvrzení e-mailu registrujícího systém pro každý vyplněný nebo odvozený kontakt vytvoří jednorázový token a odešle příslušnou žádost. Žádost ani její potvrzení **nejsou bránou životního cyklu přihlášky** a neovlivňují kapacitu, dokumenty ani platbu. Mentor potvrzením uloží čas přijetí role; hlavní vedoucí přes odkaz vyplní dvě povinné odpovědi, každou nejvýše 600 znaků: proč má účastník na akci jet a proč na ni chce jet účastník. Po odeslání se token zneplatní, odpovědi se už přes veřejný odkaz nemění a hlavní vedoucí dostane jejich kopii e-mailem. Změní-li registrující mentora, systém zruší předchozí potvrzení, zneplatní jeho token, vytvoří nový a pošle novou žádost; změna se loguje.
-- **Nezletilý účastník (< 18 let):** přihlašuje-li se nezletilý sám (nemá navázaného zákonní zástupci, který přihlášku provádí), musí v přihlášce zadat **e-mail zákonného zástupce**. Systém pošle zástupci žádost o schválení; přihláška **čeká na schválení zástupcem** a nezapočítává se do kapacity, dokud zástupce neschválí (odkazem v e-mailu). Po schválení přihláška pokračuje standardním tokem (výzva k platbě apod.); neschválí-li zástupce do vypršení, přihláška expiruje. Schválením vzniká vazba zákonný zástupce ↔ dítě. Chybí-li datum narození, přihlášku nelze vyhodnotit a systém e-mail zástupce vyžádá.
+- **Nezletilý účastník (< 18 let):** přihlašuje-li se nezletilý sám (nemá navázaného zákonného zástupce, který přihlášku provádí), musí v přihlášce zadat **e-mail zákonného zástupce**. Systém pošle zástupci žádost o schválení; přihláška **čeká na schválení zástupcem** a nezapočítává se do kapacity, dokud zástupce neschválí (odkazem v e-mailu). Po schválení přihláška pokračuje standardním tokem (výzva k platbě apod.); neschválí-li zástupce do vypršení, přihláška expiruje. Schválení tokenem vždy schválí konkrétní přihlášku. Vazba na dítě vznikne jako active, pokud dítě nemá aktivního zástupce, jinak jako pending. Stav vazby už zpětně neblokuje schválenou přihlášku. Chybí-li datum narození, přihlášku nelze vyhodnotit a systém e-mail zástupce vyžádá.
 - **Oddílová přihláška není hromadné přihlášení vedoucím:** pod ní vznikají individuální přihlášky dětí. Každá se vyhodnocuje samostatně včetně brány zákonného zástupce, dokumentů, kapacity a platby; vedoucí nemůže jedním úkonem potvrdit účast za všechny děti.
 - **Povinné dokumenty:** každý dokument má konkrétní typ a může mít dobu platnosti. Akce může vyžadovat dokument k jedné přihlášce (např. souhlas zákonného zástupce) nebo konkrétní typ trvalého dokumentu osoby (např. **potvrzení o lékařské způsobilosti**, kopie průkazu pojišťovny). Je-li u osoby dokument požadovaného typu platný po celou dobu akce, systém jej při podání přihlášky automaticky přiřadí. Chybí-li dokument nebo skončila-li jeho platnost před koncem akce, systém zákonnému zástupci zobrazí varování a nabídne nahrání nového dokumentu; stejnou informaci vidí zletilý účastník u vlastní přihlášky. Dokumenty k jedné přihlášce lze nahrávat **postupně nebo najednou**. Dokud nejsou všechny povinné dokumenty splněné, přihláška **čeká na dokumenty**. **Náhradník** dokumenty nahrává nebo vybírá až **po schválení přihlášky** (po přijetí nabídky z náhradnického místa) — do té doby je nahrávání uzamčené.
 - **Schvalování dokumentů:** vedoucí u každého nahraného dokumentu vidí stav a dokument buď **schválí**, nebo **zamítne s komentářem** (např. nečitelný, prošlý, nesprávný dokument). Zamítnutí se zaznamená včetně toho, kdo a kdy posoudil, a **e-mailem vyzve účastníka k opětovnému nahrání**. Přihláška zůstává (příp. se vrátí) do stavu čekání na dokumenty, dokud nejsou všechny povinné dokumenty schválené. Nahrání lze vyžádat i připomínkou.
@@ -382,7 +380,7 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 - Docházkový záznam má právě jeden stav: **Přišel včas**, **Přišel pozdě**, **Nepřišel** nebo **Nepřišel – omluven předem**. Nezapsaná osoba nemá žádný docházkový záznam a zůstává odlišená od nepřítomnosti.
 - U stavu **Nepřišel** vedoucí uvede důvod: nemoc, rodinné důvody, jiný kroužek, škola, učí se, zapomněl, zaracha, bez motivace nebo jiný. Omluva předem je samostatný stav a důvod nevyžaduje.
 - Při evidenci dobrovolníků je možné zadat počet hodin — vždy na docházkovém záznamu téže akce
-- Systém rozděluje Krátkodobé dobrovolníky (pod 50 hod.) a dlouhodobé (nad 50 hod.)
+- Systém rozděluje Krátkodobé dobrovolníky a dlouhodobé (50h výchozí hodnota, 50 hodin a více = dlouhodobí)
 - Zápis docházky je **samostatné oprávnění na akci** — může ho mít i Rádce, který nemá přístup k platbám.
 
 #### Reporty
@@ -390,7 +388,7 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 - Seznam akcí/schůzek, docházka členů/nečlenů/vedoucích/rádců/dobrovolníků
 - Počty členů v čase — vývoj registrovaných členů / členů DU / hostů po měsících nebo letech (růst/úbytek oddílu).
 - Účast na akcích — kolik lidí chodí na akce v jednotlivých obdobích, naplněnost kapacit, podíl náhradníků.
-- Docházka — průměrná návštěvnost pravidelných schůzek v průběhu roku, sezónní výkyvy, časová řada docházky jednotlivců, družin a celého oddílu; Rádce vidí jen svou družinu, VO/HVO svůj oddíl a ADM rozsah podle oprávnění.
+- Docházka — průměrná návštěvnost pravidelných schůzek v průběhu roku, sezónní výkyvy, časová řada docházky jednotlivců, družin a celého oddílu; Rádce bez příslušnosti k družině reporty nevidí, jinak vidí jen své družiny, VO/HVO svůj oddíl a ADM rozsah podle oprávnění.
 - Dobrovolnické hodiny — vývoj odpracovaných hodin, poměr krátkodobých/dlouhodobých dobrovolníků.
 - Retence / odchody — kolik osob přechází do neaktivní, míra reaktivací.
 - Platby — vývoj inkasa, podíl včas/pozdě zaplacených, storna.
@@ -429,7 +427,7 @@ Na závodních akcích se **dospělí pomocníci** (rozhodčí) přiřazují ke 
 #### Modul reporty ústředí
 
 - Počítá unikátní počet dětí v rámci všech akcí všech oddílů (počítá se jednou, i když bylo na více akcích)
-- Lze filtrovat a agregovat podle **regionu** (region akce = snapshot uložený při vzniku akce)
+- Lze filtrovat a agregovat podle **regionu** (region akce = snapshot uložený při první publikaci akce)
 - Zobrazí možné kandidáty (jméno, příjmení, datum narození). Systém nabídne "Reportovací sloučení" osob pro účely unikátních počtů, záznamy zůstanou oddělené
 - nepočítá hosty ostatních oddílů
 
@@ -470,5 +468,10 @@ Tento dokument popisuje **co** systém dělá a proč — je určený zadavatel�
 | [docs/modules.md](docs/modules.md)                               | hranice modulů, vlastnictví entit a katalog doménových událostí       |
 | [docs/non-functional.md](docs/non-functional.md)                 | technologický stack, OAuth, úložiště, šifrování, e-maily, joby        |
 | [docs/notifications.md](docs/notifications.md)                   | katalog notifikací — událost → příjemce → šablona → načasování        |
-| [AI_support.md](AI_support.md)                                   | AI funkce nad systémem                                                |
-| [TODO.md](TODO.md)                                               | hodnocení specifikace a co ještě dopsat                               |
+| [emails/](emails/)                                               | Latte šablony e-mailů, 1:1 s katalogem v `docs/notifications.md`      |
+| [docs/ux-navigace.md](docs/ux-navigace.md)                       | plochy, sitemap, vstupní body a společná pravidla oprávnění v UI      |
+| [docs/ux-obrazovky-verejny.md](docs/ux-obrazovky-verejny.md)     | detailní specifikace obrazovek veřejného portálu (plocha A)           |
+| [docs/ux-obrazovky-oddil.md](docs/ux-obrazovky-oddil.md)         | detailní specifikace obrazovek oddílové správy (plocha B)             |
+| [docs/ux-obrazovky-ustredi.md](docs/ux-obrazovky-ustredi.md)     | detailní specifikace obrazovek správy ústředí (plocha C)              |
+| [docs/ux-obrazovky-self.md](docs/ux-obrazovky-self.md)           | detailní specifikace obrazovek self-managementu (plocha D)            |
+| [docs/ux-texty-stavy.md](docs/ux-texty-stavy.md)                 | sdílené UI texty, validační hlášky a stavy napříč obrazovkami         |

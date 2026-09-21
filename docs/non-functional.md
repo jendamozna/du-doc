@@ -116,7 +116,7 @@ Pro zástupce, náhradníky a hosty je e-mail celé UI ([notifications.md](notif
 | expirace schválení vazby zástupce | denně              | `PARENT_CHILD` v `pending` po lhůtě (14 dní) → `canceled` ([parent-child-lifecycle.md](parent-child-lifecycle.md))               |
 | překlopení vazby po zletilosti    | denně              | `active` → `readonly_after_adulthood` v den 18. narozenin ([parent-child-lifecycle.md](parent-child-lifecycle.md))               |
 | propadnutí nabídky náhradníkovi   | hodinově           | nabídka propadá, stav přihlášky se nemění                                                                                        |
-| výzvy a připomínky splatnosti     | denně              | termín podle nastavení akce                                                                                                      |
+| výzvy a připomínky splatnosti     | denně              | termín podle nastavení oddílu (`reminder_frequency_days`)                                                                        |
 | vypršení nezaplacené přihlášky    | denně              | jen u akcí se zapnutým vypršením → `Expired` a uvolnění kapacity ([registration-lifecycle.md](registration-lifecycle.md))        |
 | propadnutí žádosti o sloučení     | denně              | `MERGE_REQUEST.expires_at` po 30 dnech bez odezvy; týž běh rozesílá připomínku 7 dní předem ([person-merge.md](person-merge.md)) |
 | připomínka závodníkům bez hlídky  | denně              | N dní před akcí, přeskočí ty, kdo už dnes připomínku dostali ([race-patrols.md](race-patrols.md))                                |

@@ -27,19 +27,19 @@ Mobile-first plochy (A, D): jednosloupcový layout, karty, sticky CTA, dotykové
 
 Aktér je **anonym** (veřejné stránky) nebo **držitel tokenu** (správa jedné přihlášky). Token opravňuje výhradně k operacím nad danou přihláškou — nikdy nezpřístupní seznam osob ani jiné akce.
 
-| Operace                                       | Aktér                        | Chování bez práva                                                                            |
-| --------------------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------- |
-| Číst veřejný výpis akcí (`/`)                 | anonym                       | — (vždy dostupné)                                                                            |
-| Číst detail veřejné akce (`/akce/:slug`)      | anonym                       | veřejná akce vždy; neveřejná jen přes `share_slug`, jinak 404 „Akci jsme nenašli“            |
-| Podat přihlášku (`/akce/:slug/prihlaska`)     | anonym                       | mimo přihlašovací okno → prázdný stav „Přihlašování není otevřené“                           |
-| Číst stav přihlášky (`/stav/:token`)          | držitel tokenu               | neplatný token → „Odkaz není platný“; po konci akce → „Platnost odkazu skončila“             |
-| Nahrát nebo nahradit dokument                 | držitel tokenu               | jen dokumenty této přihlášky; jiný token 403                                                 |
-| Zaplatit / zobrazit QR                        | držitel tokenu               | QR vždy na zbývající částku                                                                  |
-| Stornovat přihlášku                           | držitel tokenu               | jen tato přihláška; koncové stavy storno nenabízejí                                          |
-| Opravit `contact_email` přihlášky             | držitel tokenu               | bezpečnostní operace; zapíše se do auditu                                                    |
-| Přidat dalšího účastníka (dílčí přihláška)    | držitel tokenu               | jen táž akce, jedna úroveň zanoření                                                          |
-| Schválit přihlášku (`/schvaleni/:token`)      | držitel schvalovacího tokenu | token opravňuje výhradně ke schválení jedné přihlášky; po vypršení lhůty přihláška `Expired` |
-| Přijmout místo náhradníka (`/nabidka/:token`) | držitel tokenu nabídky       | platnost 48 h; po vypršení „Platnost nabídky vypršela“                                       |
+| Operace                                       | Aktér                        | Chování bez práva                                                                                           |
+| --------------------------------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Číst veřejný výpis akcí (`/`)                 | anonym                       | — (vždy dostupné)                                                                                           |
+| Číst detail veřejné akce (`/akce/:slug`)      | anonym                       | veřejná akce vždy; neveřejná jen přes `share_slug`, jinak 404 „Akci jsme nenašli“                           |
+| Podat přihlášku (`/akce/:slug/prihlaska`)     | anonym                       | mimo přihlašovací okno → prázdný stav „Přihlašování není otevřené“                                          |
+| Číst stav přihlášky (`/stav/:token`)          | držitel tokenu               | neplatný token → „Odkaz není platný“; po konci akce → „Platnost odkazu skončila“                            |
+| Nahrát nebo nahradit dokument                 | držitel tokenu               | jen dokumenty této přihlášky; jiný token 403                                                                |
+| Zaplatit / zobrazit QR                        | držitel tokenu               | QR vždy na zbývající částku                                                                                 |
+| Stornovat přihlášku                           | držitel tokenu               | jen tato přihláška; koncové stavy storno nenabízejí                                                         |
+| Opravit `contact_email` přihlášky             | držitel tokenu               | bezpečnostní operace; zapíše se do auditu                                                                   |
+| Přidat dalšího účastníka (dílčí přihláška)    | držitel tokenu               | jen táž akce, jedna úroveň zanoření                                                                         |
+| Schválit přihlášku (`/schvaleni/:token`)      | držitel schvalovacího tokenu | token opravňuje výhradně ke schválení nebo zamítnutí jedné přihlášky; po vypršení lhůty přihláška `Expired` |
+| Přijmout místo náhradníka (`/nabidka/:token`) | držitel tokenu nabídky       | platnost 48 h; po vypršení „Platnost nabídky vypršela“                                                      |
 
 Držitel tokenu **není** zákonný zástupce: přidá-li anonymní držitel dalšího nezletilého účastníka, vazba nevzniká a dítě prochází standardní bránou zástupce.
 
@@ -47,29 +47,29 @@ Držitel tokenu **není** zákonný zástupce: přidá-li anonymní držitel dal
 
 Plocha je desktop-first; husté tabulky s filtry scrollují ve vlastním kontejneru a na mobilu se mění na karty. Výjimkou je docházka navržená mobile-first pro práci v terénu.
 
-| ID   | Routa                            | Obrazovka a hlavní obsah                                                                                                                               |
-| ---- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| B-01 | `/oddil`                         | Přehled oddílu: KPI, položky vyžadující pozornost a nadcházející akce. Z přehledu se pouze proklikává, mutace se provádějí až v cílové agendě.         |
-| B-02 | `/oddil/akce`                    | Seznam akcí: filtry Otevřené / Připravované / Proběhlé / Zrušené, vyhledávání, obsazenost a extended FAB „Nová akce“.                                  |
-| B-03 | `/oddil/akce/:id`                | Detail akce s metrikami a taby Nastavení / Přihlášky / Dokumenty / Náhradníci / Docházka. Aktivní tab je v query `?tab=...`, aby na něj šlo odkazovat. |
-| B-04 | `/oddil/akce/:id?tab=nastaveni`  | Nastavení akce v sekcích Základ, Přihlašování a kapacita, Ceník, Výběrové číselníky, Povinné dokumenty, Storno pravidla a Publikace.                   |
-| B-05 | `/oddil/akce/:id?tab=prihlasky`  | Tabulka přihlášek s filtry, výběrem řádků a dvěma hromadnými akcemi: připomínka platby a export výběru.                                                |
-| B-06 | `/oddil/akce/:id/prihlaska/:pid` | Detail přihlášky: sdílený checklist bran, dokumenty a platba, doplněné o admin akce (posouzení dokumentu, úprava, storno, odkaz do plateb).            |
-| B-07 | `/oddil/akce/:id?tab=dokumenty`  | Fronta dokumentů s filtry Čeká na posouzení / Schválené / Zamítnuté a akcemi Schválit / Zamítnout.                                                     |
-| B-08 | `/oddil/akce/:id?tab=nahradnici` | Náhradníci, běžící nabídky a u závodní akce také hlídky a stanoviště.                                                                                  |
-| B-09 | `/oddil/akce/:id?tab=dochazka`   | Třístavový zápis Přítomen / Nepřítomen / Nezapsáno, filtr družiny a sticky souhrn. Mobile-first.                                                       |
-| B-10 | `/oddil/platby`                  | Párovací dvoupanel: fronta transakcí, detail s kandidáty, nahrání výpisu, ruční platba a řešení přeplatků.                                             |
-| B-11 | `/oddil/osoby`                   | Evidence členů a hostů, filtry, vyhledávání a detail osoby se základními údaji, vazbami, členstvím a chytrými sloupci.                                 |
-| B-12 | `/oddil/druziny`                 | Družiny, jejich vedoucí a členové; u zapnutého modulu závodů také správa stanovišť.                                                                    |
-| B-13 | `/oddil/reporty`                 | Oddílové reporty omezené rolí, parametry období/granularity/typu akce a export CSV.                                                                    |
-| B-14 | `/oddil/nastaveni`               | Základní údaje, bankovní účet, lhůty, moduly, tým a role a členské příspěvky.                                                                          |
+| ID   | Routa                            | Obrazovka a hlavní obsah                                                                                                                                         |
+| ---- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| B-01 | `/oddil`                         | Přehled oddílu: KPI, položky vyžadující pozornost a nadcházející akce. Z přehledu se pouze proklikává, mutace se provádějí až v cílové agendě.                   |
+| B-02 | `/oddil/akce`                    | Seznam akcí: filtry Otevřené / Připravované / Proběhlé / Zrušené, vyhledávání, obsazenost a extended FAB „Nová akce“.                                            |
+| B-03 | `/oddil/akce/:id`                | Detail akce s metrikami a taby Nastavení / Přihlášky / Dokumenty / Náhradníci / Docházka. Aktivní tab je v query `?tab=...`, aby na něj šlo odkazovat.           |
+| B-04 | `/oddil/akce/:id?tab=nastaveni`  | Nastavení akce v sekcích Základ, Přihlašování a kapacita, Ceník, Výběrové číselníky, Povinné dokumenty, Storno pravidla a Publikace.                             |
+| B-05 | `/oddil/akce/:id?tab=prihlasky`  | Tabulka přihlášek s filtry, výběrem řádků a dvěma hromadnými akcemi: připomínka platby a export výběru.                                                          |
+| B-06 | `/oddil/akce/:id/prihlaska/:pid` | Detail přihlášky: sdílený checklist bran, dokumenty a platba, doplněné o admin akce (posouzení dokumentu, úprava, storno, odkaz do plateb).                      |
+| B-07 | `/oddil/akce/:id?tab=dokumenty`  | Fronta dokumentů s filtry Čeká na posouzení / Schválené / Zamítnuté a akcemi Schválit / Zamítnout.                                                               |
+| B-08 | `/oddil/akce/:id?tab=nahradnici` | Náhradníci, běžící nabídky a u závodní akce také hlídky a stanoviště.                                                                                            |
+| B-09 | `/oddil/akce/:id?tab=dochazka`   | Čtyřstavový zápis Přítomen / Pozdě / Nepřítomen / Omluven předem (výchozí nezapsáno), u „Nepřítomen“ povinný důvod, filtr družiny a sticky souhrn. Mobile-first. |
+| B-10 | `/oddil/platby`                  | Párovací dvoupanel: fronta transakcí, detail s kandidáty, nahrání výpisu, ruční platba a řešení přeplatků.                                                       |
+| B-11 | `/oddil/osoby`                   | Evidence členů a hostů, filtry, vyhledávání a detail osoby se základními údaji, vazbami, členstvím a chytrými sloupci.                                           |
+| B-12 | `/oddil/druziny`                 | Družiny, jejich vedoucí a členové; u zapnutého modulu závodů také správa stanovišť.                                                                              |
+| B-13 | `/oddil/reporty`                 | Oddílové reporty omezené rolí, parametry období/granularity/typu akce a export CSV.                                                                              |
+| B-14 | `/oddil/nastaveni`               | Základní údaje, bankovní účet, lhůty, moduly, tým a role a členské příspěvky.                                                                                    |
 
 Pravidla plochy B:
 
-1. Oprávnění k zápisu se přidělují per akce přes `EVENT_ASSIGNMENT`; základní čtení detailu akce a seznamu přihlášených plyne z role ve vlastním oddílu.
+1. **HVO má oprávnění přímo z role. VO a RÁD získávají zvýšená zápisová oprávnění přes `EVENT_ASSIGNMENT`**; základní čtení detailu akce a seznamu přihlášených jim plyne přímo z role ve vlastním oddílu.
 2. Stav přihlášky se **nikdy nenastavuje ručně**. Vedoucí mění fakta (posoudí dokument, alokuje platbu, vybere náhradníka) a stav přepočítá `evaluate()`.
 3. Tab Nastavení se skrývá uživateli bez práva `can_edit_event`. U akce bez přihlášek zůstává jen Docházka. U závodní akce Náhradníci obsahují také hlídky a stanoviště.
-4. HVO má plný rozsah. VO a RÁD mají rozsah podle role a `EVENT_ASSIGNMENT`. ÚČE vidí Přehled, Akce ke čtení, Platby a report R8; k akcím se nepřiřazuje.
+4. ÚČE vidí Přehled, Akce ke čtení, Platby a report R8; k akcím se nepřiřazuje.
 5. Platební údaje se dle role maskují: RÁD mimo funkci vedoucího akce nevidí částky; vedoucí akce vidí předepsáno, uhrazeno a zbývá, ale ne slevy, storno poplatky, přeplatky, vratky ani transakce.
 6. Chování bez oprávnění (skrytí položky mimo rozsah role, maskování nepovoleného údaje, 403 při přímém vstupu na nepovolenou routu) je jednotné napříč plochami — viz § 5.
 7. Badge u Plateb ukazuje součet nespárovaných transakcí a přeplatků čekajících na rozhodnutí. Fronty dokumentů a náhradníků jsou badge uvnitř detailu akce, ne v hlavní navigaci.
@@ -174,6 +174,8 @@ Vzory cest:
 ## 5. Společná pravidla oprávnění
 
 Role vycházejí z [authorization.md](authorization.md#aktéři) — ADM, HVO, VO, RÁD, ÚČE, zákonný zástupce (odvozený z aktivní `PARENT_CHILD`, ne přiřaditelná role), vlastník přihlášky (token nebo účet), osoba (self), anonym.
+
+**HVO má oprávnění přímo z role. VO a RÁD získávají zvýšená zápisová oprávnění přes `EVENT_ASSIGNMENT`.**
 
 Chování při absenci oprávnění je jednotné napříč plochami: prvek mimo rozsah role se **skryje**; údaj, na jehož existenci má uživatel právo, ale nesmí znát hodnotu, se **maskuje** (`———`); read-only režim ponechá hodnoty a skryje zápisové akce; přímý vstup na nepovolenou routu vrátí **403** (ikona `lock`, „Sem nemáte přístup", CTA „Zpět na přehled"). Scope se nikdy nebere z parametru requestu — validuje se proti tomu, co aktérovi náleží ([authorization.md](authorization.md#pravidla-vyhodnocení)).
 

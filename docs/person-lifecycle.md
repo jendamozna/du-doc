@@ -14,18 +14,18 @@ Obě osy se mění nezávisle a v libovolném čase nese osoba dvojici `(members
 ## Matice povolených kombinací
 
 | `membership_state` \ `record_state` | `active`        | `inactive`                 | `archived`                               |
-| -------------------------------- | --------------- | -------------------------- | ---------------------------------------- |
-| `guest`                          | ✅ výchozí stav | ✅ dlouhodobě bez aktivity | ✅ (jen globálně ve všech vazbách osoby) |
-| `registered_member`              | ✅              | ✅                         | ✅ (jen globálně ve všech vazbách osoby) |
+| ----------------------------------- | --------------- | -------------------------- | ---------------------------------------- |
+| `guest`                             | ✅ výchozí stav | ✅ dlouhodobě bez aktivity | ✅ (jen globálně ve všech vazbách osoby) |
+| `registered_member`                 | ✅              | ✅                         | ✅ (jen globálně ve všech vazbách osoby) |
 
 `archived` je **absorbující stav nezávislý na `membership_state`** — jakmile k němu dojde, poslední hodnota `membership_state` se dál eviduje jen v historii (viz **Historie**), aktivní záznam osobní údaje nemá.
 
 ## Přechody osy `membership_state`
 
-| Přechod                    | Spouštěč | Guard                | Efekt                                                                                                                                                        |
-| -------------------------- | -------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Přechod                     | Spouštěč | Guard                | Efekt                                                                                                                                                        |
+| --------------------------- | -------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `guest → registered_member` | HVO      | povinné `birth_date` | osoba začíná splňovat podmínky pro registrovaného člena; HVO jí může vystavit oddílový členský předpis a po úhradě složky DU ji zařadit do dávky pro ústředí |
-| `registered_member → guest` | zakázáno | —                    | degradace vztahu jde jen přes `inactive`, ne zpět na `guest` — zabraňuje ztrátě `birth_date` a dalších polí, která registrovaný člen musí mít vyplněná         |
+| `registered_member → guest` | zakázáno | —                    | degradace vztahu jde jen přes `inactive`, ne zpět na `guest` — zabraňuje ztrátě `birth_date` a dalších polí, která registrovaný člen musí mít vyplněná       |
 
 ## Přechody osy `record_state`
 
@@ -35,11 +35,11 @@ Obě osy se mění nezávisle a v libovolném čase nese osoba dvojici `(members
 | `inactive → active`            | HVO (reaktivace), nebo automaticky jakoukoli novou aktivitou osoby | žádný                                                                                                                          | osoba se znovu počítá a dostává výzvy                                                                                                                              |
 | `active`/`inactive → archived` | retenční job, nebo Administrátor (průřezový výmaz)                 | uplynutí retenční lhůty **a** `record_state = inactive` ve **všech** oddílech, kde je osoba evidovaná (viz **Rozsah a scope**) | atomicky nastaví `archived` u všech otevřených `PERSON_UNIT` osoby; pak nevratně anonymizuje osobní a identifikační údaje, ruší účet a zachová jen agregovaná data |
 
-Podání nové přihlášky, docházkový záznam nebo přihlášení do systému **automaticky reaktivuje** `inactive` osobu — aktivita sama je důkazem, že vztah dál trvá.
+Podání nové přihlášky, docházkový záznam, úspěšná správa přihlášky přes její token nebo přihlášení do systému **automaticky reaktivuje** `inactive` osobu — aktivita sama je důkazem, že vztah dál trvá.
 
 ## Definice „dlouhodobě bez aktivity"
 
-- **Aktivita** = nová nebo upravená přihláška, docházkový záznam, nebo přihlášení do systému (login), pokud osoba má účet.
+- **Aktivita** = nová nebo upravená přihláška, úspěšná operace přes token přihlášky (např. změna údajů, nahrání dokumentu nebo storno), docházkový záznam, nebo přihlášení do systému (login), pokud osoba má účet. Tokenová operace se počítá osobě, které přihláška patří.
 - **Deaktivace:** host po 12 měsících bez aktivity, registrovaný člen po 24 měsících. Job před ní pošle osobě (má-li kontaktní e-mail) a HVO upozornění 30 dní předem.
 - **Návrat hosta:** neaktivní host zůstává dalších 12 měsíců dostupný pro reaktivaci. Každá nová aktivita jej automaticky vrátí do `active` a obě lhůty se počítají znovu od této aktivity.
 - **Archivace hosta:** teprve po 12 měsících v `inactive` bez návratu retenční job tiše spustí globální archivaci; neposílá se e-mail hostovi ani HVO.
@@ -77,7 +77,7 @@ Obě osy se kreslí zvlášť právě proto, že jsou na sobě nezávislé — k
 | ----------------------------- | ---------------------------------------------------------------------------------------------- |
 | Členství v družině            | osoba se odebere ze **aktivních** družin; historické členství zůstává v historii               |
 | Vazba zákonný zástupce ↔ dítě | nemění se — vazba žije nezávisle na `record_state` dítěte i zákonného zástupce                 |
-| Role účtu (VO/RÁD/ÚČE)        | role se **neruší automaticky** — HVO ji musí odebrat explicitně, pokud chce                   |
+| Role účtu (VO/RÁD/ÚČE)        | role se **neruší automaticky** — HVO ji musí odebrat explicitně, pokud chce                    |
 | Budoucí přiřazení k akci      | nové přiřazení vyžaduje `active`; existující přiřazení k už proběhlým akcím zůstává v historii |
 | Založení nové přihlášky       | dovoleno — samotné podání přihlášku reaktivuje (viz výše)                                      |
 

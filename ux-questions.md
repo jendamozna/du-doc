@@ -251,7 +251,7 @@ Skrývání ne — report unikátních dětí za rok 2024 musí sedět i poté, 
 ### Q-C6 · Zpětné datum přesunu oddílu mezi regiony 🟠
 
 **→ Návrh:** povolit **jen „od teď“** (`valid_from` = dnes), zpětné datum nepodporovat.
-Akce nesou `region_id_snapshot` pořízený při založení; zpětná změna příslušnosti by rozešla snapshoty s historií a umožnila zpětně přepsat už odevzdané regionální výkazy. Opravu chyby řešit zásahem ADM s povinným důvodem a auditem, ne běžným UI.
+Akce nesou `region_id_snapshot` pořízený při první publikaci; zpětná změna příslušnosti by rozešla snapshoty s historií a umožnila zpětně přepsat už odevzdané regionální výkazy. Opravu chyby řešit zásahem ADM s povinným důvodem a auditem, ne běžným UI.
 
 ### Q-C7 · Váha zamítnutí žádosti o sloučení 🟡
 
