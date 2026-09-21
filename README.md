@@ -72,8 +72,8 @@ flowchart TD
 
 #### Administrátor
 
-- Přiřazuje systémové role jako ADM, UČE
 - Spravuje oddíly, přiřazuje jim Hlavní vedoucí a vytváří jim účty s pozvánkou e-mailem
+- U ústředí, které nemá Hlavního vedoucího, přiřazuje navíc účetní ústředí (ÚČE) pro platební agendu dávek DU a celostátních akcí; pozvánku k roli ÚČE běžného oddílu vždy vytváří jeho HVO ([docs/authorization.md](docs/authorization.md) → **Pozvánky na role**)
 - Definuje a spravuje regiony, přiřazuje do nich oddíly (viz **Region**)
 - Čte osobní údaje a přihlášky napříč oddíly; toto oprávnění je pouze čtecí
 - Má přístup do reportů a modulu pro ústředí

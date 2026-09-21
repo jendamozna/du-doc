@@ -98,22 +98,22 @@ Oddílový členský předpis je finanční agenda oddílu. HVO nastavuje lokál
 
 ## Osoby, družiny a docházka
 
-| Operace                                    | ADM      | HVO                     | VO                        | RÁD                           | ÚČE | Osoba / zákonný zástupce |
-| ------------------------------------------ | -------- | ----------------------- | ------------------------- | ----------------------------- | --- | ------------------------ |
-| Evidovat členy a hosty                     | R        | RW                      | R                         | R (svá družina)               | —   | R (sebe / dětí)          |
-| Měnit stav osoby (host → člen, deaktivace) | —        | RW                      | —                         | —                             | —   | —                        |
-| Upravit údaje osoby                        | —        | RW                      | —                         | —                             | —   | RW (sebe / dětí)         |
-| Definovat družiny a jejich členy           | —        | RW                      | —                         | —                             | —   | —                        |
-| Zapsat docházku                            | —        | RW                      | A `can_record_attendance` | **A `can_record_attendance`** | —   | —                        |
-| Sestavit dávku příspěvků DU                | R        | RW                      | —                         | —                             | R   | —                        |
-| Převést evidenční oddíl členství           | RW       | RW (žádost + potvrzení) | —                         | —                             | —   | —                        |
-| Vytvořit účty rolí (pozvánka)              | RW (HVO) | RW (VO/ÚČE; RÁD)        | —                         | —                             | —   | —                        |
+| Operace                                    | ADM                   | HVO                     | VO                        | RÁD                           | ÚČE | Osoba / zákonný zástupce |
+| ------------------------------------------ | --------------------- | ----------------------- | ------------------------- | ----------------------------- | --- | ------------------------ |
+| Evidovat členy a hosty                     | R                     | RW                      | R                         | R (svá družina)               | —   | R (sebe / dětí)          |
+| Měnit stav osoby (host → člen, deaktivace) | —                     | RW                      | —                         | —                             | —   | —                        |
+| Upravit údaje osoby                        | —                     | RW                      | —                         | —                             | —   | RW (sebe / dětí)         |
+| Definovat družiny a jejich členy           | —                     | RW                      | —                         | —                             | —   | —                        |
+| Zapsat docházku                            | —                     | RW                      | A `can_record_attendance` | **A `can_record_attendance`** | —   | —                        |
+| Sestavit dávku příspěvků DU                | R                     | RW                      | —                         | —                             | R   | —                        |
+| Převést evidenční oddíl členství           | RW                    | RW (žádost + potvrzení) | —                         | —                             | —   | —                        |
+| Vytvořit účty rolí (pozvánka)              | RW (HVO; ÚČE ústředí) | RW (VO/ÚČE; RÁD)        | —                         | —                             | —   | —                        |
 
 Zápis docházky je **samostatné oprávnění** — může ho mít i Rádce, který nemá přístup k platbám (README → **Docházka**).
 
 ### Pozvánky na role
 
-`ROLE_INVITATION` je evidovaná pozvánka k roli v konkrétním oddílu. ADM smí vytvořit, znovu odeslat a odvolat pozvánku na HVO; HVO smí totéž pro VO, RÁD a ÚČE vlastního oddílu. Pozvánku k roli `ÚČE` nelze vytvořit ani přijmout pro účet, který má v témže oddílu roli `RÁD`, a naopak (**Pravidla vyhodnocení** → RÁD a ÚČE se vylučují). Pozvánka je ve stavu `pending`, dokud ji pozvaný nepřijme, není odvolána nebo nevyprší. Přijetím vznikne `USER_ROLE`; pozvánka se uzavře jako `accepted` a zaznamená se účet, který ji přijal. Změna stavu i vydání nebo rotace tokenu se zapisují do `AUDIT_LOG`.
+`ROLE_INVITATION` je evidovaná pozvánka k roli v konkrétním oddílu. ADM smí vytvořit, znovu odeslat a odvolat pozvánku na HVO; HVO smí totéž pro VO, RÁD a ÚČE vlastního oddílu. Výjimkou je ústředí (`UNIT.is_hq`), které nemá HVO — pozvánku na roli ÚČE ústředí vytváří, znovu odesílá a odvolává ADM. Pozvánku k roli `ÚČE` nelze vytvořit ani přijmout pro účet, který má v témže oddílu roli `RÁD`, a naopak (**Pravidla vyhodnocení** → RÁD a ÚČE se vylučují). Pozvánka je ve stavu `pending`, dokud ji pozvaný nepřijme, není odvolána nebo nevyprší. Přijetím vznikne `USER_ROLE`; pozvánka se uzavře jako `accepted` a zaznamená se účet, který ji přijal. Změna stavu i vydání nebo rotace tokenu se zapisují do `AUDIT_LOG`.
 
 Pozvánka sama nezakládá žádná oprávnění. Přijmout ji lze pouze s platným jednorázovým tokenem; účet se hledá podle normalizovaného `login_email`, a existuje-li, role se přidá tomuto účtu. Teprve není-li účet nalezen, pozvaný dokončí jeho založení a pak pozvánku přijme.
 

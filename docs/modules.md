@@ -54,7 +54,6 @@ flowchart TD
     subgraph PLAT["Platforma"]
         IAM["Identity & Access"]
         NTF["Notifications"]
-        DOC["Files"]
         AUD["Audit & GDPR"]
     end
 
@@ -71,13 +70,12 @@ flowchart TD
     ORG --> IAM
     NTF -. "odebírá události" .- DOM
     AUD -. "odebírá události" .- DOM
-    DOC -. "úložiště" .- DOM
 
     classDef plat fill:#eef2ff,stroke:#1e3a8a,color:#0f172a;
     classDef core fill:#f5f3ff,stroke:#7c3aed,color:#0f172a;
     classDef dom fill:#ecfeff,stroke:#0f766e,color:#0f172a;
     classDef anl fill:#f0fdf4,stroke:#166534,color:#0f172a;
-    class IAM,NTF,DOC,AUD plat;
+    class IAM,NTF,AUD plat;
     class ORG,PPL,MRG core;
     class EVT,REG,PAY,BNK,DUF,ATT,EDU dom;
     class REP anl;
@@ -112,12 +110,12 @@ Lhůty z [registration-lifecycle.md](registration-lifecycle.md) (souhlas zástup
 
 ### 3 · People (jádro)
 
-| Položka              | Obsah                                                                                                                                                                                                           |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Vlastní entity**   | `PERSON`, `PERSON_UNIT`, `PERSON_UNIT_HISTORY`, `PARENT_CHILD`, `PARENT_INVITATION`, `PERSON_SENSITIVE_DATA`, `CONSENT`, `UNIT_PATROL`, `UNIT_PATROL_MEMBER`, `CUSTOM_FIELD`, `CUSTOM_FIELD_VALUE`              |
-| **Vlastní pravidla** | [person-lifecycle.md](person-lifecycle.md) (dvě osy, matice, archivace), [parent-child-lifecycle.md](parent-child-lifecycle.md), podmíněná povinnost polí z [validation.md](validation.md), scope citlivých dat |
-| **Čte odjinud**      | `UNIT` z Org, `ACCOUNT` z IAM (existence účtu osoby)                                                                                                                                                            |
-| **Rozhraní**         | `person(id)`, `isMinorAt(personId, date)`, `activeGuardians(personId)`, `membership(personId, unitId)`, `sensitive(personId, eventId, actor)`                                                                   |
+| Položka              | Obsah                                                                                                                                                                                                                 |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Vlastní entity**   | `PERSON`, `PERSON_UNIT`, `PERSON_UNIT_HISTORY`, `PARENT_CHILD`, `PARENT_INVITATION`, `PERSON_SENSITIVE_DATA`, `PERSON_DOCUMENT`, `CONSENT`, `UNIT_PATROL`, `UNIT_PATROL_MEMBER`, `CUSTOM_FIELD`, `CUSTOM_FIELD_VALUE` |
+| **Vlastní pravidla** | [person-lifecycle.md](person-lifecycle.md) (dvě osy, matice, archivace), [parent-child-lifecycle.md](parent-child-lifecycle.md), podmíněná povinnost polí z [validation.md](validation.md), scope citlivých dat       |
+| **Čte odjinud**      | `UNIT` z Org, `ACCOUNT` z IAM (existence účtu osoby)                                                                                                                                                                  |
+| **Rozhraní**         | `person(id)`, `isMinorAt(personId, date)`, `activeGuardians(personId)`, `membership(personId, unitId)`, `sensitive(personId, eventId, actor)`                                                                         |
 
 **Věk se počítá zde**, ne v Registrations ani Race patrols — ty si o něj řeknou k rozhodnému datu ([race-patrols.md](race-patrols.md)).
 
@@ -196,15 +194,11 @@ Vlastní `COURSE`, `PERSON_COURSE`. Čte People a Events (akce udělující kurz
 
 Vlastní frontu odchozích e-mailů a evidenci odeslání ([non-functional.md](non-functional.md), [notifications.md](notifications.md)). **Nemá doménová pravidla** — jen mapu `událost → šablona → příjemce → načasování`. Odesílatele (oddílové SMTP vs. systém) si bere z `UNIT_MAIL_SETTING` v Org. Idempotenci drží na `domain_event_id`, aby opakovaná fronta neposlala potvrzení o platbě dvakrát.
 
-### 13 · Files (platforma)
-
-Vlastní uložení a metadata souborů (dokumenty přihlášek, pověření staršovstva). Retenci provádí na pokyn Audit & GDPR.
-
-### 14 · Audit & GDPR (platforma)
+### 13 · Audit & GDPR (platforma)
 
 Vlastní `AUDIT_LOG`, `GDPR_AUDIT`. Zapisuje **výhradně z odebíraných událostí** plus explicitních zápisů z ruční evidence plateb a dávek DU ([audit-log.md](audit-log.md)). Řídí retenční joby; anonymizaci provádí vlastník dat na příkaz, ne Audit sám.
 
-### 15 · Reporting (analytika)
+### 14 · Reporting (analytika)
 
 Vlastní pouze definice reportů a případné materializované pohledy ([reports.md](reports.md)). **Čte napříč, nezapisuje nikam.** Používá `REPORT_MERGE` z PersonMerge pro unikátní děti. Jediný modul, kterému je dovoleno spojovat data více modulů — proto je izolovaný v samostatné vrstvě a nikdo na něm nezávisí.
 
@@ -212,20 +206,20 @@ Vlastní pouze definice reportů a případné materializované pohledy ([report
 
 ## Kdo vlastní co — rychlá tabulka
 
-| Entita                                                                                                                                                                                                             | Vlastník      |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- |
-| `ACCOUNT`, `OAUTH_IDENTITY`, `USER_ROLE`                                                                                                                                                                           | Identity      |
-| `UNIT`, `REGION`, `UNIT_REGION`, `UNIT_MODULE`, `UNIT_SETTING`, `UNIT_MAIL_SETTING`, `MANDATE`, `LOCATION`, `NAME_WHITELIST`, `NAME_EXCEPTION`                                                                     | Org           |
-| `PERSON`, `PERSON_UNIT`, `PERSON_UNIT_HISTORY`, `PARENT_CHILD`, `PARENT_INVITATION`, `PERSON_SENSITIVE_DATA`, `CONSENT`, `UNIT_PATROL`, `UNIT_PATROL_MEMBER`, `CUSTOM_FIELD`, `CUSTOM_FIELD_VALUE`                 | People        |
-| `MERGE_REQUEST`, `MERGE_APPROVAL`, `MERGE_LOG`, `REPORT_MERGE`                                                                                                                                                     | PersonMerge   |
-| `EVENT`, `ACTION_TEMPLATE`, `EVENT_PRICE`, `CANCELLATION_RULE`, `EVENT_ASSIGNMENT`, `EVENT_FIELD`, `EVENT_FIELD_OPTION`, `EVENT_DOCUMENT`, `EVENT_CUSTOM_FIELD`, `WORKSHOP`, `WORKSHOP_BLOCK`, `WORKSHOP_OFFERING` | Events        |
-| `REGISTRATION`, `REGISTRATION_FIELD_VALUE`, `REGISTRATION_DOCUMENT`, `SUBSTITUTE_OFFER`, `RECOMMENDATION`, `WORKSHOP_REGISTRATION`, `RACE_PATROL`, `RACE_PATROL_MEMBER`                                            | Registrations |
-| `PAYMENT_ALLOCATION`, `UNIT_MEMBER_FEE_RATE`, `UNIT_MEMBER_FEE`                                                                                                                                                    | Payments      |
-| `BANK_ACCOUNT`, `BANK_TRANSACTION`                                                                                                                                                                                 | Banking       |
-| `DU_MEMBERSHIP`, `DU_FEE_RATE`, `DU_FEE_BATCH`, `DU_FEE_BATCH_ITEM`                                                                                                                                                | DU Membership |
-| `ATTENDANCE_RECORD`                                                                                                                                                                                                | Attendance    |
-| `COURSE`, `PERSON_COURSE`                                                                                                                                                                                          | Education     |
-| `AUDIT_LOG`, `GDPR_AUDIT`                                                                                                                                                                                          | Audit & GDPR  |
+| Entita                                                                                                                                                                                                                | Vlastník      |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `ACCOUNT`, `OAUTH_IDENTITY`, `USER_ROLE`                                                                                                                                                                              | Identity      |
+| `UNIT`, `REGION`, `UNIT_REGION`, `UNIT_MODULE`, `UNIT_SETTING`, `UNIT_MAIL_SETTING`, `MANDATE`, `LOCATION`, `NAME_WHITELIST`, `NAME_EXCEPTION`                                                                        | Org           |
+| `PERSON`, `PERSON_UNIT`, `PERSON_UNIT_HISTORY`, `PARENT_CHILD`, `PARENT_INVITATION`, `PERSON_SENSITIVE_DATA`, `PERSON_DOCUMENT`, `CONSENT`, `UNIT_PATROL`, `UNIT_PATROL_MEMBER`, `CUSTOM_FIELD`, `CUSTOM_FIELD_VALUE` | People        |
+| `MERGE_REQUEST`, `MERGE_APPROVAL`, `MERGE_LOG`, `REPORT_MERGE`                                                                                                                                                        | PersonMerge   |
+| `EVENT`, `ACTION_TEMPLATE`, `EVENT_PRICE`, `CANCELLATION_RULE`, `EVENT_ASSIGNMENT`, `EVENT_FIELD`, `EVENT_FIELD_OPTION`, `EVENT_DOCUMENT`, `EVENT_CUSTOM_FIELD`, `WORKSHOP`, `WORKSHOP_BLOCK`, `WORKSHOP_OFFERING`    | Events        |
+| `REGISTRATION`, `REGISTRATION_FIELD_VALUE`, `REGISTRATION_DOCUMENT`, `SUBSTITUTE_OFFER`, `RECOMMENDATION`, `WORKSHOP_REGISTRATION`, `RACE_PATROL`, `RACE_PATROL_MEMBER`                                               | Registrations |
+| `PAYMENT_ALLOCATION`, `UNIT_MEMBER_FEE_RATE`, `UNIT_MEMBER_FEE`                                                                                                                                                       | Payments      |
+| `BANK_ACCOUNT`, `BANK_TRANSACTION`                                                                                                                                                                                    | Banking       |
+| `DU_MEMBERSHIP`, `DU_FEE_RATE`, `DU_FEE_BATCH`, `DU_FEE_BATCH_ITEM`                                                                                                                                                   | DU Membership |
+| `ATTENDANCE_RECORD`                                                                                                                                                                                                   | Attendance    |
+| `COURSE`, `PERSON_COURSE`                                                                                                                                                                                             | Education     |
+| `AUDIT_LOG`, `GDPR_AUDIT`                                                                                                                                                                                             | Audit & GDPR  |
 
 ---
 
@@ -249,7 +243,7 @@ Jmenná konvence `modul.agregát.událost` v minulém čase. Události, které u
 | `unit_registration.registration_added`                        | `unit_registration_id`, `registration_id`                     | Notifications, Audit, Reporting                              |
 | `unit_registration.registration_updated`                      | `unit_registration_id`, `registration_id`, `changed_fields[]` | Notifications, Audit                                         |
 | `guardian.requested` / `.approved` / `.rejected` / `.expired` | `guardian_email`, `deadline`, `reason` (u `.rejected`)        | Notifications, People (vznik vazby jen u `.approved`), Audit |
-| `document.uploaded` / `.approved` / `.rejected`               | `document_id`, `comment`                                      | Notifications, Files, Audit                                  |
+| `document.uploaded` / `.approved` / `.rejected`               | `document_id`, `comment`                                      | Notifications, Audit                                         |
 | `substitute.offer.sent` / `.accepted` / `.expired`            | `offer_id`, `valid_until`                                     | Notifications, Audit                                         |
 | `mentor.requested` / `.confirmed` / `.updated`                | `registration_id`, `recommendation_id`, `mentor_contact`      | Notifications, Audit                                         |
 | `head_leader_recommendation.requested` / `.submitted`         | `registration_id`, `recommendation_id`, `head_leader_contact` | Notifications, Audit                                         |
@@ -287,7 +281,7 @@ Jmenná konvence `modul.agregát.událost` v minulém čase. Události, které u
 | `person.created`                                         | `person_id`, `unit_id`, `membership_state` | Reporting, Audit                                               |
 | `person.record_state_changed`                            | `from`, `to`, `scope`                      | Registrations, Attendance, People (družiny), Audit             |
 | `person.reached_adulthood`                               | `person_id`                                | People (zákonný zástupce → jen pro čtení), Notifications       |
-| `person.anonymized` / `.purged`                          | `person_id`, `scope`                       | všichni vlastníci dat osoby, Files, Audit                      |
+| `person.anonymized` / `.purged`                          | `person_id`, `scope`                       | všichni vlastníci dat osoby, Audit                             |
 | `person.merged`                                          | `source_person_id`, `target_person_id`     | **všechny** moduly s vazbou na osobu (přenos vazeb), Reporting |
 | `person.merge.reverted`                                  | `merge_id`                                 | tytéž moduly, Audit                                            |
 | `parent_child.link_requested` / `.approved` / `.revoked` | `parent_person_id`, `child_person_id`      | Identity (odvozená práva), Notifications, Audit                |
@@ -324,14 +318,15 @@ Jmenná konvence `modul.agregát.událost` v minulém čase. Události, které u
 
 ## Kde hranice úmyslně nevede
 
-| Pokušení                               | Proč ne                                                                                            |
-| -------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Samostatný modul „Zákonný zástupce"    | zákonné zastoupení není role, ale odvození z `PARENT_CHILD` — patří do People, práva do Identity   |
-| Samostatný modul „Portál" / „Admin"    | to jsou plochy UI ([du-doc-ux-pruvodce.md](du-doc-ux-pruvodce.md)), ne domény; sdílí stejné moduly |
-| Sloučit Banking + Payments             | ruční režim bez API mění jen zdroj transakcí, ne pravidla párování                                 |
-| Sloučit Events + Registrations         | katalog akce žije dál i bez přihlášek a mění se jiným tempem; kapacita by jinak měla dva vlastníky |
-| Nechat Reporting psát do domény        | reporty jsou odvozená data; zápis by z nich udělal druhý zdroj pravdy                              |
-| Dát každému modulu vlastní kopii osoby | osoba je nezávislá entita napříč oddíly (README) — kopie by rozbila deduplikaci i GDPR             |
+| Pokušení                               | Proč ne                                                                                                                                                                                                                                                |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Samostatný modul „Zákonný zástupce"    | zákonné zastoupení není role, ale odvození z `PARENT_CHILD` — patří do People, práva do Identity                                                                                                                                                       |
+| Samostatný modul „Portál" / „Admin"    | to jsou plochy UI ([du-doc-ux-pruvodce.md](du-doc-ux-pruvodce.md)), ne domény; sdílí stejné moduly                                                                                                                                                     |
+| Sloučit Banking + Payments             | ruční režim bez API mění jen zdroj transakcí, ne pravidla párování                                                                                                                                                                                     |
+| Sloučit Events + Registrations         | katalog akce žije dál i bez přihlášek a mění se jiným tempem; kapacita by jinak měla dva vlastníky                                                                                                                                                     |
+| Nechat Reporting psát do domény        | reporty jsou odvozená data; zápis by z nich udělal druhý zdroj pravdy                                                                                                                                                                                  |
+| Dát každému modulu vlastní kopii osoby | osoba je nezávislá entita napříč oddíly (README) — kopie by rozbila deduplikaci i GDPR                                                                                                                                                                 |
+| Samostatný modul „Files"               | obsah souboru je `LONGBLOB` přímo na vlastnící entitě (`REGISTRATION_DOCUMENT`, `PERSON_DOCUMENT`, `MANDATE.scan`) — vlastní ho stejný modul jako zbytek záznamu, ne oddělené úložiště ([non-functional.md](non-functional.md) → **Úložiště souborů**) |
 
 ## Co z toho plyne pro API
 
