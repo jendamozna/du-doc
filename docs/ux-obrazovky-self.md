@@ -161,7 +161,7 @@ Detailní specifikace obrazovek sekce **Můj účet** (`/muj-ucet/...`). Navigac
 
 **Obsah a pole:**
 
-1. **Přihlášení:** přihlašovací e-mail — jen ke čtení, podtext „Změnu e-mailu vyřídí podpora.“ Tlačítko „Změnit heslo“ → dialog: staré heslo*, nové heslo* 2× (min. 8 znaků). Úspěch: snackbar „Heslo změněno“.
+1. **Přihlášení:** přihlašovací e-mail — jen ke čtení, podtext „Změnu e-mailu vyřídí podpora.“ Tlačítko „Změnit heslo“ → dialog: staré heslo*, nové heslo*. Úspěch: snackbar „Heslo změněno“.
 2. **Propojené účty:** řádek za každou OAuth metodu (propojen / nepropojen) s akcí „Odpojit“ / „Propojit“. **Pravidlo poslední cesty:** odpojit lze, jen zbývá-li jiný způsob přihlášení — u poslední metody je tlačítko zamčené (disabled + ikona `lock`) s vysvětlením „Jediný způsob přihlášení nelze odpojit — nejdřív nastavte heslo nebo připojte jiný účet.“ Poznámka: „Propojení přes e-mail se nabízí až po přihlášení heslem — automatické propojení by umožnilo převzetí účtu.“
 3. **Sloučení duplicit:** karta s obsahem dle stavu — při nalezeném kandidátovi nabídka „Nejste to vy? V [oddíl] je evidována [jméno] se shodným datem narození.“ + tlačítko „Zobrazit návrh“ → D-08. Po odmítnutí/dokončení prázdný stav níže.
 

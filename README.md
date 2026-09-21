@@ -72,7 +72,7 @@ flowchart TD
 
 #### Administrátor
 
-- Přiřazuje systémové role jako ADM, UCE ustředí
+- Přiřazuje systémové role jako ADM, UČE
 - Spravuje oddíly, přiřazuje jim Hlavní vedoucí a vytváří jim účty s pozvánkou e-mailem
 - Definuje a spravuje regiony, přiřazuje do nich oddíly (viz **Region**)
 - Čte osobní údaje a přihlášky napříč oddíly; toto oprávnění je pouze čtecí

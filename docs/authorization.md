@@ -113,7 +113,7 @@ Zápis docházky je **samostatné oprávnění** — může ho mít i Rádce, kt
 
 ### Pozvánky na role
 
-`ROLE_INVITATION` je evidovaná pozvánka k roli v konkrétním oddílu. ADM smí vytvořit, znovu odeslat a odvolat pozvánku na HVO; HVO smí totéž pro VO, RÁD a ÚČE vlastního oddílu. Pozvánka je ve stavu `pending`, dokud ji pozvaný nepřijme, není odvolána nebo nevyprší. Přijetím vznikne `USER_ROLE`; pozvánka se uzavře jako `accepted` a zaznamená se účet, který ji přijal. Změna stavu i vydání nebo rotace tokenu se zapisují do `AUDIT_LOG`.
+`ROLE_INVITATION` je evidovaná pozvánka k roli v konkrétním oddílu. ADM smí vytvořit, znovu odeslat a odvolat pozvánku na HVO; HVO smí totéž pro VO, RÁD a ÚČE vlastního oddílu. Pozvánku k roli `ÚČE` nelze vytvořit ani přijmout pro účet, který má v témže oddílu roli `RÁD`, a naopak (**Pravidla vyhodnocení** → RÁD a ÚČE se vylučují). Pozvánka je ve stavu `pending`, dokud ji pozvaný nepřijme, není odvolána nebo nevyprší. Přijetím vznikne `USER_ROLE`; pozvánka se uzavře jako `accepted` a zaznamená se účet, který ji přijal. Změna stavu i vydání nebo rotace tokenu se zapisují do `AUDIT_LOG`.
 
 Pozvánka sama nezakládá žádná oprávnění. Přijmout ji lze pouze s platným jednorázovým tokenem; účet se hledá podle normalizovaného `login_email`, a existuje-li, role se přidá tomuto účtu. Teprve není-li účet nalezen, pozvaný dokončí jeho založení a pak pozvánku přijme.
 
@@ -244,8 +244,7 @@ Stav a výše plateb, slevy, storno poplatky, přeplatky, vratky a bankovní ú�
 ## Pravidla vyhodnocení
 
 - **Deny by default** — chybí-li explicitní pravidlo, přístup se odepře.
-- **Sjednocení rolí** — uživatel s více rolemi dostane sjednocení práv; výjimkou je zákaz finančních údajů pro Rádce mimo úzce vymezené částky přihlášek akce, jejímž je Vedoucím akce.
-- **Scope se nikdy nebere z požadavku** — `unit_id` i `event_id` z parametrů se validují proti tomu, co aktérovi náleží.
+- **Sjednocení rolí** — uživatel s více rolemi dostane sjednocení práv; výjimkou je zákaz finančních údajů pro Rádce mimo úzce vymezené částky přihlášek akce, jejímž je Vedoucím akce.- **RÁD a ÚČE se vylučují** — týž účet nesmí mít v témže oddílu zároveň roli `RÁD` a `ÚČE`. Jejich rozsahy jsou záměrně opačné (Rádce vidí osobní a zdravotní údaje, ne finance; Účetní vidí finance, ne osobní a zdravotní údaje), takže sjednocení práv by tuto dělbu zrušilo. Pozvánka k druhé z těchto rolí se zamítne, dokud první trvá.- **Scope se nikdy nebere z požadavku** — `unit_id` i `event_id` z parametrů se validují proti tomu, co aktérovi náleží.
 - **Přiřazení k akci není nutná podmínka** pro základní čtení VO/RÁD — aktivní role v pořádajícím oddílu jim dává čtení detailu akce a seznamu přihlášených. Přiřazení zůstává nutné pro týmový vztah, zápis podle příznaků, přístup k dokumentům a zdravotním údajům v rozsahu akce a pro roli Vedoucí akce.
 - Aplikace nesmí rozhodovat pouze podle role uživatele. Správná kontrola musí vždy zahrnovat i rozsah oprávnění. Každé oprávnění je vyhodnocováno nad:
   - subject = uživatel

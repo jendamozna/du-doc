@@ -299,7 +299,7 @@ Detailní specifikace obrazovek oddílové administrace (`/oddil/...`). Navigaci
 
 **Layout a komponenty:** vlevo výběr reportů (M3 list, kód + název), vpravo plocha reportu: parametry · graf · tabulka · tlačítko „Export CSV“. Scope je vlastní oddíl ([reports.md](reports.md), [authorization.md](authorization.md) → Reporty).
 
-**Obsah a pole:** výběr dle role (R1 Akce a docházka · R2 Členové v čase · R3 Účast na akcích · R4 Docházka schůzek · R5 Dobrovolnické hodiny · R7 Platby). ÚČE vidí jen R7; RÁD jen osoby své družiny; VO/HVO celý oddíl. Parametry: období od–do (výchozí 12 měsíců) · granularita · typ akce. Pod výsledkem metadata generování.
+**Obsah a pole:** výběr dle role (R1 Akce a docházka · R2 Členové v čase · R3 Účast na akcích · R4 Docházka schůzek · R6 Dobrovolnické hodiny · R8 Platby). ÚČE vidí jen R8; RÁD jen osoby své družiny; VO/HVO celý oddíl. Parametry: období od–do (výchozí 12 měsíců) · granularita · typ akce. Pod výsledkem metadata generování.
 
 **Stavy:**
 

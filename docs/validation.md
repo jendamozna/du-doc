@@ -29,7 +29,7 @@ Kanonický katalog textů sdílených mezi frontendem a backendem. Zásady:
 | `postal_code.invalid`   | PSČ není 5 číslic                             | „Zadejte PSČ ve tvaru 123 45.“                                     |
 | `amount.invalid`        | částka není platné číslo                      | „Zadejte částku v korunách.“                                       |
 | `document.file.invalid` | soubor mimo povolený typ nebo velikost        | „Nahrajte soubor typu PDF, JPG, PNG nebo HEIC do velikosti 10 MB.“ |
-| `password.too_short`    | heslo kratší než 8 znaků                      | „Heslo musí mít alespoň 8 znaků.“                                  |
+| `password.too_short`    | heslo kratší než 12 znaků                     | „Heslo musí mít alespoň 12 znaků.“                                 |
 | `password.mismatch`     | nová hesla se neshodují                       | „Hesla se neshodují.“                                              |
 
 **Osoba a vazby**
@@ -86,14 +86,15 @@ Kanonický katalog textů sdílených mezi frontendem a backendem. Zásady:
 
 **Role, struktura a účet**
 
-| Kód                              | Podmínka                                      | Kanonický text                                                                                      |
-| -------------------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `unit_patrol.leader.exists`      | družina už má vedoucího                       | „Družina už vedoucího má. Nejprve změňte nebo odeberte stávajícího.“                                |
-| `role.remove_last_hvo`           | odebrání posledního HVO oddílu                | „Posledního hlavního vedoucího oddílu nelze odebrat.“                                               |
-| `account.last_login_method`      | odpojení poslední přihlašovací metody         | „Jediný způsob přihlášení nelze odpojit — nejdřív nastavte heslo nebo připojte jiný účet.“          |
-| `merge.conflict.choice_required` | konflikt sloučení bez rozhodnuté volby A/B    | „Rozhodněte, která hodnota se přenese.“                                                             |
-| `merge.blocking_collision`       | obě osoby mají aktivní přihlášku na téže akci | „Sloučení nelze provést: obě osoby mají aktivní přihlášku na akci {event}. Vyřeší ji vedoucí akce.“ |
-| `merge.revert.admin_only`        | pokus o revert mimo ADM                       | „Sloučení může vrátit jen administrátor ústředí.“                                                   |
+| Kód                              | Podmínka                                                        | Kanonický text                                                                                      |
+| -------------------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `unit_patrol.leader.exists`      | družina už má vedoucího                                         | „Družina už vedoucího má. Nejprve změňte nebo odeberte stávajícího.“                                |
+| `role.remove_last_hvo`           | odebrání posledního HVO oddílu                                  | „Posledního hlavního vedoucího oddílu nelze odebrat.“                                               |
+| `role.rad_uce_exclusive`         | pozvánka/přijetí `ÚČE` účtu, který je v oddílu `RÁD` (a naopak) | „Rádce a účetní nelze v jednom oddílu spojit v jednom účtu — role se vylučují.“                     |
+| `account.last_login_method`      | odpojení poslední přihlašovací metody                           | „Jediný způsob přihlášení nelze odpojit — nejdřív nastavte heslo nebo připojte jiný účet.“          |
+| `merge.conflict.choice_required` | konflikt sloučení bez rozhodnuté volby A/B                      | „Rozhodněte, která hodnota se přenese.“                                                             |
+| `merge.blocking_collision`       | obě osoby mají aktivní přihlášku na téže akci                   | „Sloučení nelze provést: obě osoby mají aktivní přihlášku na akci {event}. Vyřeší ji vedoucí akce.“ |
+| `merge.revert.admin_only`        | pokus o revert mimo ADM                                         | „Sloučení může vrátit jen administrátor ústředí.“                                                   |
 
 ## Formáty
 

@@ -93,12 +93,12 @@ Kanonické znění textů (formáty i byznys pravidla) je v [validation.md](vali
 
 Ostatní obrazovky plochy A jsou **potvrzovací**, ne datové — nemají volný vstup polí kromě jednoho zaškrtnutí:
 
-| Obrazovka / operace                        | Vstup a guard                                                                                         | Text uživateli                                                                              |
-| ------------------------------------------ | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| Schválení zástupcem (`/schvaleni/:token`)  | Bez polí; jediná akce „Schválit“. Platný `guardian_approval_token`, zamítnutí neexistuje.             | „Potvrzením schvalujete účast a získáváte zástupcovský přístup k přihláškám tohoto dítěte.“ |
-| Nabídka náhradníkovi (`/nabidka/:token`)   | Bez polí; akce „Přijmout místo“. Platný token, nabídka nesmí být po lhůtě.                            | „Když nabídku nepřijmete, nic se neruší — zůstáváte na čekací listině.“                     |
-| Storno přihlášky (`/stav/:token`)          | Potvrzovací dialog s náhledem poplatku k dnešku; povinné zaškrtnutí „Rozumím, že storno je nevratné“. | „Storno je nevratné. Poplatek k dnešku je X Kč.“                                            |
-| Přidání dalšího účastníka (`/stav/:token`) | Otevře formulář A-03 pro tutéž akci — platí cross-check výše.                                         | —                                                                                           |
+| Obrazovka / operace                        | Vstup a guard                                                                                                                                             | Text uživateli                                                                              |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Schválení zástupcem (`/schvaleni/:token`)  | Akce „Schválit“ (jeden klik) nebo „Zamítnout“ (potvrzení s volitelným důvodem). Platný `guardian_approval_token`, stav `PendingGuardian` a v rámci lhůty. | „Potvrzením schvalujete účast a získáváte zástupcovský přístup k přihláškám tohoto dítěte.“ |
+| Nabídka náhradníkovi (`/nabidka/:token`)   | Bez polí; akce „Přijmout místo“. Platný token, nabídka nesmí být po lhůtě.                                                                                | „Když nabídku nepřijmete, nic se neruší — zůstáváte na čekací listině.“                     |
+| Storno přihlášky (`/stav/:token`)          | Potvrzovací dialog s náhledem poplatku k dnešku; povinné zaškrtnutí „Rozumím, že storno je nevratné“.                                                     | „Storno je nevratné. Poplatek k dnešku je X Kč.“                                            |
+| Přidání dalšího účastníka (`/stav/:token`) | Otevře formulář A-03 pro tutéž akci — platí cross-check výše.                                                                                             | —                                                                                           |
 
 ### 6.2 Validační scénáře oddílové správy
 
@@ -172,7 +172,7 @@ Guardy operací ústředí bez klasického formuláře:
 | Sloučení osob — volba pole       | Každý konflikt má povinnou volbu A/B; ruční přepis se nenabízí (kvůli věrnému revertu). Provést lze až po rozhodnutí všech konfliktů. | „Rozhodněte, která hodnota se přenese.“                                                             |
 | Sloučení osob — blokující kolize | Obě osoby mají aktivní přihlášku na téže akci → sloučení nelze provést, nic se nemění.                                                | „Sloučení nelze provést: obě osoby mají aktivní přihlášku na akci [název]. Vyřeší ji vedoucí akce.“ |
 | Sloučení osob — revert           | Vrátit sloučení smí jen ADM; operace je jednorázová.                                                                                  | „Sloučení může vrátit jen administrátor ústředí.“                                                   |
-| Reportovací sloučení (R9)        | Nemění žádná data — počítá se jen v reportu Unikátní děti.                                                                            | „Reportovací sloučení nemění žádná data — dvě osoby se počítají jako jedna jen v tomto reportu.“    |
+| Reportovací sloučení (R10)       | Nemění žádná data — počítá se jen v reportu Unikátní děti.                                                                            | „Reportovací sloučení nemění žádná data — dvě osoby se počítají jako jedna jen v tomto reportu.“    |
 | Znovu povolit potlačenou dvojici | Potlačenou dvojici smí znovu nabídnout jen ADM.                                                                                       | „Dvojici lze znovu nabízet.“                                                                        |
 
 ### 6.6 Cross-check formulářových polí plochy D (self-management)
@@ -189,7 +189,7 @@ Pole sekce Můj účet sdílí pravidla s registračním formulářem (§ 6.1) a
 | Zdravotní pojišťovna            | `PERSON.insurance_company`                    | volitelná, není-li vyžádána šablonou akce.                                                                                                                                   |
 | Pozvat zástupce — E-mail        | vazba `PARENT_CHILD` (pozvánka)               | formát e-mailu; vazba vznikne až přijetím, pozvánka platí 14 dní — [parent-child-lifecycle.md](parent-child-lifecycle.md). „Zadejte e-mail ve tvaru jmeno@domena.cz.“        |
 | Pozvánka 2. zástupce — Checkbox | —                                             | povinné potvrzení „Jsem zákonný zástupce tohoto dítěte“. „Bez potvrzení nelze pozvánku přijmout.“                                                                            |
-| Změna hesla — Nové heslo        | `ACCOUNT`                                     | min. 8 znaků, dvakrát shodně. „Heslo musí mít alespoň 8 znaků.“ / „Hesla se neshodují.“                                                                                      |
+| Změna hesla — Nové heslo        | `ACCOUNT`                                     | dvakrát shodně.“                                                                                                                                                             |
 | Odvolání souhlasu               | souhlas (self-service)                        | zapíše `revoked_at`; záznam se uchovává ještě 4 roky. „Souhlas odvolán.“                                                                                                     |
 
 Guardy operací self-managementu:

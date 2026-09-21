@@ -116,26 +116,28 @@ Detailní specifikace obrazovek veřejného portálu a tokenových stránek. Nav
 
 **Účel a publikum:** rodič ověří a schválí přihlášku dítěte do minuty a pochopí, že schválením vzniká jeho trvalá vazba na dítě.
 
-**Layout a komponenty:** jedna karta na výšku obrazovky telefonu: hlavička, souhrn, jedno filled tlačítko. Bez navigace a přihlášení.
+**Layout a komponenty:** jedna karta na výšku obrazovky telefonu: hlavička, souhrn, primární filled tlačítko schválení a méně výrazná akce zamítnutí (text/outlined). Bez navigace a přihlášení.
 
-**Obsah a pole:** kdo se přihlásil, na jakou akci a za kolik; kdo přihlášku podal; lhůta jako konkrétní datum. Text „Potvrzením schvalujete účast a získáváte zástupcovský přístup k přihláškám tohoto dítěte.“ CTA „Schválit přihlášku“. Zamítnutí neexistuje — žádost zástupce buď schválí, nebo propadne ([parent-child-lifecycle.md](parent-child-lifecycle.md)).
+**Obsah a pole:** kdo se přihlásil, na jakou akci a za kolik; kdo přihlášku podal; lhůta jako konkrétní datum. Text „Potvrzením schvalujete účast a získáváte zástupcovský přístup k přihláškám tohoto dítěte.“ Primární CTA „Schválit přihlášku“, sekundární „Zamítnout přihlášku“. Zamítnutí je vědomé rozhodnutí zástupce — přihláška skončí `Canceled` (ne `Expired`) a vazba na dítě nevzniká ([parent-child-lifecycle.md](parent-child-lifecycle.md), [registration-lifecycle.md](registration-lifecycle.md)).
 
 **Stavy:**
 
 - **Platný token:** výše; blíží-li se konec lhůty, banner v `error-container` s upozorněním.
 - **Úspěch:** potvrzení „Schváleno — děkujeme“, vznik vazby zástupce a `guardian_approved_at`, `evaluate()`, tlačítko „Zobrazit stav přihlášky“.
+- **Zamítnutí:** akce „Zamítnout přihlášku“ otevře potvrzení s **volitelným** polem důvodu (krátký text); po potvrzení stav `Canceled`, `guardian_rejected_at` a případný důvod, token se zneplatní, vazba nevzniká; hláška „Přihlášku jste zamítli.“ Bez CTA ke schválení.
 - **Už schváleno:** idempotentně „Tato přihláška už je schválená.“ + odkaz na stav.
+- **Už zamítnuto:** idempotentně „Tuto přihlášku jste už zamítli.“ Bez CTA.
 - **Lhůta vypršela:** přihláška `Expired` — „Lhůta pro schválení uplynula.“ CTA „Otevřít detail akce“.
 - **Mezitím stornováno:** „Tuto přihlášku už není co schvalovat.“ Bez CTA; vazba nevzniká.
 - **Neplatný token:** sdílený vzor § 9. **Načítání:** skeleton karty.
 
-**Interakce a validace:** jediná akce; po úspěchu tlačítko zmizí.
+**Interakce a validace:** dvě akce — schválení na jeden klik, zamítnutí přes potvrzovací krok s volitelným důvodem (guard proti omylu). Obojí lze jen ve stavu `PendingGuardian` a v rámci lhůty; po kterékoli akci se token zneplatní a tlačítka zmizí.
 
-**Oprávnění:** výhradně držitel schvalovacího tokenu; token opravňuje jen ke schválení jedné přihlášky ([ux-navigace.md](ux-navigace.md) § 5.1).
+**Oprávnění:** výhradně držitel schvalovacího tokenu; token opravňuje jen ke schválení nebo zamítnutí jedné přihlášky ([ux-navigace.md](ux-navigace.md) § 5.1).
 
 **Mobil/desktop:** celý obsah na jednu obrazovku bez scrollu.
 
-**Notifikace:** po schválení potvrzení schválení ([notifications.md](notifications.md)).
+**Notifikace:** po schválení potvrzení schválení, po zamítnutí notifikace účastníkovi (`EMAIL_GUARDIAN_REJECTED`) ([notifications.md](notifications.md)).
 
 ## 7. A-06 · Rozcestník správy přihlášky — `/stav/:token`
 

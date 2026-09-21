@@ -61,9 +61,9 @@ Tím se oddělí od `import`, který se neloguje — automatické stažení nen�
 
 Znovuposlání je **vydání nového přístupu k osobním údajům** — starý token se zneplatní a vznikne nový ([non-functional.md](non-functional.md) → **Znovuposlání ztraceného odkazu**). Loguje se proto vždy, oběma cestami.
 
-| `entity_type` / `action`   | Kdy                                       | `detail`                                                                    |
-| -------------------------- | ----------------------------------------- | --------------------------------------------------------------------------- |
-| `REGISTRATION` / `update`  | znovuposlání odkazu na správu či schválení | `changes: {token: {"from": "redacted", "to": "redacted"}}`, `refs: {event_id}` |
+| `entity_type` / `action`  | Kdy                                        | `detail`                                                                       |
+| ------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------ |
+| `REGISTRATION` / `update` | znovuposlání odkazu na správu či schválení | `changes: {token: {"from": "redacted", "to": "redacted"}}`, `refs: {event_id}` |
 
 Aktér rozlišuje obě cesty: `actor_type = 'token'` s `actor_email` u samoobslužné žádosti, `account` u vedoucího, který odkaz poslal z detailu přihlášky. **Hodnota tokenu se do `detail` nikdy nezapisuje** — je to přístupové pověření, stejně jako `api_token_enc`.
 
@@ -91,7 +91,7 @@ Záznam se zapisuje **oběma oddílům** (`unit_id` původní i nový) — jinak
 
 Čtyři evidence zůstávají oddělené, protože nejsou jen auditem:
 
-- `MERGE_LOG` — nese `snapshot` pro revert sloučení osob,
+- `MERGE_LOG` — nese `snapshot` pro revert sloučení osob; sdílí **3letou retenci auditního logu** (README → **Retence a GDPR**), takže po jejím uplynutí se snapshot smaže a sloučení už nelze vrátit ([person-merge.md](person-merge.md) → **Revert**),
 - `PERSON_UNIT_HISTORY` — typované přechody stavů, které čtou reporty,
 - `EVENT_ASSIGNMENT` s `revoked_at` — historie přístupu vedoucích k akci; je to primární evidence s vlastní retencí 10 let od skončení akce, kterou by 3letý auditní log neunesl,
 - `GDPR_AUDIT` — doklad o lokálním výmazu citlivých dat nebo globální anonymizaci osoby, s vlastní retencí a okruhem čtenářů.

@@ -13,7 +13,7 @@ Detailní specifikace obrazovek administrace ústředí (`/ustredi/...`). Naviga
 1. **Kandidáti na sloučení se jen navrhují, nikdy neslučují automaticky** — sloučení vzniká zdola (uživatel/rodič) a schvalují je dotčené strany; ústředí dohlíží, povoluje potlačené dvojice a jako jediné smí sloučení vrátit ([person-merge.md](person-merge.md)).
 2. **Regiony se nemažou** — jen se označí jako _sloučený_ / _zrušený_, historie se nepřepisuje ([region-lifecycle.md](region-lifecycle.md)).
 3. **Reporty jsou jen ke čtení** a region akce je **snapshot z okamžiku jejího vzniku** ([reports.md](reports.md)).
-4. **Reportovací sloučení ≠ skutečné sloučení osob** — nemění žádná data, počítá se jen v reportu Unikátní děti (R9).
+4. **Reportovací sloučení ≠ skutečné sloučení osob** — nemění žádná data, počítá se jen v reportu Unikátní děti (R10).
 5. **ADM je napříč oddíly čtenář** — nevidí obsah dokumentů ani citlivá/zdravotní data mimo celostátní akce ústředí ([authorization.md](authorization.md)).
 
 ## 2. C-01 · Přehled ústředí — `/ustredi`
@@ -22,7 +22,7 @@ Detailní specifikace obrazovek administrace ústředí (`/ustredi/...`). Naviga
 
 **Layout a komponenty:** top app bar „Přehled — Správa ústředí“; řádek KPI karet, pod ním „Vyžaduje pozornost“ (M3 list) a karta „Organizace“.
 
-**Obsah a pole:** KPI (počet oddílů, aktivní regiony, unikátní děti za rok → R9, běžící žádosti o sloučení). „Vyžaduje pozornost“ dle urgence: nedoručená pozvánka HVO → C-02; sloučení připravené k provedení → C-05; žádost o sloučení čekající na strany → C-05; kandidáti na reportovací sloučení → C-06/R9; oddíl bez regionu → C-03. Karta Organizace: rozpad oddílů po regionech + poznámka „Ústředí do regionů nepatří.“
+**Obsah a pole:** KPI (počet oddílů, aktivní regiony, unikátní děti za rok → R10, běžící žádosti o sloučení). „Vyžaduje pozornost“ dle urgence: nedoručená pozvánka HVO → C-02; sloučení připravené k provedení → C-05; žádost o sloučení čekající na strany → C-05; kandidáti na reportovací sloučení → C-06/R10; oddíl bez regionu → C-03. Karta Organizace: rozpad oddílů po regionech + poznámka „Ústředí do regionů nepatří.“
 
 **Stavy:**
 
@@ -133,6 +133,7 @@ Detailní specifikace obrazovek administrace ústředí (`/ustredi/...`). Naviga
 - **Úspěch (provedení):** potvrzovací dialog „Sloučit [zdroj] do [cíl]? Zdrojová osoba zůstane jako náhrobek s přesměrováním — staré odkazy povedou na sjednocenou osobu.“ Po potvrzení: stav `Dokončeno`, přihlášky přejdou na cíl, snackbar „Osoby sloučeny“, badge railu klesne.
 - **Chyba — blokující kolize:** mají-li obě osoby aktivní přihlášku na téže akci, dialog v `error-container`: „Sloučení nelze provést: obě osoby mají aktivní přihlášku na akci [název]. Vyřešit ji musí vedoucí akce — nic nebylo změněno.“
 - **Dokončeno — revert:** detail zobrazí snapshot (stav obou osob před sloučením, rozhodnuté volby, přenesené vazby) + tlačítko „Vrátit sloučení“ (jen ADM). Dialog revertu ve dvou sloupcích: „Co se vrátí“ × „Co zůstane u cílové osoby“ (záznamy vzniklé po sloučení). Revert je jednorázový → `Vráceno`; nové sloučení = nová žádost.
+- **Po retenci — revert nedostupný:** po 3 letech (retence auditního logu, smazání `MERGE_LOG`) tlačítko „Vrátit sloučení“ zmizí; místo něj řádek „Sloučení je starší tří let — snapshot pro vrácení už není k dispozici.“ Stav zůstává `Dokončeno`.
 
 **Interakce a validace:** bez rozhodnutí všech konfliktů nelze dokončit; různá data narození vyžadují zvláštní potvrzení „pravděpodobně nejde o stejnou osobu“. Směr sloučení a pravidla dědění polí dle [person-merge.md](person-merge.md).
 
@@ -142,27 +143,27 @@ Detailní specifikace obrazovek administrace ústředí (`/ustredi/...`). Naviga
 
 **Notifikace:** dle [notifications.md](notifications.md) (žádosti a jejich schvalování).
 
-## 7. C-06 · Reporty ústředí — `/ustredi/reporty` (vč. R9)
+## 7. C-06 · Reporty ústředí — `/ustredi/reporty` (vč. R10)
 
-**Účel a publikum:** jedna obálka pro reporty R1–R9 napříč oddíly s dimenzí region — podklad pro vykazování a dotace.
+**Účel a publikum:** jedna obálka pro reporty R1–R10 napříč oddíly s dimenzí region — podklad pro vykazování a dotace.
 
 **Layout a komponenty:** vlevo výběr reportů (M3 list, kód + název), vpravo plocha reportu: parametry · graf · tabulka · tlačítko „Export CSV“. Sdílí vzor s oddílovými reporty ([ux-obrazovky-oddil.md](ux-obrazovky-oddil.md) § 14).
 
 **Obsah a pole:**
 
-- Výběr: R1 Seznam akcí a docházky · R2 Počty členů v čase · R3 Účast na akcích · R4 Docházka schůzek · R5 Dobrovolnické hodiny · R6 Retence a odchody · R7 Platby · R8 Vzdělávání · R9 Unikátní děti ([reports.md](reports.md)).
+- Výběr: R1 Seznam akcí a docházky · R2 Počty členů v čase · R3 Účast na akcích · R4 Docházka schůzek · R5 Vývoj docházky v čase · R6 Dobrovolnické hodiny · R7 Retence a odchody · R8 Platby · R9 Vzdělávání · R10 Unikátní děti ([reports.md](reports.md)).
 - Parametry: Oddíly (multi-select, výchozí „všechny“) · Období od–do (výchozí 12 měsíců) · Granularita (měsíc / kvartál / rok) · Region (filtruje přes snapshot akce) · Typ akce. Pod výsledkem metadata generování.
-- **R9 — Unikátní děti** (vlastní podoba obrazovky): výběr **roku** (segmented, u R9 jen kalendářní roky) a velké číslo výsledku „[N] unikátních dětí“; rozpad po regionech (snapshot z akce). Poznámky: „Hosté cizích oddílů se nepočítají.“ a „Součet po regionech může být vyšší než celkem — dítě mohlo jet do dvou regionů.“ Trvalý banner `tertiary`: „Reportovací sloučení nemění žádná data — dvě osoby se počítají jako jedna jen v tomto reportu. Skutečné sloučení osob se schvalováním je v sekci Slučování osob.“ Karta **Kandidáti** (shoda jména, příjmení a data narození napříč oddíly; zobrazují se **jen tato tři pole**) s tlačítkem „Sloučit pro report“. Karta **Aktivní reportovací sloučení** (tranzitivní skupiny A–B, B–C ⇒ jedna osoba) s akcí „Zrušit“ (kdykoli — nic se nepřepsalo).
+- **R10 — Unikátní děti** (vlastní podoba obrazovky): výběr **roku** (segmented, u R10 jen kalendářní roky) a velké číslo výsledku „[N] unikátních dětí“; rozpad po regionech (snapshot z akce). Poznámky: „Hosté cizích oddílů se nepočítají.“ a „Součet po regionech může být vyšší než celkem — dítě mohlo jet do dvou regionů.“ Trvalý banner `tertiary`: „Reportovací sloučení nemění žádná data — dvě osoby se počítají jako jedna jen v tomto reportu. Skutečné sloučení osob se schvalováním je v sekci Slučování osob.“ Karta **Kandidáti** (shoda jména, příjmení a data narození napříč oddíly; zobrazují se **jen tato tři pole**) s tlačítkem „Sloučit pro report“. Karta **Aktivní reportovací sloučení** (tranzitivní skupiny A–B, B–C ⇒ jedna osoba) s akcí „Zrušit“ (kdykoli — nic se nepřepsalo).
 - Ostatní reporty se počítají „best effort“; metriky bez podkladu se **skryjí** (ne „0“, ne pomlčka). Export CSV = stažení ploché tabulky.
 
 **Stavy:**
 
 - **Prázdný:** kanonický „Za toto období nejsou data“ ([ux-texty-stavy.md](ux-texty-stavy.md) § 4). **Série s nulami není prázdný stav** — prázdné koše se kreslí jako nuly.
-- **Prázdný — kandidáti R9:** ikona `verified`, „Žádní kandidáti na sloučení“, „V datech není shoda jména a data narození napříč oddíly — evidence je čistá.“ Bez CTA.
-- **Úspěch (R9):** sloučení dvojice okamžitě přepočítá číslo; zrušení ho vrátí. Dvojice bez aktivní přihlášky za daný rok číslo nezmění — UI to hlásí („v čísle za rok se neprojeví“).
+- **Prázdný — kandidáti R10:** ikona `verified`, „Žádní kandidáti na sloučení“, „V datech není shoda jména a data narození napříč oddíly — evidence je čistá.“ Bez CTA.
+- **Úspěch (R10):** sloučení dvojice okamžitě přepočítá číslo; zrušení ho vrátí. Dvojice bez aktivní přihlášky za daný rok číslo nezmění — UI to hlásí („v čísle za rok se neprojeví“).
 - **Načítání:** skeleton se zachovanou plochou grafu; **Chyba:** § 5. **Úspěch (export):** snackbar „CSV exportováno“.
 
-**Interakce a validace:** reporty jen ke čtení (kromě reportovacího sloučení — zakládá ústředí samo, bez schvalování); změna parametru přepočítá okamžitě; cesta ke skutečnému sloučení se z R9 nenabízí. Scope se odvozuje z role, ne z parametru requestu.
+**Interakce a validace:** reporty jen ke čtení (kromě reportovacího sloučení — zakládá ústředí samo, bez schvalování); změna parametru přepočítá okamžitě; cesta ke skutečnému sloučení se z R10 nenabízí. Scope se odvozuje z role, ne z parametru requestu.
 
 **Oprávnění:** ADM (celoorganizační rozsah).
 
@@ -197,11 +198,11 @@ Detailní specifikace obrazovek administrace ústředí (`/ustredi/...`). Naviga
 
 ## 9. C-08 · Zkrácené sekce — Vzdělávání a Audit log
 
-- **Vzdělávání — `/ustredi/vzdelavani`** — katalog kurzů ústředí: tabulka kurz · platnost v měsících (prázdná = slovo „trvalý“) · držitelů; tlačítko „Založit kurz“ (dialog: název\*, platnost — kladné celé měsíce, nebo „trvalý“). Kurzy se vážou na vzdělávací akce ústředí; po absolvování vzniká účastníkům záznam s platností. Přehled expirací = R8 v C-06. **Prázdný stav:** ikona `school`, „Zatím žádné kurzy“, „Kurzy evidují kvalifikace vedoucích a jejich platnost. Založte první kurz.“, CTA „Založit kurz“.
+- **Vzdělávání — `/ustredi/vzdelavani`** — katalog kurzů ústředí: tabulka kurz · platnost v měsících (prázdná = slovo „trvalý“) · držitelů; tlačítko „Založit kurz“ (dialog: název\*, platnost — kladné celé měsíce, nebo „trvalý“). Kurzy se vážou na vzdělávací akce ústředí; po absolvování vzniká účastníkům záznam s platností. Přehled expirací = R9 v C-06. **Prázdný stav:** ikona `school`, „Zatím žádné kurzy“, „Kurzy evidují kvalifikace vedoucích a jejich platnost. Založte první kurz.“, CTA „Založit kurz“.
 - **Audit log — `/ustredi/audit`** — tabulka změnových událostí: čas · aktér (u systémových „Systém“) · akce (založení / úprava / schválení / zamítnutí / storno) · cíl · oddíl; filtr podle oddílu ([audit-log.md](audit-log.md)). **Prázdný stav:** ikona `history`, „Zatím žádné události“, text dle katalogu ([ux-texty-stavy.md](ux-texty-stavy.md) § 4). Bez CTA.
 
 **Oprávnění:** ADM.
 
 **Mobil/desktop:** tabulky → karty.
 
-**Notifikace:** kurzy vážou expirace na R8; audit log sám nenotifikuje.
+**Notifikace:** kurzy vážou expirace na R9; audit log sám nenotifikuje.
