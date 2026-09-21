@@ -71,7 +71,7 @@ Pravidla plochy B:
 3. Tab Nastavení se skrývá uživateli bez práva `can_edit_event`. U akce bez přihlášek zůstává jen Docházka. U závodní akce Náhradníci obsahují také hlídky a stanoviště.
 4. HVO má plný rozsah. VO a RÁD mají rozsah podle role a `EVENT_ASSIGNMENT`. ÚČE vidí Přehled, Akce ke čtení, Platby a report R7; k akcím se nepřiřazuje.
 5. Platební údaje se dle role maskují: RÁD mimo funkci vedoucího akce nevidí částky; vedoucí akce vidí předepsáno, uhrazeno a zbývá, ale ne slevy, storno poplatky, přeplatky, vratky ani transakce.
-6. Položka navigace mimo rozsah role se skryje. Nepovolený údaj se maskuje. Přímý vstup na nepovolenou routu vrátí 403 s ikonou `lock`, nadpisem „Sem nemáte přístup“ a CTA „Zpět na přehled“.
+6. Chování bez oprávnění (skrytí položky mimo rozsah role, maskování nepovoleného údaje, 403 při přímém vstupu na nepovolenou routu) je jednotné napříč plochami — viz § 5.
 7. Badge u Plateb ukazuje součet nespárovaných transakcí a přeplatků čekajících na rozhodnutí. Fronty dokumentů a náhradníků jsou badge uvnitř detailu akce, ne v hlavní navigaci.
 
 ### 2.3 Plocha C — Správa ústředí

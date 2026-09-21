@@ -13,7 +13,7 @@ Detailní specifikace obrazovek oddílové administrace (`/oddil/...`). Navigaci
 1. **Oprávnění k zápisu se přidělují per akce** přes `EVENT_ASSIGNMENT` — VO/RÁD vidí a mění přihlášky jen tam, kde jsou přiřazení; základní čtení detailu akce a seznamu přihlášených plyne z role ve vlastním oddílu ([authorization.md](authorization.md)).
 2. **Stav přihlášky se nikdy nenastavuje ručně** — vedoucí mění fakta (schválí dokument, alokuje platbu, vybere náhradníka) a stav přepočítá `evaluate()`. V UI není žádný ovladač „nastavit stav“.
 3. **Platební atributy se maskují dle role** — RÁD mimo funkci Vedoucího akce nevidí částky; ÚČE vidí platby celého oddílu, ale k akcím se nepřiřazuje.
-4. **Chování bez oprávnění:** položka mimo rozsah role se **skryje**, údaj mimo rozsah se **maskuje** (`———`), přímý vstup na URL bez práva → 403 (ikona `lock`, „Sem nemáte přístup“, CTA „Zpět na přehled“).
+4. **Chování bez oprávnění** (skrytí prvku mimo rozsah role, maskování údaje `———`, 403 při přímém vstupu na nepovolenou URL) dle [ux-navigace.md](ux-navigace.md#5-společná-pravidla-oprávnění) § 5.
 
 ## 2. B-01 · Přehled oddílu — `/oddil`
 

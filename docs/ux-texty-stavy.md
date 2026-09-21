@@ -4,19 +4,7 @@
 
 Stav se **nikdy nezobrazuje jako jediné sdělení** — hlavní je checklist „co ještě chybí" (§ 2), název stavu je jen doplňkový štítek (M3 assist/filter chip, tonální, ikona vlevo). Jedna sdílená komponenta pro tokenový rozcestník (`/stav/:token`), self-management (`/muj-ucet/prihlasky/:pid`) i detail v oddílové správě.
 
-| Stav (identifikátor) | Česká nálepka              | Ikona            | Kdy nastává                                                                 |
-| -------------------- | -------------------------- | ---------------- | --------------------------------------------------------------------------- |
-| `New`                | Nová                       | fiber_new        | založena, žádná brána zatím nevyhodnocena / náhradník před přijetím nabídky |
-| `PendingGuardian`    | Čeká na zákonného zástupce | family_restroom  | nezletilý bez aktivní/schválené vazby                                       |
-| `PendingDocuments`   | Čeká na dokumenty          | description      | chybí nebo je zamítnutý povinný dokument                                    |
-| `PendingPayment`     | Čeká na platbu             | account_balance  | dokumenty vyřízené, platba nulová                                           |
-| `PartialPaid`        | Částečně zaplaceno         | hourglass_bottom | přijata částečná úhrada                                                     |
-| `Paid`               | Zaplaceno                  | check_circle     | uhrazeno přesně (akce zdarma jde rovnou sem)                                |
-| `Overpayment`        | Přeplatek                  | trending_up      | přijato víc, než je cena                                                    |
-| `Canceled`           | Stornována                 | cancel           | zrušeno účastníkem nebo vedoucím                                            |
-| `Expired`            | Expirovaná                 | schedule         | marná lhůta (přeškrtnutý text)                                              |
-
-Barvy a přesné hex hodnoty viz [ux-navigace.md](ux-navigace.md#62-stavové-barvy-přihlášek-a-dokumentů). Pohyb zpět (např. zamítnutý dokument vrátí `Paid` → `PendingDocuments`) **není regrese** — text vysvětluje důvod („Vedoucí potřebuje kopii posudku znovu"), progress bar se nepoužívá nikde, protože stav je počítaný a nelineární.
+Devět stavů, jejich významy a kdy nastávají definuje [registration-lifecycle.md](registration-lifecycle.md#stavy) → **Stavy**; české nálepky, ikony a barevné palety čipů [ux-navigace.md](ux-navigace.md#62-stavové-barvy-přihlášek-a-dokumentů) → **6.2 Stavové barvy**. Pohyb zpět (např. zamítnutý dokument vrátí `Paid` → `PendingDocuments`) **není regrese** — text vysvětluje důvod („Vedoucí potřebuje kopii posudku znovu"), progress bar se nepoužívá nikde, protože stav je počítaný a nelineární.
 
 ## 2. Checklist bran „co ještě chybí"
 
@@ -154,11 +142,12 @@ Každá úspěšná mutace se zapíše do auditu, překreslí dotčené badge a 
 
 ### 6.4 Role a prezentace nepřístupných údajů
 
-- Akce, tab nebo ovládací prvek mimo rozsah role se skryje; neukazuje se jako disabled, pokud uživatel nemůže oprávnění sám získat.
-- Částka, na jejíž existenci uživatel právo má, ale nesmí znát hodnotu, se maskuje `———` s tooltipem „Platební údaje nejsou pro tuto roli dostupné.“
-- Read-only režim ponechá hodnoty viditelné a skryje ukládací/destruktivní akce.
-- Přímý vstup na nepovolenou URL zobrazí 403: ikona `lock`, nadpis „Sem nemáte přístup“, text „Pro tuto část nemáte potřebné oprávnění.“, CTA „Zpět na přehled“.
-- Nenalezená akce zobrazí nadpis „Akci jsme nenašli“ a CTA „Zpět na seznam akcí“.
+Chování při absenci oprávnění (skrytí prvku, maskování `———`, read-only, 403) definuje [ux-navigace.md](ux-navigace.md#5-společná-pravidla-oprávnění) § 5. Doplňky a přesné texty:
+
+- Skrytý prvek se **neukazuje jako disabled**, pokud uživatel nemůže oprávnění sám získat.
+- Maskovaná částka nese tooltip „Platební údaje nejsou pro tuto roli dostupné.“
+- 403 (přímý vstup na nepovolenou URL): ikona `lock`, nadpis „Sem nemáte přístup“, text „Pro tuto část nemáte potřebné oprávnění.“, CTA „Zpět na přehled“.
+- Nenalezená akce: nadpis „Akci jsme nenašli“, CTA „Zpět na seznam akcí“.
 
 ### 6.5 Cross-check formulářových polí plochy C (ústředí)
 

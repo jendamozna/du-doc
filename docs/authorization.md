@@ -175,15 +175,7 @@ ADM může číst osobní údaje a přihlášky napříč všemi oddíly, včetn
 
 ## Reporty
 
-Rozsah je definovaný v [reports.md](reports.md) a shoduje se s rolí:
-
-| Role | Vidí                                |
-| ---- | ----------------------------------- |
-| RÁD  | jen osoby své družiny               |
-| VO   | svůj oddíl                          |
-| HVO  | svůj oddíl                          |
-| ÚČE  | jen report Platby, svůj oddíl       |
-| ADM  | vše napříč oddíly, s dimenzí region |
+Rozsah reportů podle role je definovaný v [reports.md](reports.md) → **Rozsah dat (scope)** (RÁD jen svá družina, VO/HVO svůj oddíl, ÚČE jen report Platby svého oddílu, ADM vše napříč oddíly s dimenzí region).
 
 Scope se aplikuje jako **filtr odvozený z `USER_ROLE`**, ne z parametru requestu — `unit_id` v požadavku se proti povoleným oddílům validuje.
 

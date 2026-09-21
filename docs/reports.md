@@ -207,17 +207,17 @@ Zdrojem jsou přechody v `PERSON_UNIT_HISTORY` (proto se tato historie nesmí sl
 
 Bucket podle data akce (`EVENT.starts_at`), varianta „cash-flow" podle `BANK_TRANSACTION.date`.
 
-| Metrika              | Výpočet                                                                                             |
-| -------------------- | --------------------------------------------------------------------------------------------------- |
-| předepsáno           | `SUM(cena přihlášky)` přes aktivní přihlášky (cena = `EVENT_PRICE` + příplatky číselníků)           |
-| inkasováno           | `SUM(PAYMENT_ALLOCATION.amount)` k těmto přihláškám                                                 |
-| pohledávky           | předepsáno − inkasováno, jen `state IN ('PendingPayment', 'PartialPaid')`                           |
-| přeplatky            | `SUM(alokace − cena)` u `state = 'Overpayment'`                                                     |
+| Metrika              | Výpočet                                                                                                    |
+| -------------------- | ---------------------------------------------------------------------------------------------------------- |
+| předepsáno           | `SUM(cena přihlášky)` přes aktivní přihlášky (cena = `EVENT_PRICE` + příplatky číselníků)                  |
+| inkasováno           | `SUM(PAYMENT_ALLOCATION.amount)` k těmto přihláškám                                                        |
+| pohledávky           | předepsáno − inkasováno, jen `state IN ('PendingPayment', 'PartialPaid')`                                  |
+| přeplatky            | `SUM(alokace − cena)` u `state = 'Overpayment'`                                                            |
 | nespárované platby   | příchozí `BANK_TRANSACTION` bez alokace, mimo `ignored_at` a `voided_at`, se stářím (0–7 / 8–30 / 30+ dní) |
-| storna               | přihlášky `state = 'Canceled'`, počet + předepsaná částka + storno poplatek dle `CANCELLATION_RULE` |
-| zaplaceno včas/pozdě | podíl přihlášek, kde datum poslední alokace ≤ termín splatnosti (viz níže)                          |
+| storna               | přihlášky `state = 'Canceled'`, počet + předepsaná částka + storno poplatek dle `CANCELLATION_RULE`        |
+| zaplaceno včas/pozdě | podíl přihlášek, kde datum poslední alokace ≤ termín splatnosti (viz níže)                                 |
 
-**Termín splatnosti** je vlastnost akce a má dvě varianty: relativní (`EVENT.payment_due_days` — počet dní od podání přihlášky, default 14) nebo absolutní (`EVENT.payment_due_date` — pevné datum). U přihlášky se odvodí jako `MIN(REGISTRATION.created_at + payment_due_days, EVENT.starts_at)`, resp. přímo `payment_due_date`. Stejný výpočet používají výzvy k platbě a připomínky, aby report a notifikace nemohly dát různý výsledek.
+**Termín splatnosti** se počítá podle [payment-matching.md](payment-matching.md) → **Alokace** (relativní `payment_due_days`, nebo absolutní `payment_due_date`). Report, výzvy k platbě i připomínky sdílejí týž výpočet, aby nemohly dát různý výsledek.
 
 **Hrany:**
 

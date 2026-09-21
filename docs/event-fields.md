@@ -6,15 +6,15 @@ Obecný, znovupoužitelný mechanismus: vedoucí u libovolné akce nadefinuje li
 
 ## `EVENT_FIELD`
 
-| Pole             | Význam                                                                                                                                                         |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`           | název číselníku                                                                                                                                                |
-| `comment`        | veřejný popis / instrukce pro účastníka                                                                                                                        |
-| `internal_note`  | neveřejná poznámka jen pro vedoucí                                                                                                                             |
-| `assigned_by`    | `self` (vybírá účastník při přihlášení) / `leader` (přiřazuje vedoucí až po přihlášení)                                                                        |
-| `max_select`     | počet voleb — `1` = jednovýběrový, `> 1` = vícevýběrový s limitem, `NULL` = vícevýběrový bez limitu                                                            |
+| Pole             | Význam                                                                                                                                                                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`           | název číselníku                                                                                                                                                                                                                 |
+| `comment`        | veřejný popis / instrukce pro účastníka                                                                                                                                                                                         |
+| `internal_note`  | neveřejná poznámka jen pro vedoucí                                                                                                                                                                                              |
+| `assigned_by`    | `self` (vybírá účastník při přihlášení) / `leader` (přiřazuje vedoucí až po přihlášení)                                                                                                                                         |
+| `max_select`     | počet voleb — `1` = jednovýběrový, `> 1` = vícevýběrový s limitem, `NULL` = vícevýběrový bez limitu                                                                                                                             |
 | `required_phase` | `NULL` = nepovinný; `on_submit` = volba nutná už při odeslání přihlášky (výchozí — výzva k platbě odchází ihned po podání, takže není žádná pozdější chvíle „před výzvou k platbě"), `before_event` = kdykoli před konáním akce |
-| `condition`      | podmínka způsobilosti (`NULL` = všichni) — číselník se zobrazí jen účastníkům, kteří ji splňují (věk, členství DU, role); ostatním se skryje                   |
+| `condition`      | podmínka způsobilosti (`NULL` = všichni) — číselník se zobrazí jen účastníkům, kteří ji splňují (věk, členství DU, role); ostatním se skryje                                                                                    |
 
 - U **náhradníka** se povinný výběr (stejně jako dokumenty) vynucuje až po přijetí nabídky z náhradnického místa.
 - Číselník, kde smí položku zvolit jen jeden účastník (např. konkrétní lůžko), se modeluje nastavením `capacity = 1` na každé jeho položce — samostatné pole pro tento režim číselník nemá, řídí ho výhradně `EVENT_FIELD_OPTION.capacity`.
@@ -39,4 +39,4 @@ Obecný, znovupoužitelný mechanismus: vedoucí u libovolné akce nadefinuje li
 
 - **Ubytování** — jednovýběrový číselník `budova / stan`, kde „budova" nese vyšší `price_modifier`.
 - **Strava** — vícevýběrový číselník `snídaně / oběd / večeře`, každá položka s vlastní cenou.
-- **Stanoviště na závodě** — `assigned_by = self` (dospělý nezávodící účastník si stanoviště volí sám při přihlášení; vedoucí s `can_edit_registrations` i vlastník přihlášky ho pak můžou v editaci přihlášky změnit), `max_select = 1`, běžné stanoviště `capacity = 1`, pseudo-stanoviště „Jakékoliv" `capacity = NULL`; viz [race-patrols.md](race-patrols.md).
+- **Stanoviště na závodě** — `assigned_by = self`, `max_select = 1`, běžné stanoviště `capacity = 1`, pseudo-stanoviště „Jakékoliv" `capacity = NULL`; samoobslužná volba, způsobilost a výlučnost s hlídkou viz [race-patrols.md](race-patrols.md) → **Stanoviště a rozhodčí**.
