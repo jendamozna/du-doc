@@ -18,7 +18,7 @@ Systém je implementován jako modulární monolit.
 | --------- | --------------------------------------------------- |
 | Frontend  | TypeScript, React, Vite, TailwindCSS                |
 | Backend   | PHP 8.4, Nette 4                                    |
-| Databáze  | MariaDB 10                                          |
+| Databáze  | MariaDB 10.11.6                                     |
 | API       | REST, JSON                                          |
 | Testování | PHPUnit (jednotkové a integrační), Playwright (E2E) |
 | Vývoj     | Docker                                              |
@@ -28,7 +28,7 @@ Co z toho plyne pro zbytek specifikace:
 
 - **Oddělený frontend a backend.** Nette neservíruje HTML aplikace — vystavuje **REST JSON API**, React SPA je samostatný artefakt sestavený Vite. Šablony (Latte) zůstávají jen pro **odchozí e-maily** a PDF potvrzení. Autorizace API podle [authorization.md](authorization.md) tedy běží výhradně na serveru; skrytí prvku v UI není ochrana.
 - **Mobile-first jako build target** — viz **Rozhraní a zařízení**; Tailwind breakpointy se používají vzestupně (základ = telefon).
-- **MariaDB 10, `utf8mb4`** s českou kolací (`utf8mb4_czech_ci`) — třídění jmen musí respektovat české znaky a diakritiku.
+- **MariaDB, `utf8mb4`** s českou kolací (`utf8mb4_czech_ci`) — třídění jmen musí respektovat české znaky a diakritiku.
 - **Částky jsou `DECIMAL(10,2)`**, nikdy `FLOAT` — součty alokací a stav úhrady se porovnávají na haléř ([payment-matching.md](payment-matching.md)).
 - **Časy jako `DATETIME` v UTC**, převod do `Europe/Prague` až při zobrazení (viz **Lokalizace a formáty**).
 - **Binární obsah souborů** je `LONGBLOB` (viz **Úložiště souborů**) — `max_allowed_packet` musí pokrýt limit 10 MB na soubor s rezervou na šifrovací režii.

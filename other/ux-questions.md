@@ -3,7 +3,7 @@
 Zdroj: [docs/du-doc-ux-pruvodce.md](docs/du-doc-ux-pruvodce.md), všech 123 výskytů badge `[K rozhodnutí]`.
 Každý bod je ověřený proti aktuálnímu stavu `docs/` (10. 9. 2026); vyřešené body jsou z tohoto seznamu odstraněné.
 
-Zůstává **63 otevřených rozhodnutí**: 2 průřezová (D2, D3) a 61 lokálních u konkrétních obrazovek.
+Zůstává **58 otevřených rozhodnutí**: 2 průřezová (D2, D3) a 56 lokálních u konkrétních obrazovek.
 
 **→ Návrh** u každé otázky je doporučení k odsouhlasení nebo odmítnutí, ne hotové rozhodnutí. Kde návrh vyžaduje změnu specifikace (nové pole, událost, entita), je to výslovně uvedeno — takové body je potřeba propsat zpět do `docs/`, ne je nechat žít jen v UX vrstvě.
 
@@ -143,10 +143,6 @@ Méně lhůt v systému = méně jobů, méně stavů a méně vysvětlování.
 ---
 
 ## 3 · Plocha B — oddíl
-
-### Q-B1 · Lze založit akci _bez_ šablony? 🟠
-
-**→ Návrh:** **šablona povinná**, ale mezi systémovými šablonami mít „Prázdná akce“ jako plnohodnotný záznam. Kód má jednu cestu, data zůstanou konzistentní (`action_template_id` je vždy vyplněné) a úniková cesta zůstává. Výjimka „akce bez šablony“ by znamenala druhou větev všude, kde se ze šablony čtou výchozí hodnoty.
 
 ### Q-B2 · Vzniká SS akce automaticky, nebo ho zadává HVO? 🔴
 
@@ -307,11 +303,6 @@ Prázdný whitelist by první den provozu označil každé jméno a modul by mus
 
 **→ Návrh:** dvě záložky — **Aktivní** (výchozí) a **Historie** — a uvnitř seskupení po osobách, jakmile má uživatel víc než jedno dítě. Řadit podle nejbližšího termínu akce. Filtry nezavádět; rodič má jednotky přihlášek, ne desítky.
 
-### Q-D2 · Vidí rodič přihlášky ve stavu `PendingGuardian`, které sám nepodal? 🟠
-
-**→ Návrh:** **ano, vidí všechny přihlášky dítěte** bez ohledu na to, kdo je podal, včetně těch čekajících na schválení.
-Opak by znamenal, že přihláška podaná dítětem je pro rodiče neviditelná až do chvíle, kdy po 7 dnech propadne — a rodič se o ní dozví jen z e-mailu, který mohl přehlédnout. Aktivní vazba dává právo na údaje dítěte, tohle je jeho přirozený rozsah. Doplnit do [docs/authorization.md](docs/authorization.md).
-
 ### Q-D3 · Ukázat druhému rodiči, kdo přihlášku naposledy změnil? 🟡
 
 **→ Návrh:** **ano**, jedna řádka pod hlavičkou přihlášky: „Naposledy upravila Jana Nováková, 3. 9. v 18:20.“ Data má auditní log, takže jde jen o zobrazení.
@@ -323,15 +314,6 @@ Opak by znamenal, že přihláška podaná dítětem je pro rodiče neviditelná
 Plus **notifikace druhému zástupci a HVO oddílu** — u posledního zástupce dítěte přechází odpovědnost na HVO, takže se to nesmí dozvědět náhodou. Zrušení nelze blokovat (nelze držet zástupce proti jeho vůli), takže tření má být informační, ne překážkové.
 Doplnit notifikaci do [docs/notifications.md](docs/notifications.md).
 
-### Q-D5 · Smí rodič měnit datum narození dítěte? 🔴
-
-**→ Návrh:** rodič smí, **dokud dítě nemá žádnou přihlášku v nekoncovém stavu**; jinak jen HVO. Změna vždy s varováním o dopadech (věkové brány akcí, složení hlídek) a zápisem do auditu.
-Volná editace kdykoli by dovolila obejít věkovou podmínku akce po přihlášení; úplný zákaz by naopak nutil rodiče volat vedoucímu kvůli běžnému překlepu při registraci.
-
-### Q-D6 · Editace vlastního data narození 🟠
-
-**→ Návrh:** **stejný guard jako u dítěte** (Q-D5) — bez otevřené přihlášky volně, jinak přes HVO. Konzistence pravidla je tady důležitější než pohodlí; dvě různá pravidla pro tutéž hodnotu se nedají vysvětlit ani otestovat.
-
 ### Q-D7 · Kdo a kdy posílá výzvu k převzetí účtu po zletilosti 🟠
 
 **→ Návrh:** **automaticky v den 18. narozenin**, navěšeno na job, který už tak jako tak překlápí vazbu do `readonly_after_adulthood`. E-mail jde na kontaktní adresu osoby, existuje-li; rodič má v detailu dítěte tlačítko _Poslat výzvu znovu_ (a možnost chybějící e-mail doplnit — výjimka v právech je přesně na tohle).
@@ -341,11 +323,6 @@ Nechat to na tlačítku rodiče by znamenalo, že se výzva u většiny dětí n
 
 **→ Návrh:** **doplnit** — zvoucí smí pozvánku ve stavu `pending` odvolat týmž tlačítkem, kterým ji poslal (→ `canceled`, důvod „odvoláno zvoucím“, token se zneplatní).
 Bez toho zůstane pozvánka poslaná na špatnou adresu viset 14 dní a jedinou cestou ven je čekat. Vyžaduje doplnit přechod do [docs/parent-child-lifecycle.md](docs/parent-child-lifecycle.md).
-
-### Q-D9 · Odvolání souhlasu — self-service, nebo žádost? 🟠
-
-**→ Návrh:** **self-service tlačítko** u každého odvolatelného souhlasu, s okamžitým účinkem a jednou větou o důsledku („Bez souhlasu s fotografováním vás nebudeme fotit na akcích“).
-Souhlas, který nejde odvolat vlastní silou, není souhlas — a žádost vyřizovaná HVO by z toho udělala měsíc čekání. Doplnit do spec, že odvolání zapisuje `revoked_at` a aktéra do auditu.
 
 ### Q-D10 · Kde se podává žádost o výmaz (GDPR) 🔴
 
@@ -398,7 +375,6 @@ Návrhy výše nejsou jen UX — 26 z nich znamená doplnit něco do `docs/`. So
 | Q-C11 | definice „absolvování“ = docházka na akci s `course_id`              | `validation.md`                                  |
 | Q-C12 | čtení `certificate_file` v matici rolí                               | `authorization.md`                               |
 | Q-C15 | přepínač blokace whitelistu jmen                                     | `validation.md`                                  |
-| Q-D2  | rodič vidí i `PendingGuardian` přihlášky dítěte                      | `authorization.md`                               |
 | Q-D4  | notifikace o zrušení vazby druhému zástupci a HVO                    | `notifications.md`                               |
 | Q-D7  | `EMAIL_ACCOUNT_TAKEOVER` v den 18. narozenin                         | `notifications.md`                               |
 | Q-D8  | odvolání pozvánky zvoucím rodičem                                    | `parent-child-lifecycle.md`                      |
