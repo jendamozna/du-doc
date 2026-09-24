@@ -24,11 +24,13 @@ Dále v textu „modul" = architektonický modul. Zapínatelné moduly jsou jeho
 ## Principy
 
 1. **Jeden vlastník na entitu.** Zapisovat do tabulky smí jen její modul. Ostatní čtou přes jeho čtecí rozhraní, nikdy přímým UPDATE.
-2. **Závislosti jdou jen dolů.** Vrstvy: platforma → jádro → doména → analytika. Cyklus se rozbíjí událostí, ne obousměrným voláním.
+2. **Závislosti jdou jen dolů.** Vrstvy: platforma → jádro → doména → analytika. Cyklus se rozbíjí událostí (bod 8) nebo portem (bod 7), ne obousměrným voláním. Výjimka platí pro platformu: rozhraní Identity (`canDo`, `resolveToken`, `issueToken`) a porty `Identity\Port` a `Notifications\Port` smí používat, resp. implementovat kterýkoli modul. Tyto hrany se v grafu nekreslí, v Deptracu je pokrývá pravidlo na úrovni vrstvy. Odesílací API Notifications do výjimky nepatří (bod 4).
 3. **Synchronně se ptáme, asynchronně oznamujeme.** Guard (potřebuji rozhodnout teď) = dotaz do nižší vrstvy. Následek (stalo se, ostatní ať reagují) = událost.
 4. **Doména nezná e-maily.** Žádný modul nevolá odesílání pošty; notifikace se odvozují z událostí ([notifications.md](notifications.md)).
 5. **Audit je posluchač, ne volaný.** Do [audit-log.md](audit-log.md) zapisuje modul Audit z odebíraných událostí, ne autor změny.
 6. **Události jsou fakta v minulém čase** a nesou vždy `domain_event_id`, `occurred_at`, `actor_type` (`account` / `token` / `system`), `actor_account_id`, volitelný `actor_email` pro token, `unit_id` (je-li v oddílovém scope) a identifikátory dotčených entit — ne celé objekty. `domain_event_id` je identita samotné události; nezaměňovat s `event_id` v payloadu, který u řady událostí odkazuje na konkrétní akci (`EVENT`).
+7. **Čtení proti směru grafu jen přes port.** Potřebuje-li nižší modul synchronně data vyššího (guard nejde odložit na událost), definuje si rozhraní (port) ve vlastním jmenném prostoru `<Modul>\Port` a vyšší modul ho implementuje. Implementace je závislost ve směru grafu, takže ji Deptrac povolí; propojení dělá DI konfigurace v bootstrap vrstvě, která je z pravidel vyjmuta. Přímé volání vyššího modulu je chyba i tehdy, když by šlo „jen o čtení".
+8. **Kontrakty událostí jsou samostatná vrstva.** Třída události (payload) žije v `<Modul>\Contract\Event` vydávajícího modulu a nesmí záviset na ničem kromě skalárů a identifikátorů (bod 6). V Deptracu tvoří vrstvu **Kontrakty událostí**, na které smí záviset kterýkoli modul. Odběr události je tedy závislost jen na kontraktu, ne na vydávajícím modulu. Proto může Registrations odebírat `payment.allocated`, i když Payments leží nad ním.
 
 ## Mapa modulů a závislostí
 
@@ -57,14 +59,14 @@ flowchart TD
         AUD["Audit & GDPR"]
     end
 
-    REP --> EVT & REG & PAY & ATT & EDU & PPL & ORG
-    REG --> EVT & PPL
-    PAY --> REG & BNK
+    REP --> EVT & REG & PAY & ATT & EDU & PPL & ORG & MRG
+    REG --> EVT & PPL & ORG
+    PAY --> REG & BNK & PPL & ORG
     BNK --> ORG
     DUF --> PPL & ORG & PAY
     ATT --> EVT & PPL
     EDU --> PPL & EVT
-    EVT --> ORG
+    EVT --> ORG & BNK
     MRG --> PPL
     PPL --> ORG & IAM
     ORG --> IAM
@@ -81,6 +83,18 @@ flowchart TD
     class REP anl;
 ```
 
+Porty podle principu 7 — hrany, které v grafu nejsou, protože vedou proti jeho směru:
+
+| Port (vlastník = nižší modul)             | Implementuje            | Účel                                                                        |
+| ----------------------------------------- | ----------------------- | --------------------------------------------------------------------------- |
+| `Identity\Port\GuardianshipQuery`         | People                  | aktivní vazby zákonný zástupce ↔ dítě pro odvozená práva                    |
+| `Identity\Port\ResourceOwnershipQuery`    | Registrations, People   | vlastník přihlášky, „osoba sama" pro odvozená práva                         |
+| `Identity\Port\UnitScopeQuery`            | Org                     | scope oddílu pro vyhodnocení `canDo`                                        |
+| `Notifications\Port\SenderSettingsQuery`  | Org                     | odesílatel z `UNIT_MAIL_SETTING` (oddílové SMTP vs. systém)                 |
+| `Notifications\Port\NotificationDataProvider` | každý modul, který vydává událost s e-mailem | data pro šablonu a adresy příjemců ke **svým** událostem (payload nese jen ID) |
+| `Registrations\Port\PaidAmountQuery`      | Payments                | součet alokací pro `evaluate`                                               |
+| `Payments\Port\DuMembershipQuery`         | DU Membership           | sazba a existence členství DU při párování                                  |
+
 ---
 
 ## Katalog modulů
@@ -91,11 +105,11 @@ flowchart TD
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Vlastní entity**   | `ACCOUNT`, `OAUTH_IDENTITY`, `USER_ROLE`, `ROLE_INVITATION`, `PERMISSION_DELEGATION`, tokeny bez účtu (rozcestník přihlášky, souhlas zástupce, náhradník)                      |
 | **Vlastní pravidla** | přihlášení heslem/OAuth, unikátnost `login_email`, vyhodnocení oprávnění podle [authorization.md](authorization.md), platnost a jednorázovost tokenů, maskování citlivých polí |
-| **Čte odjinud**      | `PERSON` (zobrazení jména u účtu), aktivní vazby zákonný zástupce ↔ dítě z People pro odvozená práva, scope oddílu z Org                                                       |
+| **Čte odjinud**      | nic přímo — vše přes vlastní porty: vazby zákonný zástupce ↔ dítě (`GuardianshipQuery`, People), vlastnictví (`ResourceOwnershipQuery`, Registrations/People), scope oddílu (`UnitScopeQuery`, Org) |
 | **Nevlastní**        | osobu — účet je jen identita navázaná 1:1 na `PERSON`                                                                                                                          |
 | **Rozhraní**         | `canDo(actor, action, scope)`, `resolveToken(token)`, `issueToken(purpose, subject)` — jediné místo, kde se rozhoduje o právech                                                |
 
-Odvozená práva (zákonný zástupce, vlastník přihlášky, osoba sama) se **počítají**, neukládají — modul si je táhne z People a Registrations dotazem.
+Odvozená práva (zákonný zástupce, vlastník přihlášky, osoba sama) se **počítají**, neukládají — modul si je táhne dotazem přes své porty, které implementují People a Registrations. Jméno osoby u účtu Identity nezná — skládá ho prezentační vrstva z Identity a People.
 
 ### 2 · Org (jádro)
 
@@ -115,7 +129,7 @@ Lhůty z [registration-lifecycle.md](registration-lifecycle.md) (souhlas zástup
 | **Vlastní entity**   | `PERSON`, `PERSON_UNIT`, `PERSON_UNIT_HISTORY`, `PARENT_CHILD`, `PARENT_INVITATION`, `PERSON_SENSITIVE_DATA`, `PERSON_DOCUMENT`, `CONSENT`, `UNIT_PATROL`, `UNIT_PATROL_MEMBER`, `CUSTOM_FIELD`, `CUSTOM_FIELD_OPTION`, `CUSTOM_FIELD_VALUE` |
 | **Vlastní pravidla** | [person-lifecycle.md](person-lifecycle.md) (dvě osy, matice, archivace), [parent-child-lifecycle.md](parent-child-lifecycle.md), podmíněná povinnost polí z [validation.md](validation.md), scope citlivých dat                              |
 | **Čte odjinud**      | `UNIT` z Org, `ACCOUNT` z IAM (existence účtu osoby)                                                                                                                                                                                         |
-| **Rozhraní**         | `person(id)`, `isMinorAt(personId, date)`, `activeGuardians(personId)`, `membership(personId, unitId)`, `sensitive(personId, eventId, actor)`                                                                                                |
+| **Rozhraní**         | `person(id)`, `resolvePersonId(id)` (tombstone → platné `person_id`), `isMinorAt(personId, date)`, `activeGuardians(personId)`, `membership(personId, unitId)`, `sensitive(personId, eventId, actor)`                                                                                                |
 
 **Věk se počítá zde**, ne v Registrations ani Race patrols — ty si o něj řeknou k rozhodnému datu ([race-patrols.md](race-patrols.md)).
 
@@ -126,7 +140,7 @@ Lhůty z [registration-lifecycle.md](registration-lifecycle.md) (souhlas zástup
 | **Vlastní entity**      | `MERGE_REQUEST`, `MERGE_APPROVAL`, `MERGE_LOG`, `REPORT_MERGE`                                                              |
 | **Vlastní pravidla**    | [person-merge.md](person-merge.md) — detekce kandidátů, schvalování oběma oddíly, konflikty polí, revert                    |
 | **Zapisuje cizí data?** | Ne. Přenos vazeb provádí **každý vlastnící modul sám** na základě události `person.merged` — Merge jen orchestruje a loguje |
-| **Rozhraní**            | `resolvePerson(id)` → platné `person_id` (tombstone `merged_into_person_id` se překládá centrálně)                          |
+| **Rozhraní**            | žádné čtecí pro ostatní moduly. Překlad tombstone (`PERSON.merged_into_person_id`) dělá People v `resolvePersonId(id)`, protože sloupec vlastní People. Na PersonMerge závisí jen Reporting (`REPORT_MERGE`) |
 
 Tohle je nejcitlivější hranice: bez pravidla „přenos vazeb dělá vlastník" by Merge sahal do poloviny databáze.
 
@@ -148,8 +162,8 @@ Cena je **funkce**, ne uložené číslo — Registrations si ji vyžádá a ulo
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Vlastní entity**   | `REGISTRATION` (vč. oddílových a dílčích), `REGISTRATION_FIELD_VALUE`, `REGISTRATION_DOCUMENT`, `SUBSTITUTE_OFFER`, `RECOMMENDATION`, `WORKSHOP_REGISTRATION`, `RACE_PATROL`, `RACE_PATROL_MEMBER` |
 | **Vlastní pravidla** | [registration-lifecycle.md](registration-lifecycle.md) — funkce `evaluate`, brány, guardy, kapacita a fronta náhradníků; skládání hlídek dle [race-patrols.md](race-patrols.md)                    |
-| **Čte odjinud**      | Events (cena, dokumenty, kapacita, splatnost), People (věk, zástupci, evidence v oddíle), Org (lhůty), Payments (součet alokací)                                                                   |
-| **Nevlastní**        | platby ani stav úhrady jako uložené pole — `evaluate` si součet alokací **vyžádá** a přepočte stav                                                                                                 |
+| **Čte odjinud**      | Events (cena, dokumenty, kapacita, splatnost), People (věk, zástupci, evidence v oddíle), Org (lhůty), součet alokací přes vlastní port `PaidAmountQuery` (implementuje Payments) |
+| **Nevlastní**        | platby ani stav úhrady jako uložené pole — `evaluate` si součet alokací **vyžádá** přes port a přepočte stav                                                                                                 |
 | **Rozhraní**         | `registration(id)`, `openRegistrations(personId)`, `occupancy(eventId)` (v **účastnících**, ne přihláškách), `amountDue(registrationId)`                                                           |
 
 Klíčová hrana: **Payments neposouvá stav přihlášky.** Publikuje `payment.allocated`, Registrations na ni zavolá vlastní `evaluate`.
@@ -160,7 +174,7 @@ Klíčová hrana: **Payments neposouvá stav přihlášky.** Publikuje `payment.
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Vlastní entity**   | `PAYMENT_ALLOCATION` (vč. záporných = vratky), `REFUND_REQUEST`, `UNIT_MEMBER_FEE_RATE`, `UNIT_MEMBER_FEE`                                                                                   |
 | **Vlastní pravidla** | [payment-matching.md](payment-matching.md) — pořadí pravidel párování, více kandidátů, přeplatek a vratka, potvrzení, ruční režim                                                            |
-| **Čte odjinud**      | Banking (transakce), Registrations (VS, dlužná částka, vlastník), People (členství v oddílu, zákonní zástupci), DU Membership (sazba a existence členství), Org (zapnutý `payment_matching`) |
+| **Čte odjinud**      | Banking (transakce), Registrations (VS, dlužná částka, vlastník), People (členství v oddílu, zákonní zástupci), DU Membership (sazba a existence členství — přes vlastní port `DuMembershipQuery`), Org (zapnutý `payment_matching`) |
 | **Rozhraní**         | `paidAmount(registrationId)`, `memberFeePaidAmount(memberFeeId)`, `allocationsOf(transactionId)`                                                                                             |
 
 ### 8 · Banking (doména)
@@ -192,7 +206,7 @@ Vlastní `COURSE`, `COURSE_REQUIREMENT`, `PERSON_COURSE`. Čte People a Events (
 
 ### 12 · Notifications (platforma)
 
-Vlastní frontu odchozích e-mailů a evidenci odeslání ([non-functional.md](non-functional.md), [notifications.md](notifications.md)). **Nemá doménová pravidla** — jen mapu `událost → šablona → příjemce → načasování`. Odesílatele (oddílové SMTP vs. systém) si bere z `UNIT_MAIL_SETTING` v Org. Idempotenci drží na `domain_event_id`, aby opakovaná fronta neposlala potvrzení o platbě dvakrát.
+Vlastní frontu odchozích e-mailů a evidenci odeslání ([non-functional.md](non-functional.md), [notifications.md](notifications.md)). **Nemá doménová pravidla** — jen mapu `událost → šablona → příjemce → načasování`. Odesílatele (oddílové SMTP vs. systém) si bere z `UNIT_MAIL_SETTING` přes vlastní port `SenderSettingsQuery`, který implementuje Org. Data pro šablonu (jména, částky, název akce) a adresy příjemců nečte z domény přímo. Payload nese jen identifikátory (princip 6), proto si je Notifications vyžádá přes port `NotificationDataProvider`, který pro své události implementuje vydávající modul. Idempotenci drží na `domain_event_id`, aby opakovaná fronta neposlala potvrzení o platbě dvakrát.
 
 ### 13 · Audit & GDPR (platforma)
 
@@ -234,7 +248,7 @@ Jmenná konvence `modul.agregát.událost` v minulém čase. Události, které u
 | `registration.created`                                        | `registration_id`, `event_id`, `person_id`, `vs`              | Notifications, Audit, Reporting                              |
 | `registration.contact_email_confirmed`                        | `registration_id`                                             | Notifications, Audit                                         |
 | `registration.state_changed`                                  | `from`, `to`, `trigger`                                       | Notifications, Audit, Reporting                              |
-| `registration.canceled`                                       | `fee_amount`, `refund_due`                                    | Payments (vratka), Events (kapacita), Notifications          |
+| `registration.canceled`                                       | `fee_amount`, `refund_due`                                    | Payments (vratka), Notifications                             |
 | `registration.expired`                                        | `reason`                                                      | Notifications, Audit                                         |
 | `registration.invoice_note_changed`                           | `registration_id`, `unit_id`, `invoice_note`                  | Notifications, Audit                                         |
 | `registration.capacity_released`                              | `event_id`, `freed_slots`                                     | Registrations (výběr náhradníka), Reporting                  |
